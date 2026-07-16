@@ -1,0 +1,55 @@
+version = "1"
+
+[project]
+name = "Mark"
+slug = "mark"
+org = "sylphx"
+default_env = "production"
+
+[build]
+strategy = "dockerfile"
+dockerfile = "Dockerfile"
+context = "."
+
+[deploy]
+health_check_path = "/health"
+strategy = "rolling"
+graceful_shutdown = 15
+
+[[services]]
+name = "web"
+type = "web"
+port = 8787
+# Public free image host — keep at least one warm instance.
+min_instances = 1
+max_instances = 10
+instance_type = "micro"
+scale_to_zero = false
+path_prefixes = ["/", "/api", "/badge", "/banner", "/stats", "/org", "/repo", "/icons", "/brand", "/deploy", "/health"]
+watch_paths = [
+  "src/**",
+  "static/**",
+  "Cargo.toml",
+  "Cargo.lock",
+  "Dockerfile",
+  "sylphx.toml",
+]
+
+[services.health]
+mode = "http"
+path = "/health"
+
+[env.PUBLIC_BASE_URL]
+value = "https://mark.sylphx.app"
+
+[env.DEFAULT_CREDIT]
+value = "1"
+
+[env.RUST_LOG]
+value = "mark=info,tower_http=info"
+
+[ci]
+preview_deploys = true
+pr_comment = true
+production_branches = ["^main$"]
+runner = "standard"
