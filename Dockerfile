@@ -18,7 +18,7 @@ WORKDIR /app
 ENV PORT=8787 \
     HOST=0.0.0.0 \
     RUST_LOG=mark=info \
-    DEFAULT_CREDIT=1 \
+    DEFAULT_CREDIT=0 \
     SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt \
     SSL_CERT_DIR=/etc/ssl/certs
 COPY --from=builder /app/target/release/mark /usr/local/bin/mark

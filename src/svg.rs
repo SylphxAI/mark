@@ -43,10 +43,13 @@ pub fn credit_mark(width: u32, height: u32, enabled: bool) -> String {
     if !enabled {
         return String::new();
     }
+    // Product watermark only — not a company brand stamp. Opt-in via credit=1.
     let x = width.saturating_sub(8);
     let y = height.saturating_sub(6);
     format!(
-        "<a href=\"https://sylphx.com\" target=\"_blank\" rel=\"noopener\"><text x=\"{x}\" y=\"{y}\" text-anchor=\"end\" font-family=\"ui-sans-serif,system-ui,sans-serif\" font-size=\"9\" fill=\"#ffffff\" fill-opacity=\"0.35\">sylphx</text></a>"
+        "<a href=\"https://mark.sylphx.com\" target=\"_blank\" rel=\"noopener\">\
+           <text x=\"{x}\" y=\"{y}\" text-anchor=\"end\" font-family=\"ui-sans-serif,system-ui,sans-serif\" \
+             font-size=\"9\" fill=\"#ffffff\" fill-opacity=\"0.22\">mark</text></a>"
     )
 }
 

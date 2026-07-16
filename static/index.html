@@ -384,7 +384,7 @@
       mode: "banner",
       tab: "md",
       showAllStyles: false,
-      banner: { type: "aurora", theme: "sylphx", text: "Sylphx Mark", desc: "Any URL. One image. Your brand.", height: 220, animation: "fadeIn" },
+      banner: { type: "aurora", theme: "tokyonight", text: "Ship your next release", desc: "Paste this banner into your README", height: 220, animation: "rise" },
       badge: { label: "build", message: "passing", color: "brightgreen", style: "flat" },
       stats: { user: "shtse8", theme: "dark" },
       icons: { selected: ["rust","ts","docker","kubernetes"], theme: "dark" },
@@ -415,6 +415,7 @@
         const b = state.banner;
         const p = new URLSearchParams({ type: b.type, theme: b.theme, text: b.text, desc: b.desc, height: String(b.height) });
         if (b.animation) p.set("animation", b.animation);
+        p.set("credit", "0");
         return `${BASE}/api/v1/banner?${p}`;
       }
       if (m === "badge") {
@@ -514,10 +515,10 @@
             <div class="field"><label>Height</label><input id="f-h" type="number" min="100" max="500" value="${state.banner.height}" /></div>
             <div class="field"><label>Motion</label>
               <select id="f-anim">
-                <option value="">none</option>
-                ${["fadeIn","scaleIn","blinking","twinkling"].map(a =>
+                ${["none","ambient","fade","rise","scale","float","glow","breathe","slide","cascade","shimmer","glitch","wave","orbit"].map(a =>
                   `<option value="${a}" ${state.banner.animation===a?"selected":""}>${a}</option>`).join("")}
               </select>
+              <p class="hint">SMIL motion works in the browser preview. Backgrounds always drift when motion ≠ none.</p>
             </div>
           </div>`;
         bindBanner();

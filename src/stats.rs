@@ -166,7 +166,7 @@ fn render_org_card(org: &str, agg: &Aggregate, opts: &CardOpts) -> String {
         "<rect width=\"{w}\" height=\"{h}\" rx=\"12\" fill=\"{bg}\"/>\
          <rect x=\"0\" y=\"0\" width=\"6\" height=\"{h}\" fill=\"{accent}\"/>\
          <text x=\"24\" y=\"36\" font-family=\"ui-sans-serif,system-ui,sans-serif\" font-size=\"20\" font-weight=\"700\" fill=\"{fg}\">{}</text>\
-         <text x=\"24\" y=\"56\" font-family=\"ui-sans-serif,system-ui,sans-serif\" font-size=\"12\" fill=\"{muted}\">organization · powered by Mark</text>\
+         <text x=\"24\" y=\"56\" font-family=\"ui-sans-serif,system-ui,sans-serif\" font-size=\"12\" fill=\"{muted}\">organization</text>\
          {metric_xml}{}",
         esc(org),
         credit_mark(w, h, opts.credit)

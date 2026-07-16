@@ -42,8 +42,9 @@ path = "/health"
 [env.PUBLIC_BASE_URL]
 value = "https://mark.sylphx.com"
 
+# Off by default — banners should not stamp product/company names unless asked.
 [env.DEFAULT_CREDIT]
-value = "1"
+value = "0"
 
 [env.RUST_LOG]
 value = "mark=info,tower_http=info"

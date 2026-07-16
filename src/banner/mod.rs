@@ -1,11 +1,14 @@
 //! Banner / hero SVG renderer.
 
+mod motion;
 mod shapes;
 
+pub use motion::ANIMATIONS;
 pub use shapes::{is_banner_type, normalize_type, BANNER_TYPES, FEATURED_TYPES};
 
 use crate::color::resolve_fill;
 use crate::svg::{credit_mark, ensure_hash, esc, svg_doc};
+use motion::{ambient_gain, normalize_animation, text_children, text_open_attrs};
 use shapes::{shape_background, shape_defs};
 
 #[derive(Debug, Clone, Default)]
@@ -44,6 +47,8 @@ pub fn render(input: &BannerInput) -> String {
     } else {
         "header"
     };
+    let anim = normalize_animation(input.animation.as_deref());
+    let gain = ambient_gain(anim);
 
     let seed = input
         .seed
@@ -80,25 +85,6 @@ pub fn render(input: &BannerInput) -> String {
         .stroke_width
         .unwrap_or(if stroke.is_some() { 1.0 } else { 0.0 });
 
-    let anim_css = match input.animation.as_deref() {
-        Some("fadeIn") => {
-            Some("@keyframes fadeIn{from{opacity:0}to{opacity:1}} .a{animation:fadeIn 1.2s ease both}")
-        }
-        Some("scaleIn") => Some(
-            "@keyframes scaleIn{from{transform:scale(.85);opacity:0}to{transform:scale(1);opacity:1}} .a{animation:scaleIn .8s ease both;transform-origin:center}",
-        ),
-        Some("blink") => {
-            Some("@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}} .a{animation:blink .6s step-end infinite}")
-        }
-        Some("blinking") => Some(
-            "@keyframes blinking{0%,100%{opacity:1}50%{opacity:.35}} .a{animation:blinking 1.6s ease-in-out infinite}",
-        ),
-        Some("twinkling") => Some(
-            "@keyframes twinkling{0%,100%{opacity:1}50%{opacity:.55}} .a{animation:twinkling 4s ease-in-out infinite}",
-        ),
-        _ => None,
-    };
-
     let lines: Vec<&str> = text.split('\n').filter(|l| !l.is_empty()).collect();
     let mut text_nodes = String::new();
     let n = lines.len().max(1) as f32;
@@ -125,32 +111,45 @@ pub fn render(input: &BannerInput) -> String {
         } else {
             String::new()
         };
+        // rotate conflicts with motion transform; prefer motion when active
+        let open_extra = text_open_attrs(anim, i, width, height);
+        let rot_attr = if open_extra.contains("transform=") {
+            String::new()
+        } else {
+            rot
+        };
+        let children = text_children(anim, i, width, height);
         text_nodes.push_str(&format!(
-            "<text class=\"a\" x=\"{x}\" y=\"{y}\" text-anchor=\"middle\" dominant-baseline=\"middle\" font-family=\"ui-sans-serif,system-ui,-apple-system,Segoe UI,Helvetica,sans-serif\" font-weight=\"650\" letter-spacing=\"-0.02em\" font-size=\"{font_size}\" fill=\"{font_color}\"{stroke_attr}{rot}>{}</text>",
-            esc(line)
+            "<text x=\"{x}\" y=\"{y}\" text-anchor=\"middle\" dominant-baseline=\"middle\" \
+             font-family=\"ui-sans-serif,system-ui,-apple-system,Segoe UI,Helvetica,sans-serif\" \
+             font-weight=\"650\" letter-spacing=\"-0.02em\" font-size=\"{font_size}\" \
+             fill=\"{font_color}\"{stroke_attr}{rot_attr}{open_extra}>{content}{children}</text>",
+            content = esc(line),
         ));
     }
 
     let desc_node = if !desc.is_empty() {
+        let open_extra = text_open_attrs(anim, lines.len().max(1), width, height);
+        let children = text_children(anim, lines.len().max(1), width, height);
         format!(
-            "<text class=\"a\" x=\"{}\" y=\"{}\" text-anchor=\"middle\" dominant-baseline=\"middle\" font-family=\"ui-sans-serif,system-ui,sans-serif\" font-size=\"{desc_size}\" font-weight=\"450\" letter-spacing=\"0.01em\" fill=\"{font_color}\" fill-opacity=\"0.82\">{}</text>",
+            "<text x=\"{}\" y=\"{}\" text-anchor=\"middle\" dominant-baseline=\"middle\" \
+             font-family=\"ui-sans-serif,system-ui,sans-serif\" font-size=\"{desc_size}\" \
+             font-weight=\"450\" letter-spacing=\"0.01em\" fill=\"{font_color}\" fill-opacity=\"0.82\"{open_extra}>{}{children}</text>",
             width as f32 * desc_align / 100.0,
             height as f32 * desc_align_y / 100.0,
-            esc(desc)
+            esc(desc),
         )
     } else {
         String::new()
     };
 
-    let style = anim_css
-        .map(|c| format!("<style><![CDATA[{c}]]></style>"))
-        .unwrap_or_default();
-
     let body = format!(
-        "<defs>{}{}</defs>{style}{}{text_nodes}{desc_node}{}",
+        "<defs>{}{}</defs>{}{}{}{}",
         fill.defs,
-        shape_defs(ty),
-        shape_background(ty, width, height, &fill.fill, section, input.reversal),
+        shape_defs(ty, gain),
+        shape_background(ty, width, height, &fill.fill, section, input.reversal, gain),
+        text_nodes,
+        desc_node,
         credit_mark(width, height, input.credit),
     );
 

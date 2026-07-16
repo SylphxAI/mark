@@ -14,8 +14,8 @@ async fn main() {
         .unwrap_or(8787);
     let host = std::env::var("HOST").unwrap_or_else(|_| "0.0.0.0".into());
     let default_credit = std::env::var("DEFAULT_CREDIT")
-        .map(|v| v != "0")
-        .unwrap_or(true);
+        .map(|v| matches!(v.as_str(), "1" | "true" | "yes" | "on"))
+        .unwrap_or(false);
     let public_base =
         std::env::var("PUBLIC_BASE_URL").unwrap_or_else(|_| format!("http://{host}:{port}"));
 

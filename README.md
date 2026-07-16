@@ -35,7 +35,7 @@ Env (see `.env.example`):
 | `PORT` | `8787` | |
 | `HOST` | `0.0.0.0` | |
 | `PUBLIC_BASE_URL` | derived | Used in docs / generator copy |
-| `DEFAULT_CREDIT` | `1` | Soft `sylphx` watermark on banners/cards |
+| `DEFAULT_CREDIT` | `0` | Opt-in soft `mark` watermark (`credit=1`) |
 | `GITHUB_TOKEN` | empty | Higher rate limits for `/stats` `/repo` `/org` |
 | `RUST_LOG` | `mark=info` | |
 
