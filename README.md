@@ -60,14 +60,18 @@ Env (see `.env.example`):
 ### Banner
 
 ```markdown
-![header](https://img.sylphx.com/api/v1/banner?type=aurora&theme=sylphx&text=Sylphx&desc=AI-native%20platform&height=200&animation=fadeIn)
+![header](https://mark.sylphx.com/api/v1/banner?type=aurora&theme=tokyonight&text=Ship%20your%20next%20release&desc=Paste%20into%20README&height=220&animation=rise)
 ```
 
 **Types (v1):**  
 `wave` `waving` `soft` `rounded` `rect` `slice` `cylinder` `blur` `pulse` `checkered` `egg` `shark` `venom` `speech` `transparent` `aurora` `mesh` `noise` `glass` `grid` `constellation` `terminal` `hud` `circuit` `orbit` `ring` `beam` `product` `oss` `org`
 
+**Motion (`animation=`):** SMIL (works when the SVG is loaded as `<img>`):  
+`none` · `ambient` (default) · `fade` · `rise` · `scale` · `float` · `glow` · `breathe` · `slide` · `cascade` · `shimmer` · `glitch` · `wave` · `orbit`  
+Every style has ambient background motion when motion ≠ `none`.
+
 **Themes:**  
-`sylphx` `cubeage` `epiow` `ozyrix` `kyle` `dark` `light` `radical` `gruvbox` `tokyonight` `dracula` `nord` `monokai` `ocean` `sunset` `forest` `neon` `github`
+`dark` `light` `tokyonight` `dracula` `nord` `neon` `ocean` `sunset` `forest` `github` `radical` · fleet kits: `sylphx` `cubeage` `epiow` `ozyrix` `kyle`
 
 **Color:** `auto` · `timeAuto` · `gradient` · `timeGradient` · hex · `0:EEFF00,100:a82da8`
 
