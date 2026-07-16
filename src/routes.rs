@@ -11,7 +11,7 @@ use tower_http::cors::CorsLayer;
 use tower_http::services::ServeDir;
 
 use crate::badge::{self, BadgeInput, BadgeStyle};
-use crate::banner::{self, BannerInput, BANNER_TYPES};
+use crate::banner::{self, BannerInput, BANNER_TYPES, FEATURED_TYPES};
 use crate::brand;
 use crate::icons;
 use crate::stats::{self, CardOpts};
@@ -85,6 +85,7 @@ async fn api_index(State(st): State<AppState>) -> impl IntoResponse {
 async fn catalog() -> impl IntoResponse {
     Json(json!({
         "banner_types": BANNER_TYPES,
+        "featured_banner_types": FEATURED_TYPES,
         "themes": themes::list_names(),
         "icons": icons::available(),
         "badge_styles": ["flat", "plastic", "for-the-badge", "social", "pill"],
