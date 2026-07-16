@@ -7,15 +7,15 @@ use mark::icons;
 fn banner_waving_contains_svg() {
     let svg = banner::render(&BannerInput {
         type_name: Some("waving".into()),
-        theme: Some("sylphx".into()),
-        text: Some("Mark".into()),
+        theme: Some("tokyonight".into()),
+        text: Some("Hello".into()),
         desc: Some("test".into()),
-        credit: true,
+        credit: false,
         ..Default::default()
     });
     assert!(svg.contains("<svg"));
-    assert!(svg.contains("Mark"));
-    assert!(svg.contains("sylphx"));
+    assert!(svg.contains("Hello"));
+    assert!(!svg.to_ascii_lowercase().contains("sylphx"));
 }
 
 #[test]
