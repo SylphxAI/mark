@@ -5,7 +5,7 @@
 /// Catalog exported to API / studio (order = UI order).
 pub const ANIMATIONS: &[&str] = &[
     "none", "ambient", "fade", "rise", "scale", "float", "glow", "breathe", "slide", "cascade",
-    "shimmer", "glitch", "wave", "orbit",
+    "shimmer", "glitch", "wave", "orbit", "neon", "bounce", "type",
 ];
 
 /// Legacy aliases accepted for compatibility.
@@ -27,6 +27,9 @@ pub fn normalize_animation(raw: Option<&str>) -> &'static str {
             "glitch" | "jitter" => "glitch",
             "wave" | "waving" => "wave",
             "orbit" | "spin" => "orbit",
+            "neon" | "flicker" | "cyber" => "neon",
+            "bounce" | "spring" | "elastic" => "bounce",
+            "type" | "typewriter" | "reveal" => "type",
             _ => "ambient",
         },
     }
@@ -60,8 +63,13 @@ pub fn text_open_attrs(anim: &str, line_index: usize, width: u32, height: u32) -
                 -cx, -cy
             )
         }
-        "glow" => " opacity=\"0.7\"".into(),
+        "glow" | "neon" => " opacity=\"0.7\"".into(),
         "shimmer" => " opacity=\"0.55\"".into(),
+        "bounce" => {
+            let dy = -(height as f32 * 0.1).clamp(12.0, 28.0);
+            format!(" opacity=\"0\" transform=\"translate(0 {dy})\"")
+        }
+        "type" => " opacity=\"0\"".into(),
         "slide" => {
             let dx = -(width as f32 * 0.09).clamp(24.0, 72.0);
             format!(" opacity=\"0\" transform=\"translate({dx} 0)\"")
@@ -180,6 +188,41 @@ pub fn text_children(anim: &str, line_index: usize, width: u32, height: u32) -> 
                values=\"0 0; 3.5 -2; 0 -3.5; -3.5 -1; 0 0\" keyTimes=\"0;0.25;0.5;0.75;1\" \
                dur=\"6.5s\" begin=\"{delay}s\" repeatCount=\"indefinite\"/>"
         ),
+
+        // Neon flicker — cyber/signage pulse with occasional hard cut.
+        "neon" => format!(
+            "<animate attributeName=\"opacity\" \
+               values=\"0.55;1;0.92;1;0.35;1;0.88;1;0.55\" \
+               keyTimes=\"0;0.12;0.28;0.42;0.48;0.55;0.72;0.88;1\" \
+               dur=\"2.4s\" begin=\"{delay}s\" repeatCount=\"indefinite\"/>\
+             <animateTransform attributeName=\"transform\" type=\"translate\" \
+               values=\"0 0; 0.6 0; 0 0; -0.8 0; 0 0; 0 0\" \
+               keyTimes=\"0;0.45;0.5;0.55;0.6;1\" \
+               dur=\"2.4s\" begin=\"{delay}s\" repeatCount=\"indefinite\"/>"
+        ),
+
+        // Spring bounce entry then soft settle.
+        "bounce" => {
+            let dy = -(height as f32 * 0.1).clamp(12.0, 28.0);
+            format!(
+                "<animate attributeName=\"opacity\" from=\"0\" to=\"1\" dur=\"0.35s\" begin=\"{delay}s\" fill=\"freeze\"/>\
+                 <animateTransform attributeName=\"transform\" type=\"translate\" \
+                   values=\"0 {dy}; 0 6; 0 -3; 0 1.5; 0 0\" keyTimes=\"0;0.4;0.62;0.82;1\" \
+                   dur=\"0.95s\" begin=\"{delay}s\" fill=\"freeze\" \
+                   calcMode=\"spline\" keySplines=\"0.22 1.4 0.36 1;0.34 1.2 0.64 1;0.34 1.1 0.64 1;0.25 1 0.5 1\"/>"
+            )
+        },
+
+        // Staggered typewriter / line reveal (per-line delay).
+        "type" => {
+            let d = delay * 1.35 + line_index as f32 * 0.08;
+            format!(
+                "<animate attributeName=\"opacity\" from=\"0\" to=\"1\" dur=\"0.08s\" begin=\"{d}s\" fill=\"freeze\"/>\
+                 <animateTransform attributeName=\"transform\" type=\"translate\" \
+                   from=\"0 8\" to=\"0 0\" dur=\"0.28s\" begin=\"{d}s\" fill=\"freeze\" \
+                   calcMode=\"spline\" keySplines=\"0.16 1 0.3 1\" keyTimes=\"0;1\"/>"
+            )
+        }
 
         _ => String::new(),
     }

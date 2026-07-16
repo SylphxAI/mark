@@ -51,7 +51,22 @@ fn ambient_aurora_has_background_smil_not_only_text() {
 
 #[test]
 fn ambient_orbit_and_wave_have_background_smil() {
-    for ty in ["orbit", "wave", "mesh", "constellation"] {
+    for ty in [
+        "orbit",
+        "wave",
+        "mesh",
+        "constellation",
+        "plasma",
+        "holo",
+        "neon",
+        "meteor",
+        "liquid",
+        "prism",
+        "void",
+        "firefly",
+        "silk",
+        "iridescent",
+    ] {
         let svg = banner::render(&BannerInput {
             type_name: Some(ty.into()),
             text: Some("Hello".into()),
@@ -65,6 +80,24 @@ fn ambient_orbit_and_wave_have_background_smil() {
             count_smil(&bg) >= 1,
             "style {ty} ambient missing background SMIL"
         );
+    }
+}
+
+#[test]
+fn neon_bounce_type_text_motion_emit_smil() {
+    for anim in ["neon", "bounce", "type"] {
+        let svg = banner::render(&BannerInput {
+            type_name: Some("plasma".into()),
+            text: Some("Motion".into()),
+            animation: Some(anim.into()),
+            credit: false,
+            ..Default::default()
+        });
+        assert!(
+            svg.contains("<animate") || svg.contains("animateTransform"),
+            "{anim} must emit SMIL"
+        );
+        assert!(svg.contains("Motion"), "{anim} must keep text");
     }
 }
 
