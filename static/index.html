@@ -1,0 +1,281 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Sylphx Mark — embeddable images</title>
+  <meta name="description" content="Any URL. One image. Your brand. Banners, badges, stats, icons — powered by Sylphx." />
+  <style>
+    :root {
+      --bg: #0b0d12;
+      --panel: #12151c;
+      --fg: #e8ecf4;
+      --muted: #8b93a7;
+      --accent: #d87000;
+      --blue: #4a90e2;
+      --line: #222836;
+      --ok: #3dd68c;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif;
+      background: radial-gradient(1200px 600px at 10% -10%, #1a1420 0%, transparent 50%),
+                  radial-gradient(900px 500px at 100% 0%, #0f1e33 0%, transparent 45%),
+                  var(--bg);
+      color: var(--fg);
+      min-height: 100vh;
+    }
+    a { color: var(--blue); }
+    header {
+      padding: 2.5rem 1.25rem 1rem;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+    .badge {
+      display: inline-flex; gap: .4rem; align-items: center;
+      border: 1px solid var(--line); background: #161a24;
+      color: var(--muted); border-radius: 999px; padding: .25rem .7rem;
+      font-size: .8rem; letter-spacing: .02em;
+    }
+    h1 {
+      font-size: clamp(1.8rem, 4vw, 2.6rem);
+      margin: .8rem 0 .4rem;
+      letter-spacing: -0.03em;
+    }
+    .lead { color: var(--muted); max-width: 52ch; line-height: 1.55; }
+    main {
+      max-width: 1100px; margin: 0 auto; padding: 0 1.25rem 4rem;
+      display: grid; gap: 1.25rem;
+    }
+    .grid { display: grid; gap: 1.25rem; grid-template-columns: 1.1fr .9fr; }
+    @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+    .card {
+      background: color-mix(in srgb, var(--panel) 92%, black);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 1.1rem 1.2rem 1.25rem;
+    }
+    .card h2 { margin: 0 0 .75rem; font-size: 1rem; font-weight: 600; color: var(--fg); }
+    label { display: block; font-size: .75rem; color: var(--muted); margin: .55rem 0 .25rem; }
+    input, select, textarea {
+      width: 100%;
+      background: #0d1017;
+      border: 1px solid var(--line);
+      color: var(--fg);
+      border-radius: 10px;
+      padding: .55rem .7rem;
+      font: inherit;
+    }
+    textarea { min-height: 70px; resize: vertical; }
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; }
+    button, .btn {
+      margin-top: .9rem;
+      background: linear-gradient(135deg, var(--accent), #b45309);
+      color: white; border: 0; border-radius: 10px;
+      padding: .65rem 1rem; font-weight: 600; cursor: pointer;
+    }
+    button.secondary {
+      background: transparent; border: 1px solid var(--line); color: var(--fg);
+    }
+    .preview {
+      background: #0a0c10;
+      border: 1px dashed var(--line);
+      border-radius: 12px;
+      min-height: 180px;
+      display: grid; place-items: center;
+      overflow: auto; padding: .75rem;
+    }
+    .preview img { max-width: 100%; height: auto; }
+    code, .mono {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: .78rem;
+    }
+    pre {
+      background: #0a0c10; border: 1px solid var(--line); border-radius: 10px;
+      padding: .75rem; overflow: auto; color: #c6d0e0; margin: .5rem 0 0;
+      white-space: pre-wrap; word-break: break-all;
+    }
+    .chips { display: flex; flex-wrap: wrap; gap: .4rem; margin-top: .6rem; }
+    .chip {
+      border: 1px solid var(--line); border-radius: 999px; padding: .2rem .55rem;
+      font-size: .72rem; color: var(--muted); cursor: pointer; background: #10141c;
+    }
+    .chip:hover { border-color: var(--blue); color: var(--fg); }
+    footer {
+      max-width: 1100px; margin: 0 auto; padding: 0 1.25rem 3rem;
+      color: var(--muted); font-size: .85rem;
+    }
+    .examples { display: grid; gap: .75rem; }
+    .examples img { width: 100%; border-radius: 10px; border: 1px solid var(--line); }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="badge">Sylphx Mark · URL → SVG · hosted for promotion</div>
+    <h1>Any URL. One image.<br/>Your brand.</h1>
+    <p class="lead">
+      Embeddable banners, badges, GitHub stats, icon rows, and brand cards.
+      Drop a URL into any README. Built in Rust. Made to dogfood Sylphx.
+    </p>
+  </header>
+
+  <main>
+    <div class="grid">
+      <section class="card">
+        <h2>Banner generator</h2>
+        <div class="row">
+          <div>
+            <label>Type</label>
+            <select id="type"></select>
+          </div>
+          <div>
+            <label>Theme</label>
+            <select id="theme"></select>
+          </div>
+        </div>
+        <label>Text</label>
+        <input id="text" value="Sylphx Mark" />
+        <label>Description</label>
+        <input id="desc" value="Any URL. One image. Your brand." />
+        <div class="row">
+          <div>
+            <label>Height</label>
+            <input id="height" type="number" value="200" min="40" max="600" />
+          </div>
+          <div>
+            <label>Animation</label>
+            <select id="animation">
+              <option value="">none</option>
+              <option value="fadeIn" selected>fadeIn</option>
+              <option value="scaleIn">scaleIn</option>
+              <option value="blinking">blinking</option>
+              <option value="twinkling">twinkling</option>
+            </select>
+          </div>
+        </div>
+        <div style="display:flex; gap:.5rem; flex-wrap:wrap">
+          <button type="button" id="renderBtn">Update preview</button>
+          <button type="button" class="secondary" id="copyBtn">Copy markdown</button>
+        </div>
+        <label style="margin-top:1rem">Markdown</label>
+        <pre id="md" class="mono"></pre>
+      </section>
+
+      <section class="card">
+        <h2>Live preview</h2>
+        <div class="preview"><img id="preview" alt="preview" /></div>
+        <div class="chips" id="presets"></div>
+      </section>
+    </div>
+
+    <section class="card">
+      <h2>Quick endpoints</h2>
+      <div class="examples" id="examples"></div>
+    </section>
+
+    <section class="card">
+      <h2>API surface</h2>
+      <pre class="mono" id="api"></pre>
+    </section>
+  </main>
+
+  <footer>
+    <p>
+      Product: <strong>Mark</strong> · Host target: <code>img.sylphx.com</code> ·
+      <a href="https://sylphx.com">sylphx.com</a> ·
+      MIT · Built with Rust (axum)
+    </p>
+  </footer>
+
+  <script>
+    const BASE = window.location.origin;
+    const types = ["waving","wave","aurora","soft","rounded","rect","slice","cylinder","blur","pulse","checkered","egg","shark","venom","speech","mesh","noise","glass","grid","constellation","terminal","hud","circuit","orbit","ring","beam","product","oss","org","transparent"];
+    const themes = ["sylphx","cubeage","epiow","ozyrix","kyle","dark","light","radical","gruvbox","tokyonight","dracula","nord","neon","ocean","sunset","forest","github"];
+
+    const typeEl = document.getElementById('type');
+    const themeEl = document.getElementById('theme');
+    types.forEach(t => typeEl.insertAdjacentHTML('beforeend', `<option value="${t}">${t}</option>`));
+    themes.forEach(t => themeEl.insertAdjacentHTML('beforeend', `<option value="${t}">${t}</option>`));
+    typeEl.value = 'aurora';
+    themeEl.value = 'sylphx';
+
+    function bannerUrl() {
+      const p = new URLSearchParams({
+        type: typeEl.value,
+        theme: themeEl.value,
+        text: document.getElementById('text').value,
+        desc: document.getElementById('desc').value,
+        height: document.getElementById('height').value,
+        animation: document.getElementById('animation').value,
+      });
+      if (!p.get('animation')) p.delete('animation');
+      return `${BASE}/api/v1/banner?${p}`;
+    }
+
+    function refresh() {
+      const url = bannerUrl();
+      document.getElementById('preview').src = url;
+      document.getElementById('md').textContent = `![header](${url})`;
+    }
+
+    document.getElementById('renderBtn').onclick = refresh;
+    document.getElementById('copyBtn').onclick = async () => {
+      await navigator.clipboard.writeText(document.getElementById('md').textContent);
+      document.getElementById('copyBtn').textContent = 'Copied';
+      setTimeout(() => document.getElementById('copyBtn').textContent = 'Copy markdown', 1200);
+    };
+    ['type','theme','text','desc','height','animation'].forEach(id => {
+      document.getElementById(id).addEventListener('change', refresh);
+      document.getElementById(id).addEventListener('input', refresh);
+    });
+
+    const presets = [
+      { type: 'aurora', theme: 'sylphx', text: 'Sylphx', desc: 'Ship without the ops tax' },
+      { type: 'orbit', theme: 'epiow', text: 'Epiow', desc: 'B2B technology' },
+      { type: 'beam', theme: 'cubeage', text: 'Cubeage', desc: 'Games & entertainment' },
+      { type: 'product', theme: 'ozyrix', text: 'Ozyrix', desc: 'Premium tech accessories' },
+      { type: 'terminal', theme: 'dark', text: 'mark --help', desc: 'URL → SVG' },
+    ];
+    const presetBox = document.getElementById('presets');
+    presets.forEach(p => {
+      const el = document.createElement('button');
+      el.type = 'button';
+      el.className = 'chip';
+      el.textContent = `${p.theme}/${p.type}`;
+      el.onclick = () => {
+        typeEl.value = p.type;
+        themeEl.value = p.theme;
+        document.getElementById('text').value = p.text;
+        document.getElementById('desc').value = p.desc;
+        refresh();
+      };
+      presetBox.appendChild(el);
+    });
+
+    const examples = [
+      [`Badge`, `${BASE}/badge/build-passing-brightgreen`],
+      [`Stats`, `${BASE}/api/v1/stats/shtse8?theme=sylphx`],
+      [`Icons`, `${BASE}/api/v1/icons?i=rust,ts,docker,kubernetes,postgres&theme=dark`],
+      [`Brand`, `${BASE}/api/v1/brand/sylphx`],
+      [`Deploy`, `${BASE}/api/v1/deploy?service=mark&style=for-the-badge`],
+    ];
+    document.getElementById('examples').innerHTML = examples.map(([label, url]) =>
+      `<div><div class="mono" style="color:var(--muted);margin-bottom:.35rem">${label} — ${url}</div><img src="${url}" alt="${label}" loading="lazy" /></div>`
+    ).join('');
+
+    document.getElementById('api').textContent = `GET ${BASE}/api/v1/banner?type=aurora&theme=sylphx&text=Hello
+GET ${BASE}/badge/license-MIT-blue
+GET ${BASE}/api/v1/stats/{user}?theme=dark
+GET ${BASE}/api/v1/org/{org}?theme=sylphx
+GET ${BASE}/api/v1/repo/{owner}/{repo}
+GET ${BASE}/api/v1/icons?i=rust,ts,k8s
+GET ${BASE}/api/v1/brand/{name}
+GET ${BASE}/api/v1/deploy?service=my-app
+GET ${BASE}/api/v1/catalog
+GET ${BASE}/health`;
+
+    refresh();
+  </script>
+</body>
+</html>
