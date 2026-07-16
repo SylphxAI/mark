@@ -48,6 +48,9 @@ value = "1"
 [env.RUST_LOG]
 value = "mark=info,tower_http=info"
 
+# GITHUB_TOKEN is provisioned via platform env-vars (secret) for production — not inlined here.
+# Without it, unauthenticated GitHub is 60 req/hr/IP and /stats will degrade.
+
 [ci]
 preview_deploys = true
 pr_comment = true

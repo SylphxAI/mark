@@ -12,6 +12,23 @@ static CACHE: Lazy<Cache<String, String>> = Lazy::new(|| {
         .build()
 });
 
+/// Short-lived negative cache so rate-limit storms don't burn remaining quota.
+static NEG_CACHE: Lazy<Cache<String, String>> = Lazy::new(|| {
+    Cache::builder()
+        .max_capacity(256)
+        .time_to_live(Duration::from_secs(60))
+        .build()
+});
+
+static CLIENT: Lazy<reqwest::Client> = Lazy::new(|| {
+    reqwest::Client::builder()
+        .user_agent("Sylphx-Mark/0.1 (+https://github.com/SylphxAI/mark)")
+        .timeout(Duration::from_secs(12))
+        .pool_max_idle_per_host(4)
+        .build()
+        .expect("reqwest client")
+});
+
 #[derive(Debug, Clone, Deserialize)]
 pub struct GhUser {
     pub login: String,
@@ -49,30 +66,57 @@ pub struct Aggregate {
     pub top_langs: Vec<(String, u32, u32)>, // name, count, pct
 }
 
-fn client() -> reqwest::Client {
-    reqwest::Client::builder()
-        .user_agent("Sylphx-Mark/0.1 (+https://github.com/SylphxAI/mark)")
-        .timeout(Duration::from_secs(12))
-        .build()
-        .expect("reqwest client")
+fn github_token() -> Option<String> {
+    for key in ["GITHUB_TOKEN", "GH_TOKEN", "SYLPHX_GITHUB_TOKEN"] {
+        if let Ok(t) = std::env::var(key) {
+            let t = t.trim().to_string();
+            if !t.is_empty() {
+                return Some(t);
+            }
+        }
+    }
+    None
+}
+
+fn humanize_gh_error(status: reqwest::StatusCode, body: &str) -> String {
+    let lower = body.to_ascii_lowercase();
+    if status.as_u16() == 403 && lower.contains("rate limit") {
+        if github_token().is_none() {
+            return "GitHub rate limit exceeded. Set GITHUB_TOKEN on this Mark service for authenticated limits (5000/hr).".into();
+        }
+        return "GitHub rate limit exceeded for this token. Retry later.".into();
+    }
+    if status.as_u16() == 404 {
+        return "GitHub user/repo not found".into();
+    }
+    let snippet: String = body.chars().take(160).collect();
+    format!("GitHub {status}: {snippet}")
 }
 
 async fn gh_get(path: &str) -> Result<String, String> {
     if let Some(hit) = CACHE.get(path).await {
         return Ok(hit);
     }
-    let mut req = client().get(format!("https://api.github.com{path}"));
-    req = req.header("Accept", "application/vnd.github+json");
-    if let Ok(token) = std::env::var("GITHUB_TOKEN") {
-        if !token.is_empty() {
-            req = req.bearer_auth(token);
-        }
+    if let Some(err) = NEG_CACHE.get(path).await {
+        return Err(err);
     }
-    let res = req.send().await.map_err(|e| e.to_string())?;
+    let mut req = CLIENT
+        .get(format!("https://api.github.com{path}"))
+        .header("Accept", "application/vnd.github+json")
+        .header("X-GitHub-Api-Version", "2022-11-28");
+    if let Some(token) = github_token() {
+        req = req.bearer_auth(token);
+    }
+    let res = req.send().await.map_err(|e| format!("GitHub request failed: {e}"))?;
     let status = res.status();
-    let body = res.text().await.map_err(|e| e.to_string())?;
+    let body = res.text().await.map_err(|e| format!("GitHub response failed: {e}"))?;
     if !status.is_success() {
-        return Err(format!("GitHub {status}: {}", body.chars().take(200).collect::<String>()));
+        let msg = humanize_gh_error(status, &body);
+        // Cache rate-limit / auth failures briefly to avoid stampede.
+        if status.as_u16() == 403 || status.as_u16() == 429 {
+            NEG_CACHE.insert(path.to_string(), msg.clone()).await;
+        }
+        return Err(msg);
     }
     CACHE.insert(path.to_string(), body.clone()).await;
     Ok(body)

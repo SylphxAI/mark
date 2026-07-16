@@ -1,7 +1,7 @@
 //! HTTP routes.
 
 use axum::extract::{Path, Query, State};
-use axum::http::{header, HeaderMap, HeaderValue, StatusCode};
+use axum::http::{header, HeaderMap, HeaderValue};
 use axum::response::{Html, IntoResponse, Response};
 use axum::routing::get;
 use axum::{Json, Router};
@@ -381,13 +381,18 @@ fn svg_response(svg: &str, cache: &str) -> Response {
 }
 
 fn err_svg(msg: &str) -> Response {
+    // Always 200 for embed URLs: CDNs/browsers treat 5xx as a dead <img>.
+    // Keep a readable SVG so the failure is visible and cacheable only briefly.
+    let safe = crate::svg::esc(msg);
+    let short: String = safe.chars().take(120).collect();
     let body = format!(
-        "<?xml version=\"1.0\"?><svg xmlns=\"http://www.w3.org/2000/svg\" width=\"420\" height=\"80\"><rect width=\"100%\" height=\"100%\" fill=\"#1a1a1a\"/><text x=\"20\" y=\"45\" fill=\"#e05d44\" font-family=\"sans-serif\" font-size=\"14\">{}</text></svg>",
-        crate::svg::esc(msg)
+        "<?xml version=\"1.0\" encoding=\"UTF-8\"?><svg xmlns=\"http://www.w3.org/2000/svg\" width=\"480\" height=\"96\" role=\"img\">\
+         <rect width=\"100%\" height=\"100%\" rx=\"12\" fill=\"#141821\"/>\
+         <text x=\"20\" y=\"38\" fill=\"#ff7b86\" font-family=\"ui-sans-serif,system-ui,sans-serif\" font-size=\"14\" font-weight=\"600\">Mark couldn&apos;t load this card</text>\
+         <text x=\"20\" y=\"62\" fill=\"#9aa3b5\" font-family=\"ui-sans-serif,system-ui,sans-serif\" font-size=\"12\">{short}</text>\
+         </svg>"
     );
-    let mut res = svg_response(&body, "no-store");
-    *res.status_mut() = StatusCode::BAD_GATEWAY;
-    res
+    svg_response(&body, "public, max-age=30")
 }
 
 fn parse_bool(v: Option<&str>, default: bool) -> bool {
