@@ -3,277 +3,847 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Sylphx Mark — embeddable images</title>
-  <meta name="description" content="Any URL. One image. Your brand. Banners, badges, stats, icons — powered by Sylphx." />
+  <title>Sylphx Mark — any URL, one image</title>
+  <meta name="description" content="Compose embeddable SVG marks for READMEs — banners, badges, stats, icons. Drop in, copy out. Hosted on Sylphx." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
   <style>
     :root {
-      --bg: #0b0d12;
-      --panel: #12151c;
-      --fg: #e8ecf4;
+      --bg: #07080c;
+      --bg-elev: #0e1118;
+      --panel: rgba(18, 22, 32, 0.72);
+      --panel-solid: #121620;
+      --fg: #f2f4f8;
       --muted: #8b93a7;
+      --faint: #5c657a;
+      --line: rgba(255,255,255,0.08);
+      --line-strong: rgba(255,255,255,0.14);
       --accent: #d87000;
-      --blue: #4a90e2;
-      --line: #222836;
+      --accent-soft: rgba(216, 112, 0, 0.16);
+      --blue: #6aa8ff;
       --ok: #3dd68c;
+      --danger: #ff6b7a;
+      --radius: 20px;
+      --shadow: 0 24px 80px rgba(0,0,0,0.45);
+      --font: "Instrument Sans", ui-sans-serif, system-ui, sans-serif;
+      --mono: "JetBrains Mono", ui-monospace, monospace;
+      --space: clamp(1.25rem, 3vw, 2rem);
     }
     * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
     body {
       margin: 0;
-      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif;
-      background: radial-gradient(1200px 600px at 10% -10%, #1a1420 0%, transparent 50%),
-                  radial-gradient(900px 500px at 100% 0%, #0f1e33 0%, transparent 45%),
-                  var(--bg);
-      color: var(--fg);
       min-height: 100vh;
+      font-family: var(--font);
+      color: var(--fg);
+      background:
+        radial-gradient(1000px 520px at 12% -8%, rgba(216,112,0,0.18), transparent 55%),
+        radial-gradient(900px 480px at 92% 0%, rgba(74,144,226,0.14), transparent 50%),
+        radial-gradient(700px 400px at 50% 100%, rgba(124,58,237,0.08), transparent 45%),
+        var(--bg);
+      background-attachment: fixed;
     }
-    a { color: var(--blue); }
-    header {
-      padding: 2.5rem 1.25rem 1rem;
-      max-width: 1100px;
+    a { color: var(--blue); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    button, input, textarea { font: inherit; color: inherit; }
+    .shell {
+      width: min(1200px, calc(100% - 2 * var(--space)));
       margin: 0 auto;
+      padding: calc(var(--space) * 1.4) 0 calc(var(--space) * 3);
     }
-    .badge {
-      display: inline-flex; gap: .4rem; align-items: center;
-      border: 1px solid var(--line); background: #161a24;
-      color: var(--muted); border-radius: 999px; padding: .25rem .7rem;
-      font-size: .8rem; letter-spacing: .02em;
+    .nav {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 1rem; margin-bottom: calc(var(--space) * 1.6);
     }
-    h1 {
-      font-size: clamp(1.8rem, 4vw, 2.6rem);
-      margin: .8rem 0 .4rem;
+    .brand {
+      display: inline-flex; align-items: center; gap: .65rem;
+      font-weight: 600; letter-spacing: -0.02em;
+    }
+    .brand-mark {
+      width: 28px; height: 28px; border-radius: 9px;
+      background: linear-gradient(135deg, #d87000, #4a90e2);
+      box-shadow: 0 0 0 1px rgba(255,255,255,0.08), 0 8px 24px rgba(216,112,0,0.35);
+    }
+    .nav-links { display: flex; gap: 1rem; color: var(--muted); font-size: .92rem; }
+    .pill {
+      display: inline-flex; align-items: center; gap: .4rem;
+      border: 1px solid var(--line); background: rgba(255,255,255,0.03);
+      color: var(--muted); border-radius: 999px; padding: .35rem .75rem;
+      font-size: .8rem;
+    }
+    .pill .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--ok); box-shadow: 0 0 12px var(--ok); }
+    .hero {
+      display: grid; gap: 1.25rem;
+      margin-bottom: calc(var(--space) * 1.8);
+      max-width: 44rem;
+    }
+    .hero h1 {
+      margin: 0;
+      font-size: clamp(2.4rem, 5.5vw, 3.6rem);
+      line-height: 1.05;
+      letter-spacing: -0.045em;
+      font-weight: 700;
+    }
+    .hero h1 em {
+      font-style: normal;
+      background: linear-gradient(120deg, #fff 20%, #d87000 55%, #6aa8ff 100%);
+      -webkit-background-clip: text; background-clip: text; color: transparent;
+    }
+    .hero p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 1.08rem;
+      line-height: 1.65;
+      max-width: 38rem;
+    }
+    .hero-meta { display: flex; flex-wrap: wrap; gap: .6rem; margin-top: .25rem; }
+
+    .workspace {
+      display: grid;
+      grid-template-columns: 1.05fr 0.95fr;
+      gap: 1.25rem;
+      align-items: start;
+    }
+    @media (max-width: 980px) {
+      .workspace { grid-template-columns: 1fr; }
+      .nav-links { display: none; }
+    }
+
+    .panel {
+      background: var(--panel);
+      backdrop-filter: blur(18px);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+    .panel-head {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 1rem; padding: 1.15rem 1.25rem;
+      border-bottom: 1px solid var(--line);
+    }
+    .panel-head h2 {
+      margin: 0; font-size: 1rem; font-weight: 600; letter-spacing: -0.02em;
+    }
+    .panel-head span { color: var(--faint); font-size: .8rem; }
+    .panel-body { padding: 1.25rem; }
+    .panel-body + .panel-body { padding-top: 0; }
+
+    .step {
+      display: flex; gap: .75rem; align-items: flex-start;
+      margin-bottom: 1.35rem;
+    }
+    .step-num {
+      flex: 0 0 auto;
+      width: 1.6rem; height: 1.6rem; border-radius: 999px;
+      display: grid; place-items: center;
+      font-size: .75rem; font-weight: 700;
+      background: var(--accent-soft); color: #ffb15a;
+      border: 1px solid rgba(216,112,0,0.35);
+    }
+    .step-body { flex: 1; min-width: 0; }
+    .step-title {
+      font-size: .92rem; font-weight: 600; margin: .1rem 0 .55rem;
+      letter-spacing: -0.01em;
+    }
+    .hint { color: var(--faint); font-size: .8rem; line-height: 1.45; margin: .35rem 0 0; }
+
+    /* Style gallery — visual cards, not select boxes */
+    .style-rail {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(108px, 1fr));
+      gap: .55rem;
+      max-height: 280px;
+      overflow: auto;
+      padding: .15rem;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(255,255,255,0.12) transparent;
+    }
+    .style-card {
+      position: relative;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      overflow: hidden;
+      background: #0a0d13;
+      cursor: grab;
+      transition: transform .15s ease, border-color .15s ease, box-shadow .15s ease;
+      aspect-ratio: 16 / 10;
+      user-select: none;
+    }
+    .style-card:hover { border-color: var(--line-strong); transform: translateY(-1px); }
+    .style-card:active { cursor: grabbing; }
+    .style-card.selected {
+      border-color: rgba(216,112,0,0.85);
+      box-shadow: 0 0 0 1px rgba(216,112,0,0.45), 0 10px 28px rgba(216,112,0,0.18);
+    }
+    .style-card img {
+      width: 100%; height: 100%; object-fit: cover; display: block;
+      pointer-events: none;
+    }
+    .style-card .label {
+      position: absolute; left: .4rem; bottom: .35rem; right: .4rem;
+      font-size: .68rem; font-weight: 600; letter-spacing: -0.01em;
+      color: #fff; text-shadow: 0 1px 4px rgba(0,0,0,.8);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+
+    /* Theme swatches */
+    .theme-rail {
+      display: flex; flex-wrap: wrap; gap: .5rem;
+    }
+    .theme-swatch {
+      display: inline-flex; align-items: center; gap: .45rem;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,0.02);
+      border-radius: 999px;
+      padding: .3rem .65rem .3rem .35rem;
+      cursor: pointer;
+      transition: border-color .15s, background .15s;
+      font-size: .78rem; color: var(--muted);
+    }
+    .theme-swatch:hover { border-color: var(--line-strong); color: var(--fg); }
+    .theme-swatch.selected {
+      border-color: rgba(255,255,255,0.28);
+      background: rgba(255,255,255,0.06);
+      color: var(--fg);
+    }
+    .theme-swatch .orb {
+      width: 18px; height: 18px; border-radius: 50%;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.15);
+    }
+
+    .field {
+      display: grid; gap: .4rem; margin-bottom: .85rem;
+    }
+    .field label {
+      font-size: .78rem; color: var(--muted); font-weight: 500;
+    }
+    .field input, .field textarea {
+      width: 100%;
+      background: rgba(0,0,0,0.28);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: .7rem .85rem;
+      outline: none;
+      transition: border-color .15s, box-shadow .15s;
+    }
+    .field input:focus, .field textarea:focus {
+      border-color: rgba(106,168,255,0.45);
+      box-shadow: 0 0 0 3px rgba(106,168,255,0.12);
+    }
+    .field textarea { min-height: 72px; resize: vertical; }
+    .row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; }
+    @media (max-width: 560px) { .row-2 { grid-template-columns: 1fr; } }
+
+    /* Drop zone */
+    .dropzone {
+      border: 1.5px dashed rgba(255,255,255,0.14);
+      border-radius: 16px;
+      background: rgba(255,255,255,0.02);
+      padding: 1.1rem 1rem;
+      text-align: center;
+      transition: border-color .15s, background .15s, transform .15s;
+      margin-bottom: 1rem;
+    }
+    .dropzone.dragover {
+      border-color: rgba(216,112,0,0.7);
+      background: var(--accent-soft);
+      transform: scale(1.01);
+    }
+    .dropzone strong { display: block; margin-bottom: .25rem; font-size: .92rem; }
+    .dropzone p { margin: 0; color: var(--faint); font-size: .8rem; line-height: 1.45; }
+    .dropzone .chips {
+      display: flex; flex-wrap: wrap; gap: .4rem; justify-content: center;
+      margin-top: .75rem;
+    }
+    .chip {
+      border: 1px solid var(--line); border-radius: 999px;
+      padding: .25rem .6rem; font-size: .72rem; color: var(--muted);
+      background: rgba(0,0,0,0.2); cursor: pointer;
+    }
+    .chip:hover { color: var(--fg); border-color: var(--line-strong); }
+
+    /* Preview stage */
+    .stage {
+      min-height: 220px;
+      border-radius: 16px;
+      border: 1px solid var(--line);
+      background:
+        linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px) 0 0 / 24px 24px,
+        linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px) 0 0 / 24px 24px,
+        #090b10;
+      display: grid; place-items: center;
+      padding: 1rem;
+      overflow: hidden;
+    }
+    .stage img {
+      max-width: 100%; height: auto; border-radius: 8px;
+      box-shadow: 0 16px 48px rgba(0,0,0,0.4);
+      transition: opacity .2s;
+    }
+    .stage.loading img { opacity: .45; }
+
+    .url-box {
+      margin-top: 1rem;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: rgba(0,0,0,0.28);
+      overflow: hidden;
+    }
+    .url-tabs {
+      display: flex; gap: 0; border-bottom: 1px solid var(--line);
+      background: rgba(255,255,255,0.02);
+    }
+    .url-tabs button {
+      flex: 1; border: 0; background: transparent;
+      padding: .65rem .5rem; color: var(--muted); cursor: pointer;
+      font-size: .8rem; font-weight: 500;
+    }
+    .url-tabs button.active {
+      color: var(--fg);
+      box-shadow: inset 0 -2px 0 var(--accent);
+      background: rgba(255,255,255,0.03);
+    }
+    .url-body {
+      padding: .85rem;
+      font-family: var(--mono);
+      font-size: .72rem;
+      line-height: 1.5;
+      color: #c8d0e0;
+      word-break: break-all;
+      min-height: 4.5rem;
+      white-space: pre-wrap;
+    }
+    .actions {
+      display: flex; flex-wrap: wrap; gap: .55rem; margin-top: .9rem;
+    }
+    .btn {
+      appearance: none; border: 0; cursor: pointer;
+      border-radius: 12px; padding: .7rem 1rem;
+      font-weight: 600; font-size: .88rem;
+      transition: transform .12s, opacity .12s, background .12s;
+    }
+    .btn:active { transform: translateY(1px); }
+    .btn-primary {
+      background: linear-gradient(135deg, #e8890a, #c45f00);
+      color: #fff;
+      box-shadow: 0 10px 28px rgba(216,112,0,0.28);
+    }
+    .btn-secondary {
+      background: transparent;
+      border: 1px solid var(--line-strong);
+      color: var(--fg);
+    }
+    .btn-ghost {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--line);
+      color: var(--muted);
+    }
+
+    .section {
+      margin-top: calc(var(--space) * 2.2);
+    }
+    .section h3 {
+      margin: 0 0 .35rem;
+      font-size: 1.25rem;
       letter-spacing: -0.03em;
     }
-    .lead { color: var(--muted); max-width: 52ch; line-height: 1.55; }
-    main {
-      max-width: 1100px; margin: 0 auto; padding: 0 1.25rem 4rem;
-      display: grid; gap: 1.25rem;
+    .section > p {
+      margin: 0 0 1.1rem;
+      color: var(--muted);
+      max-width: 40rem;
+      line-height: 1.55;
     }
-    .grid { display: grid; gap: 1.25rem; grid-template-columns: 1.1fr .9fr; }
-    @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
-    .card {
-      background: color-mix(in srgb, var(--panel) 92%, black);
+    .feature-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1rem;
+    }
+    @media (max-width: 800px) { .feature-grid { grid-template-columns: 1fr; } }
+    .feature {
       border: 1px solid var(--line);
       border-radius: 16px;
-      padding: 1.1rem 1.2rem 1.25rem;
+      padding: 1.15rem 1.2rem;
+      background: rgba(255,255,255,0.02);
     }
-    .card h2 { margin: 0 0 .75rem; font-size: 1rem; font-weight: 600; color: var(--fg); }
-    label { display: block; font-size: .75rem; color: var(--muted); margin: .55rem 0 .25rem; }
-    input, select, textarea {
-      width: 100%;
-      background: #0d1017;
+    .feature h4 { margin: 0 0 .4rem; font-size: .95rem; letter-spacing: -0.02em; }
+    .feature p { margin: 0; color: var(--muted); font-size: .88rem; line-height: 1.55; }
+    .feature code {
+      font-family: var(--mono); font-size: .78rem;
+      background: rgba(255,255,255,0.05); padding: .1rem .35rem; border-radius: 6px;
+    }
+
+    .endpoint-list {
+      display: grid; gap: .55rem;
+    }
+    .endpoint {
+      display: grid; grid-template-columns: 110px 1fr;
+      gap: .75rem; align-items: start;
+      padding: .85rem 1rem;
       border: 1px solid var(--line);
-      color: var(--fg);
-      border-radius: 10px;
-      padding: .55rem .7rem;
-      font: inherit;
+      border-radius: 14px;
+      background: rgba(0,0,0,0.18);
     }
-    textarea { min-height: 70px; resize: vertical; }
-    .row { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; }
-    button, .btn {
-      margin-top: .9rem;
-      background: linear-gradient(135deg, var(--accent), #b45309);
-      color: white; border: 0; border-radius: 10px;
-      padding: .65rem 1rem; font-weight: 600; cursor: pointer;
+    .endpoint .tag {
+      font-size: .72rem; font-weight: 700; letter-spacing: 0.04em;
+      text-transform: uppercase; color: #ffb15a;
+      margin-top: .15rem;
     }
-    button.secondary {
-      background: transparent; border: 1px solid var(--line); color: var(--fg);
+    .endpoint code {
+      font-family: var(--mono); font-size: .78rem; color: #c8d0e0;
+      word-break: break-all;
     }
-    .preview {
-      background: #0a0c10;
-      border: 1px dashed var(--line);
-      border-radius: 12px;
-      min-height: 180px;
-      display: grid; place-items: center;
-      overflow: auto; padding: .75rem;
-    }
-    .preview img { max-width: 100%; height: auto; }
-    code, .mono {
-      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-      font-size: .78rem;
-    }
-    pre {
-      background: #0a0c10; border: 1px solid var(--line); border-radius: 10px;
-      padding: .75rem; overflow: auto; color: #c6d0e0; margin: .5rem 0 0;
-      white-space: pre-wrap; word-break: break-all;
-    }
-    .chips { display: flex; flex-wrap: wrap; gap: .4rem; margin-top: .6rem; }
-    .chip {
-      border: 1px solid var(--line); border-radius: 999px; padding: .2rem .55rem;
-      font-size: .72rem; color: var(--muted); cursor: pointer; background: #10141c;
-    }
-    .chip:hover { border-color: var(--blue); color: var(--fg); }
+    .endpoint .desc { color: var(--muted); font-size: .82rem; margin-top: .25rem; }
+
     footer {
-      max-width: 1100px; margin: 0 auto; padding: 0 1.25rem 3rem;
-      color: var(--muted); font-size: .85rem;
+      margin-top: calc(var(--space) * 2.5);
+      padding-top: 1.25rem;
+      border-top: 1px solid var(--line);
+      color: var(--faint);
+      font-size: .82rem;
+      display: flex; flex-wrap: wrap; gap: .75rem 1.25rem;
+      justify-content: space-between;
     }
-    .examples { display: grid; gap: .75rem; }
-    .examples img { width: 100%; border-radius: 10px; border: 1px solid var(--line); }
+    .toast {
+      position: fixed; bottom: 1.25rem; left: 50%; transform: translateX(-50%) translateY(120%);
+      background: #151a24; border: 1px solid var(--line-strong);
+      color: var(--fg); padding: .7rem 1rem; border-radius: 999px;
+      font-size: .85rem; box-shadow: var(--shadow);
+      transition: transform .25s ease; z-index: 50;
+    }
+    .toast.show { transform: translateX(-50%) translateY(0); }
   </style>
 </head>
 <body>
-  <header>
-    <div class="badge">Sylphx Mark · URL → SVG · hosted for promotion</div>
-    <h1>Any URL. One image.<br/>Your brand.</h1>
-    <p class="lead">
-      Embeddable banners, badges, GitHub stats, icon rows, and brand cards.
-      Drop a URL into any README. Built in Rust. Made to dogfood Sylphx.
-    </p>
-  </header>
+  <div class="shell">
+    <nav class="nav">
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true"></span>
+        <span>Sylphx Mark</span>
+      </div>
+      <div class="nav-links">
+        <a href="#compose">Compose</a>
+        <a href="#api">API</a>
+        <a href="https://github.com/SylphxAI/mark">GitHub</a>
+        <a href="https://sylphx.com">Platform</a>
+      </div>
+      <span class="pill"><span class="dot"></span> Live</span>
+    </nav>
 
-  <main>
-    <div class="grid">
-      <section class="card">
-        <h2>Banner generator</h2>
-        <div class="row">
-          <div>
-            <label>Type</label>
-            <select id="type"></select>
+    <header class="hero">
+      <h1>Any URL.<br /><em>One image.</em><br />Your brand.</h1>
+      <p>
+        Compose embeddable SVG marks for GitHub READMEs, docs, and status pages.
+        Pick a style by sight, drop a theme, copy a ready-made snippet —
+        no select-box archaeology.
+      </p>
+      <div class="hero-meta">
+        <span class="pill">30 banner styles</span>
+        <span class="pill">Fleet brand themes</span>
+        <span class="pill">Drag · drop · copy</span>
+      </div>
+    </header>
+
+    <section class="workspace" id="compose">
+      <!-- LEFT: compose -->
+      <div class="panel">
+        <div class="panel-head">
+          <h2>Compose</h2>
+          <span>Interactive builder</span>
+        </div>
+        <div class="panel-body">
+          <div class="dropzone" id="dropzone" tabindex="0" aria-label="Drop zone for styles, themes, or text">
+            <strong>Drop a style card or theme here</strong>
+            <p>Or drop plain text / a README fragment — we’ll draft title and description for you.</p>
+            <div class="chips">
+              <button type="button" class="chip" data-preset="sylphx">Sylphx aurora</button>
+              <button type="button" class="chip" data-preset="oss">OSS terminal</button>
+              <button type="button" class="chip" data-preset="launch">Launch beam</button>
+              <button type="button" class="chip" data-preset="badge">Status badge</button>
+            </div>
           </div>
-          <div>
-            <label>Theme</label>
-            <select id="theme"></select>
+
+          <div class="step">
+            <div class="step-num">1</div>
+            <div class="step-body">
+              <div class="step-title">Style — click or drag</div>
+              <div class="style-rail" id="styleRail" role="listbox" aria-label="Banner styles"></div>
+              <p class="hint">Live thumbnails. Selected style sits in your canvas below.</p>
+            </div>
+          </div>
+
+          <div class="step">
+            <div class="step-num">2</div>
+            <div class="step-body">
+              <div class="step-title">Theme — fleet brands & palettes</div>
+              <div class="theme-rail" id="themeRail"></div>
+            </div>
+          </div>
+
+          <div class="step">
+            <div class="step-num">3</div>
+            <div class="step-body">
+              <div class="step-title">Words</div>
+              <div class="field">
+                <label for="text">Title</label>
+                <input id="text" value="Sylphx Mark" autocomplete="off" />
+              </div>
+              <div class="field">
+                <label for="desc">Description</label>
+                <input id="desc" value="Any URL. One image. Your brand." autocomplete="off" />
+              </div>
+              <div class="row-2">
+                <div class="field">
+                  <label for="height">Height</label>
+                  <input id="height" type="number" min="80" max="600" value="200" />
+                </div>
+                <div class="field">
+                  <label for="animation">Motion</label>
+                  <input id="animation" list="animList" value="fadeIn" placeholder="none" />
+                  <datalist id="animList">
+                    <option value=""></option>
+                    <option value="fadeIn"></option>
+                    <option value="scaleIn"></option>
+                    <option value="blinking"></option>
+                    <option value="twinkling"></option>
+                  </datalist>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
-        <label>Text</label>
-        <input id="text" value="Sylphx Mark" />
-        <label>Description</label>
-        <input id="desc" value="Any URL. One image. Your brand." />
-        <div class="row">
-          <div>
-            <label>Height</label>
-            <input id="height" type="number" value="200" min="40" max="600" />
-          </div>
-          <div>
-            <label>Animation</label>
-            <select id="animation">
-              <option value="">none</option>
-              <option value="fadeIn" selected>fadeIn</option>
-              <option value="scaleIn">scaleIn</option>
-              <option value="blinking">blinking</option>
-              <option value="twinkling">twinkling</option>
-            </select>
-          </div>
-        </div>
-        <div style="display:flex; gap:.5rem; flex-wrap:wrap">
-          <button type="button" id="renderBtn">Update preview</button>
-          <button type="button" class="secondary" id="copyBtn">Copy markdown</button>
-        </div>
-        <label style="margin-top:1rem">Markdown</label>
-        <pre id="md" class="mono"></pre>
-      </section>
+      </div>
 
-      <section class="card">
-        <h2>Live preview</h2>
-        <div class="preview"><img id="preview" alt="preview" /></div>
-        <div class="chips" id="presets"></div>
-      </section>
-    </div>
+      <!-- RIGHT: preview + export -->
+      <div class="panel" id="canvas">
+        <div class="panel-head">
+          <h2>Canvas</h2>
+          <span id="selectionLabel">aurora · sylphx</span>
+        </div>
+        <div class="panel-body">
+          <div class="stage" id="stage">
+            <img id="preview" alt="Live mark preview" draggable="true" />
+          </div>
 
-    <section class="card">
-      <h2>Quick endpoints</h2>
-      <div class="examples" id="examples"></div>
+          <div class="url-box">
+            <div class="url-tabs" role="tablist">
+              <button type="button" class="active" data-tab="markdown">Markdown</button>
+              <button type="button" data-tab="html">HTML</button>
+              <button type="button" data-tab="url">URL</button>
+            </div>
+            <div class="url-body" id="exportBody"></div>
+          </div>
+
+          <div class="actions">
+            <button type="button" class="btn btn-primary" id="copyBtn">Copy snippet</button>
+            <button type="button" class="btn btn-secondary" id="openBtn">Open image</button>
+            <button type="button" class="btn btn-ghost" id="refreshBtn">Refresh</button>
+          </div>
+          <p class="hint" style="margin-top:.85rem">
+            Tip: drag the preview image into a README editor that accepts drops, or copy the markdown snippet above.
+          </p>
+        </div>
+      </div>
     </section>
 
-    <section class="card">
-      <h2>API surface</h2>
-      <pre class="mono" id="api"></pre>
+    <section class="section">
+      <h3>Built for how people actually ship READMEs</h3>
+      <p>One host for banners, badges, stats cards, icon rows, brand kits, and “deployed on Sylphx” pills — so you stop juggling five free CDNs.</p>
+      <div class="feature-grid">
+        <div class="feature">
+          <h4>See styles, don’t guess</h4>
+          <p>Every style is a live thumbnail. Click or drag onto the canvas — no opaque dropdowns.</p>
+        </div>
+        <div class="feature">
+          <h4>Drop in context</h4>
+          <p>Drop text or a README fragment into the zone. We extract a sensible title and description for you.</p>
+        </div>
+        <div class="feature">
+          <h4>Copy what you need</h4>
+          <p>Markdown, HTML, or raw URL — one click. Snippets stay cache-friendly and CDN-ready.</p>
+        </div>
+      </div>
     </section>
-  </main>
 
-  <footer>
-    <p>
-      Product: <strong>Mark</strong> · Host target: <code>img.sylphx.com</code> ·
-      <a href="https://sylphx.com">sylphx.com</a> ·
-      MIT · Built with Rust (axum)
-    </p>
-  </footer>
+    <section class="section" id="api">
+      <h3>API surface</h3>
+      <p>Stateless SVG endpoints. Same origin as this page when you’re on the product host.</p>
+      <div class="endpoint-list" id="endpoints"></div>
+    </section>
+
+    <footer>
+      <div>
+        Product host: <code id="hostLabel"></code>
+        · Auto runtime: platform-assigned <code>*.sylphx.app</code>
+      </div>
+      <div>
+        <a href="https://github.com/SylphxAI/mark">Source</a>
+        · <a href="https://sylphx.com">Sylphx Platform</a>
+        · MIT
+      </div>
+    </footer>
+  </div>
+
+  <div class="toast" id="toast" role="status"></div>
 
   <script>
     const BASE = window.location.origin;
-    const types = ["waving","wave","aurora","soft","rounded","rect","slice","cylinder","blur","pulse","checkered","egg","shark","venom","speech","mesh","noise","glass","grid","constellation","terminal","hud","circuit","orbit","ring","beam","product","oss","org","transparent"];
-    const themes = ["sylphx","cubeage","epiow","ozyrix","kyle","dark","light","radical","gruvbox","tokyonight","dracula","nord","neon","ocean","sunset","forest","github"];
+    const STYLES = [
+      "aurora","waving","wave","soft","rounded","rect","slice","cylinder","blur","pulse",
+      "checkered","egg","shark","venom","speech","mesh","noise","glass","grid","constellation",
+      "terminal","hud","circuit","orbit","ring","beam","product","oss","org","transparent"
+    ];
+    const THEMES = [
+      { id: "sylphx", name: "Sylphx", a: "#1A1A2E", b: "#D87000" },
+      { id: "cubeage", name: "Cubeage", a: "#1A1A1A", b: "#E03840" },
+      { id: "epiow", name: "Epiow", a: "#0B1020", b: "#7C3AED" },
+      { id: "ozyrix", name: "Ozyrix", a: "#0A0A0A", b: "#C9A227" },
+      { id: "kyle", name: "Kyle", a: "#0F172A", b: "#38BDF8" },
+      { id: "dark", name: "Dark", a: "#0D1117", b: "#58A6FF" },
+      { id: "radical", name: "Radical", a: "#141321", b: "#FE428E" },
+      { id: "tokyonight", name: "Tokyo", a: "#1A1B27", b: "#7AA2F7" },
+      { id: "dracula", name: "Dracula", a: "#282A36", b: "#BD93F9" },
+      { id: "nord", name: "Nord", a: "#2E3440", b: "#88C0D0" },
+      { id: "neon", name: "Neon", a: "#0A0A12", b: "#00F5D4" },
+      { id: "ocean", name: "Ocean", a: "#0B1D36", b: "#00B4D8" },
+      { id: "sunset", name: "Sunset", a: "#2B0A0A", b: "#FF6B35" },
+      { id: "forest", name: "Forest", a: "#0B1F14", b: "#52B788" },
+      { id: "github", name: "GitHub", a: "#0D1117", b: "#238636" },
+      { id: "light", name: "Light", a: "#FFFFFF", b: "#0969DA" },
+    ];
 
-    const typeEl = document.getElementById('type');
-    const themeEl = document.getElementById('theme');
-    types.forEach(t => typeEl.insertAdjacentHTML('beforeend', `<option value="${t}">${t}</option>`));
-    themes.forEach(t => themeEl.insertAdjacentHTML('beforeend', `<option value="${t}">${t}</option>`));
-    typeEl.value = 'aurora';
-    themeEl.value = 'sylphx';
+    const state = {
+      type: "aurora",
+      theme: "sylphx",
+      tab: "markdown",
+    };
+
+    const els = {
+      styleRail: document.getElementById("styleRail"),
+      themeRail: document.getElementById("themeRail"),
+      text: document.getElementById("text"),
+      desc: document.getElementById("desc"),
+      height: document.getElementById("height"),
+      animation: document.getElementById("animation"),
+      preview: document.getElementById("preview"),
+      stage: document.getElementById("stage"),
+      exportBody: document.getElementById("exportBody"),
+      selectionLabel: document.getElementById("selectionLabel"),
+      dropzone: document.getElementById("dropzone"),
+      toast: document.getElementById("toast"),
+      hostLabel: document.getElementById("hostLabel"),
+    };
+    els.hostLabel.textContent = location.host;
+
+    function thumbUrl(type, theme) {
+      const p = new URLSearchParams({
+        type, theme, height: "72", width: "140",
+        text: type, fontSize: "18", credit: "0",
+      });
+      return `${BASE}/api/v1/banner?${p}`;
+    }
 
     function bannerUrl() {
       const p = new URLSearchParams({
-        type: typeEl.value,
-        theme: themeEl.value,
-        text: document.getElementById('text').value,
-        desc: document.getElementById('desc').value,
-        height: document.getElementById('height').value,
-        animation: document.getElementById('animation').value,
+        type: state.type,
+        theme: state.theme,
+        text: els.text.value,
+        desc: els.desc.value,
+        height: els.height.value || "200",
       });
-      if (!p.get('animation')) p.delete('animation');
+      const anim = (els.animation.value || "").trim();
+      if (anim) p.set("animation", anim);
       return `${BASE}/api/v1/banner?${p}`;
+    }
+
+    function exportText() {
+      const url = bannerUrl();
+      if (state.tab === "html") return `<img src="${url}" alt="${escapeAttr(els.text.value)}" />`;
+      if (state.tab === "url") return url;
+      return `![${els.text.value || "mark"}](${url})`;
+    }
+
+    function escapeAttr(s) {
+      return String(s).replace(/"/g, "&quot;");
+    }
+
+    let refreshTimer;
+    function scheduleRefresh() {
+      clearTimeout(refreshTimer);
+      els.stage.classList.add("loading");
+      refreshTimer = setTimeout(refresh, 180);
     }
 
     function refresh() {
       const url = bannerUrl();
-      document.getElementById('preview').src = url;
-      document.getElementById('md').textContent = `![header](${url})`;
+      els.preview.src = url;
+      els.preview.dataset.url = url;
+      els.exportBody.textContent = exportText();
+      els.selectionLabel.textContent = `${state.type} · ${state.theme}`;
+      document.querySelectorAll(".style-card").forEach((el) => {
+        el.classList.toggle("selected", el.dataset.type === state.type);
+      });
+      document.querySelectorAll(".theme-swatch").forEach((el) => {
+        el.classList.toggle("selected", el.dataset.theme === state.theme);
+      });
     }
 
-    document.getElementById('renderBtn').onclick = refresh;
-    document.getElementById('copyBtn').onclick = async () => {
-      await navigator.clipboard.writeText(document.getElementById('md').textContent);
-      document.getElementById('copyBtn').textContent = 'Copied';
-      setTimeout(() => document.getElementById('copyBtn').textContent = 'Copy markdown', 1200);
+    els.preview.addEventListener("load", () => els.stage.classList.remove("loading"));
+    els.preview.addEventListener("error", () => els.stage.classList.remove("loading"));
+
+    // Style cards
+    STYLES.forEach((type) => {
+      const card = document.createElement("button");
+      card.type = "button";
+      card.className = "style-card";
+      card.dataset.type = type;
+      card.draggable = true;
+      card.setAttribute("role", "option");
+      card.innerHTML = `<img src="${thumbUrl(type, "dark")}" alt="" loading="lazy" /><span class="label">${type}</span>`;
+      card.addEventListener("click", () => { state.type = type; scheduleRefresh(); });
+      card.addEventListener("dragstart", (e) => {
+        e.dataTransfer.setData("application/x-mark-style", type);
+        e.dataTransfer.setData("text/plain", type);
+        e.dataTransfer.effectAllowed = "copy";
+      });
+      els.styleRail.appendChild(card);
+    });
+
+    // Theme swatches
+    THEMES.forEach((t) => {
+      const el = document.createElement("button");
+      el.type = "button";
+      el.className = "theme-swatch";
+      el.dataset.theme = t.id;
+      el.draggable = true;
+      el.innerHTML = `<span class="orb" style="background:linear-gradient(135deg,${t.a},${t.b})"></span>${t.name}`;
+      el.addEventListener("click", () => { state.theme = t.id; scheduleRefresh(); });
+      el.addEventListener("dragstart", (e) => {
+        e.dataTransfer.setData("application/x-mark-theme", t.id);
+        e.dataTransfer.setData("text/plain", t.id);
+      });
+      els.themeRail.appendChild(el);
+    });
+
+    ["text","desc","height","animation"].forEach((id) => {
+      els[id].addEventListener("input", scheduleRefresh);
+    });
+
+    // Tabs
+    document.querySelectorAll(".url-tabs button").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        state.tab = btn.dataset.tab;
+        document.querySelectorAll(".url-tabs button").forEach((b) => b.classList.toggle("active", b === btn));
+        els.exportBody.textContent = exportText();
+      });
+    });
+
+    function toast(msg) {
+      els.toast.textContent = msg;
+      els.toast.classList.add("show");
+      setTimeout(() => els.toast.classList.remove("show"), 1600);
+    }
+
+    document.getElementById("copyBtn").onclick = async () => {
+      await navigator.clipboard.writeText(exportText());
+      toast("Copied");
     };
-    ['type','theme','text','desc','height','animation'].forEach(id => {
-      document.getElementById(id).addEventListener('change', refresh);
-      document.getElementById(id).addEventListener('input', refresh);
+    document.getElementById("openBtn").onclick = () => window.open(bannerUrl(), "_blank");
+    document.getElementById("refreshBtn").onclick = refresh;
+
+    // Drag preview as URL / markdown
+    els.preview.addEventListener("dragstart", (e) => {
+      const md = exportText();
+      e.dataTransfer.setData("text/uri-list", bannerUrl());
+      e.dataTransfer.setData("text/plain", md);
+      e.dataTransfer.setData("text/html", `<img src="${bannerUrl()}" />`);
     });
 
-    const presets = [
-      { type: 'aurora', theme: 'sylphx', text: 'Sylphx', desc: 'Ship without the ops tax' },
-      { type: 'orbit', theme: 'epiow', text: 'Epiow', desc: 'B2B technology' },
-      { type: 'beam', theme: 'cubeage', text: 'Cubeage', desc: 'Games & entertainment' },
-      { type: 'product', theme: 'ozyrix', text: 'Ozyrix', desc: 'Premium tech accessories' },
-      { type: 'terminal', theme: 'dark', text: 'mark --help', desc: 'URL → SVG' },
-    ];
-    const presetBox = document.getElementById('presets');
-    presets.forEach(p => {
-      const el = document.createElement('button');
-      el.type = 'button';
-      el.className = 'chip';
-      el.textContent = `${p.theme}/${p.type}`;
-      el.onclick = () => {
-        typeEl.value = p.type;
-        themeEl.value = p.theme;
-        document.getElementById('text').value = p.text;
-        document.getElementById('desc').value = p.desc;
-        refresh();
-      };
-      presetBox.appendChild(el);
+    // Dropzone
+    function onDragOver(e) {
+      e.preventDefault();
+      els.dropzone.classList.add("dragover");
+    }
+    function onDragLeave() { els.dropzone.classList.remove("dragover"); }
+    function applyDrop(e) {
+      e.preventDefault();
+      els.dropzone.classList.remove("dragover");
+      const style = e.dataTransfer.getData("application/x-mark-style");
+      const theme = e.dataTransfer.getData("application/x-mark-theme");
+      if (style) { state.type = style; scheduleRefresh(); toast(`Style: ${style}`); return; }
+      if (theme) { state.theme = theme; scheduleRefresh(); toast(`Theme: ${theme}`); return; }
+
+      // Files
+      const file = e.dataTransfer.files?.[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = () => ingestText(String(reader.result || ""));
+        reader.readAsText(file);
+        return;
+      }
+      const text = e.dataTransfer.getData("text/plain");
+      if (text) ingestText(text);
+    }
+    els.dropzone.addEventListener("dragover", onDragOver);
+    els.dropzone.addEventListener("dragleave", onDragLeave);
+    els.dropzone.addEventListener("drop", applyDrop);
+    // also allow drop on canvas panel
+    document.getElementById("canvas").addEventListener("dragover", (e) => e.preventDefault());
+    document.getElementById("canvas").addEventListener("drop", applyDrop);
+
+    function ingestText(raw) {
+      const lines = raw.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+      if (!lines.length) return;
+      // Prefer first markdown heading / first non-badge line
+      let title = lines.find((l) => /^#\s+/.test(l))?.replace(/^#+\s+/, "")
+        || lines.find((l) => !l.startsWith("!") && !l.startsWith("[") && !l.startsWith("<") && !l.startsWith("http"))
+        || lines[0];
+      title = title.replace(/[*_`]/g, "").slice(0, 48);
+      const desc = lines.find((l) => l !== lines[0] && l.length > 12 && !l.startsWith("http") && !l.startsWith("!"))
+        ?.replace(/[*_`#]/g, "").slice(0, 80)
+        || "Built with Mark";
+      els.text.value = title;
+      els.desc.value = desc;
+      scheduleRefresh();
+      toast("Drafted from dropped text");
+    }
+
+    // Presets
+    const presets = {
+      sylphx: { type: "aurora", theme: "sylphx", text: "Sylphx", desc: "Stop stitching tools together. Ship with one platform." },
+      oss: { type: "terminal", theme: "dark", text: "mark --help", desc: "URL → SVG for READMEs" },
+      launch: { type: "beam", theme: "neon", text: "Launch", desc: "Ship the thing." },
+      badge: { type: "soft", theme: "github", text: "Status", desc: "passing" },
+    };
+    document.querySelectorAll("[data-preset]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const p = presets[btn.dataset.preset];
+        if (!p) return;
+        state.type = p.type; state.theme = p.theme;
+        els.text.value = p.text; els.desc.value = p.desc;
+        scheduleRefresh();
+      });
     });
 
-    const examples = [
-      [`Badge`, `${BASE}/badge/build-passing-brightgreen`],
-      [`Stats`, `${BASE}/api/v1/stats/shtse8?theme=sylphx`],
-      [`Icons`, `${BASE}/api/v1/icons?i=rust,ts,docker,kubernetes,postgres&theme=dark`],
-      [`Brand`, `${BASE}/api/v1/brand/sylphx`],
-      [`Deploy`, `${BASE}/api/v1/deploy?service=mark&style=for-the-badge`],
+    // Endpoints
+    const eps = [
+      ["Banner", "/api/v1/banner?type=aurora&theme=sylphx&text=Hello", "Hero headers & footers"],
+      ["Badge", "/badge/build-passing-brightgreen", "Shields-style status pills"],
+      ["Stats", "/api/v1/stats/{user}?theme=dark", "GitHub profile cards"],
+      ["Icons", "/api/v1/icons?i=rust,ts,docker", "Tech stack rows"],
+      ["Brand", "/api/v1/brand/sylphx", "Fleet brand kit cards"],
+      ["Deploy", "/api/v1/deploy?service=my-app", "Deployed-on-Sylphx badges"],
     ];
-    document.getElementById('examples').innerHTML = examples.map(([label, url]) =>
-      `<div><div class="mono" style="color:var(--muted);margin-bottom:.35rem">${label} — ${url}</div><img src="${url}" alt="${label}" loading="lazy" /></div>`
-    ).join('');
-
-    document.getElementById('api').textContent = `GET ${BASE}/api/v1/banner?type=aurora&theme=sylphx&text=Hello
-GET ${BASE}/badge/license-MIT-blue
-GET ${BASE}/api/v1/stats/{user}?theme=dark
-GET ${BASE}/api/v1/org/{org}?theme=sylphx
-GET ${BASE}/api/v1/repo/{owner}/{repo}
-GET ${BASE}/api/v1/icons?i=rust,ts,k8s
-GET ${BASE}/api/v1/brand/{name}
-GET ${BASE}/api/v1/deploy?service=my-app
-GET ${BASE}/api/v1/catalog
-GET ${BASE}/health`;
+    document.getElementById("endpoints").innerHTML = eps.map(([tag, path, desc]) => `
+      <div class="endpoint">
+        <div class="tag">${tag}</div>
+        <div>
+          <code>${BASE}${path}</code>
+          <div class="desc">${desc}</div>
+        </div>
+      </div>
+    `).join("");
 
     refresh();
   </script>

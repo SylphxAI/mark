@@ -6,7 +6,8 @@ Embeddable **SVG** marks for GitHub READMEs and docs — banners, badges, stats 
 
 Built in **Rust** (`axum`). Stateless. CDN-friendly. Designed as a Sylphx dogfood + brand surface.
 
-Target public host: **`https://img.sylphx.com`** (or `*.sylphx.app` while dogfooding).
+Product host: **`https://mark.sylphx.com`**  
+Platform auto host: **`https://mark-web-prod.sylphx.app`** (runtime-assigned; not a vanity product URL).
 
 ---
 

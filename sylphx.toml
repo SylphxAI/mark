@@ -40,7 +40,7 @@ mode = "http"
 path = "/health"
 
 [env.PUBLIC_BASE_URL]
-value = "https://mark.sylphx.app"
+value = "https://mark.sylphx.com"
 
 [env.DEFAULT_CREDIT]
 value = "1"
