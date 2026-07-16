@@ -26,8 +26,10 @@
       --mono: "JetBrains Mono", ui-monospace, monospace;
     }
     * { box-sizing: border-box; }
+    html { overflow-x: clip; }
     body {
       margin: 0; min-height: 100vh; color: var(--fg); font-family: var(--font);
+      overflow-x: clip;
       background:
         radial-gradient(900px 480px at 15% -10%, rgba(216,112,0,0.14), transparent 55%),
         radial-gradient(800px 420px at 100% 0%, rgba(74,144,226,0.1), transparent 50%),
@@ -38,24 +40,29 @@
     a:hover { text-decoration: underline; }
 
     .app {
-      width: min(1180px, calc(100% - 2.5rem));
+      width: 100%;
+      max-width: 1180px;
       margin: 0 auto;
-      padding: 1.75rem 0 4rem;
+      padding: 1.75rem 1.25rem 4rem;
     }
 
     /* Top */
     .top {
       display: flex; align-items: center; justify-content: space-between;
       gap: 1rem; margin-bottom: 2rem;
+      min-width: 0;
     }
-    .brand { display: flex; align-items: center; gap: .65rem; font-weight: 600; letter-spacing: -0.02em; }
+    .brand {
+      display: flex; align-items: center; gap: .65rem;
+      font-weight: 600; letter-spacing: -0.02em; min-width: 0;
+    }
     .logo {
-      width: 28px; height: 28px; border-radius: 9px;
+      width: 28px; height: 28px; border-radius: 9px; flex-shrink: 0;
       background: linear-gradient(135deg, #d87000, #4a90e2);
       box-shadow: 0 8px 24px rgba(216,112,0,0.28);
     }
     .live {
-      display: inline-flex; align-items: center; gap: .4rem;
+      display: inline-flex; align-items: center; gap: .4rem; flex-shrink: 0;
       font-size: .8rem; color: var(--muted);
       border: 1px solid var(--line); border-radius: 999px; padding: .3rem .7rem;
       background: rgba(255,255,255,0.02);
@@ -95,15 +102,18 @@
       box-shadow: inset 0 0 0 1px var(--line2);
     }
 
-    /* Studio layout: preview dominates */
+    /* Studio layout: preview dominates.
+       minmax(0, …) is required so wide SVG previews cannot blow past the right edge. */
     .studio {
       display: grid;
-      grid-template-columns: 1fr 340px;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 320px);
       gap: 1.1rem;
       align-items: start;
+      width: 100%;
+      min-width: 0;
     }
     @media (max-width: 920px) {
-      .studio { grid-template-columns: 1fr; }
+      .studio { grid-template-columns: minmax(0, 1fr); }
     }
 
     .card {
@@ -111,27 +121,42 @@
       border: 1px solid var(--line);
       border-radius: var(--radius);
       overflow: hidden;
+      min-width: 0;
+      max-width: 100%;
     }
     .card-h {
       display: flex; align-items: center; justify-content: space-between;
+      gap: .75rem;
       padding: .9rem 1.1rem; border-bottom: 1px solid var(--line);
       font-size: .85rem; color: var(--muted);
+      min-width: 0;
     }
-    .card-h strong { color: var(--fg); font-weight: 600; letter-spacing: -0.01em; }
-    .card-b { padding: 1.1rem; }
+    .card-h strong {
+      color: var(--fg); font-weight: 600; letter-spacing: -0.01em;
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+      min-width: 0;
+    }
+    .card-b { padding: 1.1rem; min-width: 0; }
 
-    /* Big preview */
+    /* Big preview — never let intrinsic SVG width expand the page */
     .stage {
       min-height: 280px;
       display: grid; place-items: center;
       padding: 1.5rem 1.25rem;
+      min-width: 0;
+      max-width: 100%;
+      overflow: hidden;
       background:
         linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px) 0 0 / 28px 28px,
         linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px) 0 0 / 28px 28px,
         #090b10;
     }
     .stage img {
-      max-width: 100%; height: auto; border-radius: 10px;
+      display: block;
+      max-width: 100%;
+      width: auto;
+      height: auto;
+      border-radius: 10px;
       box-shadow: 0 20px 60px rgba(0,0,0,0.45);
       transition: opacity .15s;
     }
@@ -143,11 +168,13 @@
       border-radius: 12px;
       background: #0a0c11;
       overflow: hidden;
+      min-width: 0;
+      max-width: 100%;
     }
-    .export-tabs { display: flex; border-bottom: 1px solid var(--line); }
+    .export-tabs { display: flex; border-bottom: 1px solid var(--line); min-width: 0; }
     .export-tabs button {
-      flex: 1; border: 0; background: transparent; color: var(--muted);
-      padding: .6rem; cursor: pointer; font-size: .8rem; font-weight: 500;
+      flex: 1 1 0; min-width: 0; border: 0; background: transparent; color: var(--muted);
+      padding: .6rem .35rem; cursor: pointer; font-size: .8rem; font-weight: 500;
     }
     .export-tabs button.on {
       color: var(--fg);
@@ -157,8 +184,10 @@
     .export pre {
       margin: 0; padding: .85rem;
       font-family: var(--mono); font-size: .72rem; line-height: 1.5;
-      color: #c5cddc; white-space: pre-wrap; word-break: break-all;
+      color: #c5cddc; white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word;
       min-height: 3.8rem;
+      max-width: 100%;
+      overflow-x: auto;
     }
     .actions { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: .85rem; }
     .btn {
@@ -189,13 +218,19 @@
       box-shadow: 0 0 0 3px rgba(106,168,255,0.1);
     }
     .field textarea { min-height: 64px; resize: vertical; }
-    .row { display: grid; grid-template-columns: 1fr 1fr; gap: .65rem; }
+    .row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: .65rem;
+      min-width: 0;
+    }
 
     /* Style gallery: curated visual tiles, click only */
     .gallery {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
+      grid-template-columns: repeat(3, minmax(0, 1fr));
       gap: .5rem;
+      min-width: 0;
     }
     @media (max-width: 520px) { .gallery { grid-template-columns: repeat(2, 1fr); } }
     .tile {
