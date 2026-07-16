@@ -134,6 +134,9 @@ fn vignette(w: u32, h: u32) -> String {
 }
 
 /// Soft blob that drifts when gain > 0.
+///
+/// Motion is applied on a parent `<g>` via `animateTransform` (more reliable than
+/// animating `cx`/`cy` on filtered ellipses inside SVG-as-`<img>`).
 fn blob(
     cx: f32,
     cy: f32,
@@ -147,25 +150,35 @@ fn blob(
     dur: f32,
     phase: f32,
 ) -> String {
+    // Amplify motion so ambient drift is obvious at README sizes.
+    let adx = (dx.abs().max(28.0) * gain.max(0.01)).copysign(if dx == 0.0 { 1.0 } else { dx });
+    let ady = (dy.abs().max(18.0) * gain.max(0.01)).copysign(if dy == 0.0 { -1.0 } else { dy });
+    let o2 = (opacity * 1.55).min(0.48);
+    let o3 = (opacity * 0.55).max(0.04);
     if gain < 0.01 {
         return format!(
             "<ellipse cx=\"{cx}\" cy=\"{cy}\" rx=\"{rx}\" ry=\"{ry}\" fill=\"{color}\" fill-opacity=\"{opacity}\" filter=\"url(#softGlow)\"/>"
         );
     }
-    let adx = dx * gain;
-    let ady = dy * gain;
+    // Slightly shorter cycles so motion is visible within a few seconds of loading.
+    let dur = (dur * 0.55).clamp(4.5, 9.0);
     format!(
-        "<ellipse cx=\"{cx}\" cy=\"{cy}\" rx=\"{rx}\" ry=\"{ry}\" fill=\"{color}\" fill-opacity=\"{opacity}\" filter=\"url(#softGlow)\">\
-           <animate attributeName=\"cx\" values=\"{cx};{x2};{cx};{x3};{cx}\" keyTimes=\"0;0.25;0.5;0.75;1\" dur=\"{dur}s\" begin=\"{phase}s\" repeatCount=\"indefinite\"/>\
-           <animate attributeName=\"cy\" values=\"{cy};{y2};{cy};{y3};{cy}\" keyTimes=\"0;0.25;0.5;0.75;1\" dur=\"{dur}s\" begin=\"{phase}s\" repeatCount=\"indefinite\"/>\
-           <animate attributeName=\"fill-opacity\" values=\"{opacity};{o2};{opacity};{o3};{opacity}\" dur=\"{dur}s\" begin=\"{phase}s\" repeatCount=\"indefinite\"/>\
-         </ellipse>",
-        x2 = cx + adx,
-        y2 = cy - ady,
-        x3 = cx - adx * 0.7,
-        y3 = cy + ady * 0.6,
-        o2 = (opacity * 1.25).min(0.42),
-        o3 = opacity * 0.75,
+        "<g>\
+           <animateTransform attributeName=\"transform\" type=\"translate\" \
+             values=\"0 0; {adx} {ady}; 0 0; {adx2} {ady2}; 0 0\" \
+             keyTimes=\"0;0.25;0.5;0.75;1\" dur=\"{dur}s\" begin=\"{phase}s\" repeatCount=\"indefinite\" \
+             calcMode=\"spline\" keySplines=\"0.45 0 0.55 1;0.45 0 0.55 1;0.45 0 0.55 1;0.45 0 0.55 1\"/>\
+           <ellipse cx=\"{cx}\" cy=\"{cy}\" rx=\"{rx}\" ry=\"{ry}\" fill=\"{color}\" fill-opacity=\"{opacity}\" filter=\"url(#softGlow)\">\
+             <animate attributeName=\"fill-opacity\" values=\"{opacity};{o2};{opacity};{o3};{opacity}\" \
+               keyTimes=\"0;0.25;0.5;0.75;1\" dur=\"{dur}s\" begin=\"{phase}s\" repeatCount=\"indefinite\"/>\
+             <animate attributeName=\"rx\" values=\"{rx};{rx2};{rx};{rx3};{rx}\" \
+               keyTimes=\"0;0.25;0.5;0.75;1\" dur=\"{dur}s\" begin=\"{phase}s\" repeatCount=\"indefinite\"/>\
+           </ellipse>\
+         </g>",
+        adx2 = -adx * 0.75,
+        ady2 = ady * 0.55,
+        rx2 = rx * 1.12,
+        rx3 = rx * 0.92,
     )
 }
 

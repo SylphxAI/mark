@@ -155,11 +155,18 @@ async fn banner_handler(
         stroke: q.stroke,
         stroke_width: q.stroke_width,
         text_bg: parse_bool(q.text_bg.as_deref(), false),
-        animation: q.animation,
+        animation: q.animation.clone(),
         credit,
         seed: None,
     };
-    svg_response(&banner::render(&input), SVG_CACHE)
+    // Animated banners must not sit behind long CDN TTL — otherwise deploys look "dead".
+    let anim = q.animation.as_deref().unwrap_or("ambient");
+    let cache = if anim.eq_ignore_ascii_case("none") || anim.eq_ignore_ascii_case("static") {
+        SVG_CACHE
+    } else {
+        "public, max-age=60, s-maxage=120, stale-while-revalidate=600"
+    };
+    svg_response(&banner::render(&input), cache)
 }
 
 #[derive(Debug, Deserialize)]

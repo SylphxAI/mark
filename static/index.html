@@ -461,8 +461,10 @@
     }
 
     function refresh() {
+      // Bust browser/CDN cache so motion changes are visible immediately.
       const url = currentUrl();
-      preview.src = url;
+      const bust = url.includes("?") ? `&_=${Date.now()}` : `?_=${Date.now()}`;
+      preview.src = url + bust;
       exportOut.textContent = exportText();
       $("previewMeta").textContent = metaLabel();
       $("previewTitle").textContent = ({
