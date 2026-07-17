@@ -23,8 +23,10 @@ ENV PORT=8787 \
     SSL_CERT_DIR=/etc/ssl/certs
 COPY --from=builder /app/target/release/mark /usr/local/bin/mark
 COPY static ./static
-# Prove CAs exist in the final image (fails the build if stripped).
-RUN test -s /etc/ssl/certs/ca-certificates.crt && mark --help >/dev/null 2>&1 || true
+# Prove CA bundle + binary are real. `mark --help` must exit (not start the server).
+RUN test -s /etc/ssl/certs/ca-certificates.crt \
+  && test -x /usr/local/bin/mark \
+  && mark --help | grep -q "Sylphx Mark"
 EXPOSE 8787
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
   CMD curl -fsS http://127.0.0.1:8787/health >/dev/null || exit 1

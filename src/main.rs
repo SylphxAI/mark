@@ -4,6 +4,17 @@ use tracing_subscriber::EnvFilter;
 
 #[tokio::main]
 async fn main() {
+    // Image builds must be able to smoke the binary without binding forever.
+    // `mark --help` / `mark -V` exit immediately (used by Dockerfile prove step).
+    if std::env::args().skip(1).any(|a| a == "--help" || a == "-h" || a == "-V" || a == "--version")
+    {
+        println!("Sylphx Mark {}", env!("CARGO_PKG_VERSION"));
+        println!("Usage: mark");
+        println!("  Serves embeddable SVG marks (banners, badges, stats, …).");
+        println!("  Env: PORT HOST PUBLIC_BASE_URL DEFAULT_CREDIT RUST_LOG");
+        return;
+    }
+
     tracing_subscriber::fmt()
         .with_env_filter(EnvFilter::from_default_env().add_directive("mark=info".parse().unwrap()))
         .init();
