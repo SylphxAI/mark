@@ -138,27 +138,34 @@ fn typewriter_line(
 fn plate_chrome(width: u32, height: u32, mono: &str, accent: &str, ink: &str) -> String {
     let wf = width as f32;
     let hf = height as f32;
-    // Left calm scrim so title always wins over busy backgrounds
-    let scrim_w = wf * 0.58;
-    let tile = (hf * 0.11).clamp(44.0, 72.0);
-    let tile_x = wf * 0.055;
-    let tile_y = hf * 0.14;
-    let mono_size = (tile * 0.38).clamp(16.0, 28.0);
+    // Left calm field so type always wins over decorative backgrounds
+    let scrim_w = wf * 0.62;
+    let tile = (hf * 0.12).clamp(48.0, 80.0);
+    let tile_x = wf * 0.052;
+    let tile_y = hf * 0.12;
+    let mono_size = (tile * 0.36).clamp(18.0, 30.0);
+    let rule_y = tile_y + tile + hf * 0.04;
+    let rule_w = (wf * 0.055).clamp(36.0, 72.0);
     format!(
         "<defs>\
            <linearGradient id=\"plateScrim\" x1=\"0%\" y1=\"0%\" x2=\"100%\" y2=\"0%\">\
-             <stop offset=\"0%\" stop-color=\"#000000\" stop-opacity=\"0.42\"/>\
-             <stop offset=\"70%\" stop-color=\"#000000\" stop-opacity=\"0.12\"/>\
+             <stop offset=\"0%\" stop-color=\"#000000\" stop-opacity=\"0.48\"/>\
+             <stop offset=\"55%\" stop-color=\"#000000\" stop-opacity=\"0.18\"/>\
              <stop offset=\"100%\" stop-color=\"#000000\" stop-opacity=\"0\"/>\
+           </linearGradient>\
+           <linearGradient id=\"plateTile\" x1=\"0%\" y1=\"0%\" x2=\"100%\" y2=\"100%\">\
+             <stop offset=\"0%\" stop-color=\"{accent}\" stop-opacity=\"0.22\"/>\
+             <stop offset=\"100%\" stop-color=\"{accent}\" stop-opacity=\"0.08\"/>\
            </linearGradient>\
          </defs>\
          <rect x=\"0\" y=\"0\" width=\"{scrim_w}\" height=\"{hf}\" fill=\"url(#plateScrim)\"/>\
          <rect x=\"{tile_x}\" y=\"{tile_y}\" width=\"{tile}\" height=\"{tile}\" rx=\"{rx}\" \
-           fill=\"{accent}\" fill-opacity=\"0.14\" stroke=\"{accent}\" stroke-opacity=\"0.55\" stroke-width=\"1.5\"/>\
+           fill=\"url(#plateTile)\" stroke=\"{accent}\" stroke-opacity=\"0.62\" stroke-width=\"1.5\"/>\
          <text x=\"{mx}\" y=\"{my}\" text-anchor=\"middle\" dominant-baseline=\"middle\" \
            font-family=\"ui-sans-serif,system-ui,sans-serif\" font-weight=\"700\" font-size=\"{mono_size}\" \
-           fill=\"{ink}\" letter-spacing=\"0.04em\">{mono}</text>",
-        rx = tile * 0.22,
+           fill=\"{ink}\" letter-spacing=\"0.06em\">{mono}</text>\
+         <rect x=\"{tile_x}\" y=\"{rule_y}\" width=\"{rule_w}\" height=\"2\" rx=\"1\" fill=\"{accent}\" fill-opacity=\"0.55\"/>",
+        rx = tile * 0.24,
         mx = tile_x + tile / 2.0,
         my = tile_y + tile / 2.0,
         mono = esc(mono),

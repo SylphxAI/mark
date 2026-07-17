@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Sylphx Mark</title>
-  <meta name="description" content="Compose embeddable SVG marks for READMEs — banners, badges, stats, icons, brand cards." />
+  <meta name="description" content="Beautiful embeddable SVG marks — product plates, banners, badges. Art-first." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
@@ -411,7 +411,7 @@
     </div>
 
     <footer>
-      <div><code>mark.sylphx.com</code> · SVG embeds for READMEs</div>
+      <div><code>mark.sylphx.com</code> · Art-first embeds · plate · typewriter</div>
       <div><a href="https://github.com/SylphxAI/mark">Source</a> · <a href="https://sylphx.com">Sylphx</a></div>
     </footer>
   </div>
@@ -420,11 +420,10 @@
   <script>
     const BASE = location.origin;
     // Wave first — signature classic; then SOTA + polished set
+    // Classics first — commercial default; showcase secondary
     const FEATURED = [
-      "wave","waving","aurora","mesh","glass",
-      "plasma","holo","neon","meteor","liquid",
-      "prism","void","firefly","silk","iridescent",
-      "orbit","constellation"
+      "wave","waving","soft","glass","aurora","product","oss","terminal","mesh","rounded",
+      "plasma","holo","neon","liquid","void","silk","constellation","orbit"
     ];
     const ALL_STYLES = FEATURED.concat([
       "soft","horizon","dusk","beam","terminal","grid","blur","ring","circuit","hud",
@@ -432,23 +431,29 @@
       "venom","speech","product","oss","org","transparent"
     ]);
     const MOTIONS = [
+      ["none","Still"],
       ["ambient","Idle drift"],
+      ["type","Typewriter"],
       ["rise","Rise in"],
       ["fade","Fade in"],
-      ["wave","Wave text"],
       ["float","Float"],
       ["glow","Glow"],
-      ["bounce","Bounce"],
-      ["neon","Neon"],
-      ["type","Type"],
       ["shimmer","Shimmer"],
-      ["glitch","Glitch"],
       ["cascade","Cascade"],
       ["slide","Slide"],
+      ["wave","Wave text"],
+      ["bounce","Bounce"],
+      ["neon","Neon"],
+      ["glitch","Glitch"],
       ["scale","Scale"],
       ["orbit","Orbit"],
       ["breathe","Breathe"],
-      ["none","Off"],
+    ];
+    const LAYOUTS = [
+      ["plate","Product plate"],
+      ["signal","Signal (center)"],
+      ["terminal","Terminal"],
+      ["default","Default"],
     ];
     const THEMES = [
       ["tokyonight","#1A1B27","#7AA2F7"],["sylphx","#1A1A2E","#D87000"],["ocean","#0B1D36","#00B4D8"],
@@ -469,9 +474,10 @@
         type: "wave",
         theme: "tokyonight",
         text: "Ship your next release",
-        desc: "Paste this banner into your README",
+        desc: "Quiet field. Clear name. Your brand.",
         height: 220,
-        animation: "rise",
+        animation: "none",
+        layout: "plate",
       },
       badge: { label: "build", message: "passing", color: "brightgreen", style: "flat" },
       stats: { user: "shtse8", theme: "dark" },
@@ -502,6 +508,7 @@
       if (m === "banner") {
         const b = state.banner;
         const p = new URLSearchParams({ type: b.type, theme: b.theme, text: b.text, desc: b.desc, height: String(b.height) });
+        if (b.layout) p.set("layout", b.layout);
         if (b.animation) p.set("animation", b.animation);
         p.set("credit", "0");
         return `${BASE}/api/v1/banner?${p}`;
@@ -563,7 +570,7 @@
     preview.addEventListener("error", () => stage.classList.remove("loading"));
 
     function metaLabel() {
-      if (state.mode === "banner") return `${state.banner.type} · ${state.banner.theme} · ${state.banner.animation}`;
+      if (state.mode === "banner") return `${state.banner.layout || "default"} · ${state.banner.type} · ${state.banner.theme} · ${state.banner.animation}`;
       if (state.mode === "badge") return `${state.badge.style} · ${state.badge.color}`;
       if (state.mode === "stats") return `@${state.stats.user} · ${state.stats.theme}`;
       if (state.mode === "icons") return `${state.icons.selected.length} icons · ${state.icons.theme}`;
@@ -596,6 +603,14 @@
       </div>`;
     }
 
+    function layoutChips(selected) {
+      return `<div class="chips" id="layoutChips">
+        ${LAYOUTS.map(([id, label]) =>
+          `<button type="button" class="chip ${selected===id?"on":""}" data-l="${id}" title="${id}">${label}</button>`
+        ).join("")}
+      </div>`;
+    }
+
     function esc(s) {
       return String(s ?? "").replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;");
     }
@@ -622,15 +637,22 @@
           </section>
 
           <section class="sec">
+            <div class="sec-h"><h3>Composition</h3><span>Hierarchy first</span></div>
+            <div class="field"><label>Layout</label>${layoutChips(b.layout || "plate")}</div>
+            <p class="hint">Product plate = monogram + left title. Signal = centered hero. Terminal = systems look.</p>
+          </section>
+
+          <section class="sec">
             <div class="sec-h"><h3>Look</h3><span>Theme + motion</span></div>
             <div class="field"><label>Theme</label>${themePills(b.theme)}</div>
             <div class="field"><label>Motion</label>${motionChips(b.animation)}</div>
+            <p class="hint">Still is the commercial default. Typewriter is pure SVG SMIL.</p>
           </section>
 
           <section class="sec">
             <div class="sec-h"><h3>Size</h3><span>Banner height</span></div>
             <div class="range">
-              <input id="f-h" type="range" min="140" max="360" step="10" value="${b.height}" />
+              <input id="f-h" type="range" min="140" max="480" step="10" value="${b.height}" />
               <out id="hOut">${b.height}px</out>
             </div>
           </section>`;
@@ -744,6 +766,11 @@
       document.querySelectorAll("#motionChips .chip").forEach(el => el.onclick = () => {
         state.banner.animation = el.dataset.a;
         document.querySelectorAll("#motionChips .chip").forEach(c => c.classList.toggle("on", c === el));
+        schedule();
+      });
+      document.querySelectorAll("#layoutChips .chip").forEach(el => el.onclick = () => {
+        state.banner.layout = el.dataset.l;
+        document.querySelectorAll("#layoutChips .chip").forEach(c => c.classList.toggle("on", c === el));
         schedule();
       });
       $("f-text").oninput = e => { state.banner.text = e.target.value; schedule(); };
