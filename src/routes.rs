@@ -11,7 +11,7 @@ use tower_http::cors::CorsLayer;
 use tower_http::services::ServeDir;
 
 use crate::badge::{self, BadgeInput, BadgeStyle};
-use crate::banner::{self, BannerInput, ANIMATIONS, BANNER_TYPES, FEATURED_TYPES};
+use crate::banner::{self, BannerInput, ANIMATIONS, BANNER_TYPES, FEATURED_TYPES, LAYOUTS};
 use crate::brand;
 use crate::icons;
 use crate::stats::{self, CardOpts};
@@ -86,10 +86,16 @@ async fn catalog() -> impl IntoResponse {
     Json(json!({
         "banner_types": BANNER_TYPES,
         "featured_banner_types": FEATURED_TYPES,
+        "layouts": LAYOUTS,
         "themes": themes::list_names(),
         "icons": icons::available(),
         "badge_styles": ["flat", "plastic", "for-the-badge", "social", "pill"],
         "animations": ANIMATIONS,
+        "notes": {
+            "layout": "plate = left monogram product cover; signal = centered hero; terminal = left mono systems look",
+            "animation_type": "true per-character typewriter with cursor (SMIL)",
+            "star_history": "not offered — use star-history.com; time-series store is out of art-kernel scope"
+        }
     }))
 }
 
@@ -127,6 +133,7 @@ struct BannerQuery {
     text_bg: Option<String>,
     animation: Option<String>,
     credit: Option<String>,
+    layout: Option<String>,
 }
 
 async fn banner_handler(
@@ -158,6 +165,7 @@ async fn banner_handler(
         animation: q.animation.clone(),
         credit,
         seed: None,
+        layout: q.layout,
     };
     // Animated banners must not sit behind long CDN TTL — otherwise deploys look "dead".
     let anim = q.animation.as_deref().unwrap_or("ambient");

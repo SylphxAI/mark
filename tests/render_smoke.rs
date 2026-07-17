@@ -35,6 +35,45 @@ fn banner_all_types_render() {
 }
 
 #[test]
+fn layout_plate_has_monogram_and_left_anchor() {
+    let svg = banner::render(&BannerInput {
+        type_name: Some("aurora".into()),
+        theme: Some("tokyonight".into()),
+        text: Some("PDF Reader MCP".into()),
+        desc: Some("The PDF intelligence layer".into()),
+        layout: Some("plate".into()),
+        animation: Some("none".into()),
+        height: Some(768),
+        width: Some(1376),
+        credit: false,
+        ..Default::default()
+    });
+    assert!(svg.contains("text-anchor=\"start\""), "plate titles left-aligned");
+    assert!(svg.contains("plateScrim") || svg.contains("PR"), "monogram/scrim present");
+    assert!(svg.contains("PDF Reader MCP"));
+    // taller card canvas allowed
+    assert!(svg.contains("height=\"768\"") || svg.contains("height='768'"));
+}
+
+#[test]
+fn animation_type_is_per_character_typewriter() {
+    let svg = banner::render(&BannerInput {
+        type_name: Some("soft".into()),
+        text: Some("Hi".into()),
+        animation: Some("type".into()),
+        credit: false,
+        ..Default::default()
+    });
+    // Two characters → at least two text nodes with opacity animate
+    let opacity_anims = svg.matches("attributeName=\"opacity\"").count();
+    assert!(
+        opacity_anims >= 2,
+        "typewriter should animate each character; anims={opacity_anims}"
+    );
+    assert!(svg.contains(">H<") || svg.contains(">H</text>") || svg.contains("H"));
+}
+
+#[test]
 fn badge_flat() {
     let svg = badge::render(&BadgeInput {
         label: Some("build".into()),

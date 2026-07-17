@@ -213,14 +213,13 @@ pub fn text_children(anim: &str, line_index: usize, width: u32, height: u32) -> 
             )
         },
 
-        // Staggered typewriter / line reveal (per-line delay).
+        // Legacy line-level type path — full typewriter is handled in banner::render
+        // when animation=type (per-character SMIL + cursor). Keep a soft reveal fallback
+        // if something still calls text_children("type").
         "type" => {
             let d = delay * 1.35 + line_index as f32 * 0.08;
             format!(
-                "<animate attributeName=\"opacity\" from=\"0\" to=\"1\" dur=\"0.08s\" begin=\"{d}s\" fill=\"freeze\"/>\
-                 <animateTransform attributeName=\"transform\" type=\"translate\" \
-                   from=\"0 8\" to=\"0 0\" dur=\"0.28s\" begin=\"{d}s\" fill=\"freeze\" \
-                   calcMode=\"spline\" keySplines=\"0.16 1 0.3 1\" keyTimes=\"0;1\"/>"
+                "<animate attributeName=\"opacity\" from=\"0\" to=\"1\" dur=\"0.12s\" begin=\"{d}s\" fill=\"freeze\"/>"
             )
         }
 

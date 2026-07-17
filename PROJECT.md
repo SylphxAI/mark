@@ -23,6 +23,15 @@ badges, GitHub stats cards, icon rows, brand kits, and deploy badges.
 - Not a full shields.io replacement for every CI vendor
 - Not AI image generation on the hot path
 - Not a general CDN for arbitrary user uploads (v1)
+- Not star-history / contribution time-series analytics (use specialist hosts;
+  art kernel stays stateless SVG + optional short-TTL GH snapshots)
+
+## Positioning
+
+**Art + brand embed product.** Beauty is non-negotiable: hierarchy, calm field,
+name craft, contrast, crop-honest surfaces. Stats/badges/icons are thin
+completeness so users need not leave for a second host — not the product thesis.
+Layout families (`layout=plate|signal|terminal`) outrank novelty background types.
 
 ## Public surfaces
 
