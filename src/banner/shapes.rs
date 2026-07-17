@@ -50,6 +50,13 @@ pub const BANNER_TYPES: &[&str] = &[
 ];
 
 pub const FEATURED_TYPES: &[&str] = &[
+    // Classics users expect first (wave is the signature liquid banner)
+    "wave",
+    "waving",
+    "aurora",
+    "mesh",
+    "glass",
+    // SOTA showcase
     "plasma",
     "holo",
     "neon",
@@ -60,11 +67,7 @@ pub const FEATURED_TYPES: &[&str] = &[
     "firefly",
     "silk",
     "iridescent",
-    "aurora",
-    "mesh",
-    "glass",
     "orbit",
-    "wave",
     "constellation",
 ];
 
@@ -817,69 +820,116 @@ M0,{hy} Q{w1},{hy2} {w2},{hy} T{w},{hy} L{w},{h} L0,{h} Z\"/>\
             )
         }
 
+        // Signature liquid-banner waves (multi-layer SMIL morph — readable at README size).
         "wave" | "waving" => {
-            let y = hf * 0.64;
-            let amp = hf * 0.1 * g.max(0.15);
-            let path_anim = if g > 0.01 {
-                format!(
-                    "<animate attributeName=\"d\" dur=\"4.5s\" repeatCount=\"indefinite\" values=\"\
-M0,{y} C{a},{y1} {b},{y2} {c},{y} S{d},{y3} {w},{y} L{w},{h} L0,{h} Z;\
-M0,{y} C{a},{y2} {b},{y1} {c},{y} S{d},{y4} {w},{y} L{w},{h} L0,{h} Z;\
-M0,{y} C{a},{y1} {b},{y2} {c},{y} S{d},{y3} {w},{y} L{w},{h} L0,{h} Z\"/>",
-                    a = wf * 0.2,
-                    y1 = y - amp,
-                    b = wf * 0.38,
-                    y2 = y + amp,
-                    c = wf * 0.52,
-                    d = wf * 0.78,
-                    y3 = y - amp * 0.6,
-                    y4 = y + amp * 0.5,
-                )
+            // `waving` = taller, faster, more aggressive crest motion.
+            let wild = ty == "waving";
+            let gain = g.max(0.2);
+            let layers: [(f32, f32, f32, f32, &str); 4] = if wild {
+                [
+                    (0.48, 0.14, 0.16, 3.6, "#7dd3fc"),
+                    (0.58, 0.12, 0.20, 4.4, "#ffffff"),
+                    (0.70, 0.10, 0.18, 5.2, "#38bdf8"),
+                    (0.82, 0.08, 0.22, 6.0, "#000000"),
+                ]
             } else {
-                String::new()
+                [
+                    (0.52, 0.11, 0.14, 5.0, "#a5b4fc"),
+                    (0.62, 0.10, 0.18, 6.2, "#ffffff"),
+                    (0.74, 0.08, 0.16, 7.4, "#67e8f9"),
+                    (0.84, 0.06, 0.20, 8.8, "#000000"),
+                ]
             };
-            format!(
-                "{base}\
-                 <path d=\"M0,{y} C{a},{y1} {b},{y2} {c},{y} S{d},{y3} {w},{y} L{w},{h} L0,{h} Z\" fill=\"#ffffff\" fill-opacity=\"0.09\">{path_anim}</path>\
-                 <path d=\"M0,{y4} C{a2},{y5} {b2},{y6} {c2},{y4} S{d2},{y7} {w},{y4} L{w},{h} L0,{h} Z\" fill=\"#000000\" fill-opacity=\"0.14\">{path_anim2}</path>\
-                 {sheen}{vig}",
-                base = base_fill(w, h, fill),
-                a = wf * 0.2,
-                y1 = y - amp.max(hf * 0.06),
-                b = wf * 0.38,
-                y2 = y + amp.max(hf * 0.06),
-                c = wf * 0.52,
-                d = wf * 0.78,
-                y3 = y - amp.max(hf * 0.04),
-                y4 = hf * 0.74,
-                a2 = wf * 0.18,
-                y5 = hf * 0.88,
-                b2 = wf * 0.4,
-                y6 = hf * 0.62,
-                c2 = wf * 0.55,
-                d2 = wf * 0.82,
-                y7 = hf * 0.78,
-                path_anim2 = if g > 0.01 {
+            let mut body = base_fill(w, h, fill);
+            // soft sky bloom so waves sit on a living backdrop
+            body.push_str(&blob(
+                wf * 0.22,
+                hf * 0.28,
+                wf * 0.32,
+                hf * 0.4,
+                "#ffffff",
+                0.1,
+                gain,
+                wf * 0.05,
+                hf * 0.04,
+                10.0,
+                0.0,
+            ));
+            body.push_str(&blob(
+                wf * 0.78,
+                hf * 0.22,
+                wf * 0.28,
+                hf * 0.36,
+                if wild { "#38bdf8" } else { "#818cf8" },
+                0.14,
+                gain,
+                -wf * 0.04,
+                hf * 0.05,
+                11.0,
+                0.5,
+            ));
+            for (i, (mid, amp_r, opac, dur, color)) in layers.iter().enumerate() {
+                let y = hf * mid;
+                let amp = (hf * amp_r * gain).max(hf * 0.05);
+                let a = wf * 0.16;
+                let b = wf * 0.34;
+                let c = wf * 0.5;
+                let d = wf * 0.72;
+                let e = wf * 0.88;
+                let y_up = y - amp;
+                let y_dn = y + amp;
+                let y_up2 = y - amp * 0.55;
+                let y_dn2 = y + amp * 0.7;
+                let fill_op = if *color == "#000000" {
+                    opac * 0.85
+                } else {
+                    *opac
+                };
+                let anim = if g > 0.01 {
+                    // two-phase morph keeps crests traveling left↔right
                     format!(
-                        "<animate attributeName=\"d\" dur=\"5.5s\" repeatCount=\"indefinite\" values=\"\
-M0,{y4} C{a2},{y5} {b2},{y6} {c2},{y4} S{d2},{y7} {w},{y4} L{w},{h} L0,{h} Z;\
-M0,{y4} C{a2},{y6} {b2},{y5} {c2},{y4} S{d2},{y5} {w},{y4} L{w},{h} L0,{h} Z;\
-M0,{y4} C{a2},{y5} {b2},{y6} {c2},{y4} S{d2},{y7} {w},{y4} L{w},{h} L0,{h} Z\"/>",
-                        y4 = hf * 0.74,
-                        a2 = wf * 0.18,
-                        y5 = hf * 0.88,
-                        b2 = wf * 0.4,
-                        y6 = hf * 0.62,
-                        c2 = wf * 0.55,
-                        d2 = wf * 0.82,
-                        y7 = hf * 0.78,
+                        "<animate attributeName=\"d\" dur=\"{dur}s\" begin=\"{beg}s\" repeatCount=\"indefinite\" values=\"\
+M0,{y} C{a},{y_up} {b},{y_dn} {c},{y} S{d},{y_up2} {w},{y} L{w},{h} L0,{h} Z;\
+M0,{y} C{a},{y_dn} {b},{y_up} {c},{y} S{d},{y_dn2} {w},{y} L{w},{h} L0,{h} Z;\
+M0,{y} C{a},{y_up2} {b},{y_dn2} {c},{y} S{e},{y_up} {w},{y} L{w},{h} L0,{h} Z;\
+M0,{y} C{a},{y_up} {b},{y_dn} {c},{y} S{d},{y_up2} {w},{y} L{w},{h} L0,{h} Z\"/>",
+                        beg = i as f32 * 0.35,
                     )
                 } else {
                     String::new()
-                },
-                sheen = sheen(w, h, g),
-                vig = vignette(w, h),
-            )
+                };
+                body.push_str(&format!(
+                    "<path d=\"M0,{y} C{a},{y_up} {b},{y_dn} {c},{y} S{d},{y_up2} {w},{y} L{w},{h} L0,{h} Z\" \
+                       fill=\"{color}\" fill-opacity=\"{fill_op}\">{anim}</path>"
+                ));
+            }
+            // bright foam crest riding the primary wave
+            if g > 0.01 {
+                let cy = hf * if wild { 0.58 } else { 0.62 };
+                let camp = hf * if wild { 0.1 } else { 0.08 } * gain;
+                body.push_str(&format!(
+                    "<path d=\"M0,{cy} C{a},{y1} {b},{y2} {c},{cy} S{d},{y3} {w},{cy}\" fill=\"none\" \
+                       stroke=\"#ffffff\" stroke-opacity=\"0.45\" stroke-width=\"1.6\" stroke-linecap=\"round\">\
+                       <animate attributeName=\"d\" dur=\"{dur}s\" repeatCount=\"indefinite\" values=\"\
+M0,{cy} C{a},{y1} {b},{y2} {c},{cy} S{d},{y3} {w},{cy};\
+M0,{cy} C{a},{y2} {b},{y1} {c},{cy} S{d},{y4} {w},{cy};\
+M0,{cy} C{a},{y1} {b},{y2} {c},{cy} S{d},{y3} {w},{cy}\"/>\
+                       <animate attributeName=\"stroke-opacity\" values=\"0.25;0.7;0.3;0.65;0.25\" dur=\"{dur}s\" repeatCount=\"indefinite\"/>\
+                     </path>",
+                    a = wf * 0.18,
+                    b = wf * 0.4,
+                    c = wf * 0.55,
+                    d = wf * 0.8,
+                    y1 = cy - camp,
+                    y2 = cy + camp,
+                    y3 = cy - camp * 0.5,
+                    y4 = cy + camp * 0.55,
+                    dur = if wild { 4.2 } else { 5.6 },
+                ));
+            }
+            body.push_str(&sheen(w, h, g));
+            body.push_str(&vignette(w, h));
+            body
         }
 
         "orbit" => {

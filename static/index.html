@@ -10,97 +10,99 @@
   <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
   <style>
     :root {
-      --bg: #08090d;
-      --panel: #0e1117;
-      --elev: #141922;
-      --fg: #eef1f6;
+      --bg: #07080c;
+      --panel: #0c0f15;
+      --elev: #131821;
+      --fg: #f2f4f8;
       --muted: #8b93a7;
-      --faint: #5e6678;
-      --line: rgba(255,255,255,0.075);
-      --line2: rgba(255,255,255,0.12);
-      --accent: #d87000;
-      --accent2: #4a90e2;
+      --faint: #5c6478;
+      --line: rgba(255,255,255,0.07);
+      --line2: rgba(255,255,255,0.13);
+      --accent: #e08712;
+      --accent2: #5b9dff;
       --ok: #3dd68c;
-      --radius: 18px;
+      --radius: 16px;
       --font: "Instrument Sans", ui-sans-serif, system-ui, sans-serif;
       --mono: "JetBrains Mono", ui-monospace, monospace;
+      --scroll: rgba(255,255,255,0.14);
     }
     * { box-sizing: border-box; }
-    html { overflow-x: clip; height: 100%; }
+    html, body { height: 100%; }
+    html { overflow-x: clip; }
     body {
-      margin: 0; min-height: 100%; height: 100%; color: var(--fg); font-family: var(--font);
-      overflow-x: clip;
+      margin: 0; color: var(--fg); font-family: var(--font);
+      overflow: hidden;
       background:
-        radial-gradient(900px 480px at 15% -10%, rgba(216,112,0,0.14), transparent 55%),
-        radial-gradient(800px 420px at 100% 0%, rgba(74,144,226,0.1), transparent 50%),
+        radial-gradient(1000px 520px at 8% -15%, rgba(224,135,18,0.13), transparent 55%),
+        radial-gradient(900px 480px at 95% 0%, rgba(91,157,255,0.1), transparent 50%),
         var(--bg);
     }
     button, input, select, textarea { font: inherit; color: inherit; }
-    a { color: #7eb6ff; text-decoration: none; }
+    a { color: #8ec0ff; text-decoration: none; }
     a:hover { text-decoration: underline; }
 
+    /* Thin modern scrollbars */
+    .scroll {
+      scrollbar-width: thin;
+      scrollbar-color: var(--scroll) transparent;
+    }
+    .scroll::-webkit-scrollbar { width: 8px; height: 8px; }
+    .scroll::-webkit-scrollbar-thumb {
+      background: var(--scroll); border-radius: 99px; border: 2px solid transparent;
+      background-clip: padding-box;
+    }
+    .scroll::-webkit-scrollbar-track { background: transparent; }
+
     .app {
-      width: 100%;
-      max-width: 1240px;
-      margin: 0 auto;
-      padding: 1.1rem 1.15rem 1.25rem;
-      min-height: 100%;
       height: 100%;
-      display: flex;
-      flex-direction: column;
+      max-width: 1360px;
+      margin: 0 auto;
+      padding: 0.75rem 1rem 0.75rem;
+      display: grid;
+      grid-template-rows: auto auto minmax(0, 1fr) auto;
+      gap: 0.65rem;
       min-width: 0;
     }
 
-    /* Top */
+    /* Compact chrome */
     .top {
       display: flex; align-items: center; justify-content: space-between;
-      gap: 1rem; margin-bottom: 0.85rem;
-      min-width: 0;
-      flex-shrink: 0;
+      gap: .75rem; min-width: 0;
     }
     .brand {
-      display: flex; align-items: center; gap: .65rem;
-      font-weight: 600; letter-spacing: -0.02em; min-width: 0;
+      display: flex; align-items: center; gap: .55rem;
+      font-weight: 600; letter-spacing: -0.02em;
     }
     .logo {
-      width: 28px; height: 28px; border-radius: 9px; flex-shrink: 0;
-      background: linear-gradient(135deg, #d87000, #4a90e2);
-      box-shadow: 0 8px 24px rgba(216,112,0,0.28);
+      width: 26px; height: 26px; border-radius: 8px; flex-shrink: 0;
+      background: linear-gradient(135deg, #e08712, #5b9dff);
+      box-shadow: 0 6px 18px rgba(224,135,18,0.28);
     }
     .live {
-      display: inline-flex; align-items: center; gap: .4rem; flex-shrink: 0;
-      font-size: .8rem; color: var(--muted);
-      border: 1px solid var(--line); border-radius: 999px; padding: .3rem .7rem;
+      display: inline-flex; align-items: center; gap: .4rem;
+      font-size: .75rem; color: var(--muted);
+      border: 1px solid var(--line); border-radius: 999px; padding: .28rem .65rem;
       background: rgba(255,255,255,0.02);
     }
     .live i {
-      width: 7px; height: 7px; border-radius: 50%; background: var(--ok);
-      box-shadow: 0 0 10px var(--ok); font-style: normal;
+      width: 6px; height: 6px; border-radius: 50%; background: var(--ok);
+      box-shadow: 0 0 8px var(--ok); font-style: normal;
     }
 
-    .intro { max-width: 40rem; margin-bottom: 0.75rem; flex-shrink: 0; }
-    .intro h1 {
-      margin: 0 0 .35rem; font-size: clamp(1.45rem, 2.8vw, 1.85rem);
-      letter-spacing: -0.04em; line-height: 1.1; font-weight: 700;
-    }
-    .intro p { margin: 0; color: var(--muted); line-height: 1.45; font-size: .92rem; }
-
-    /* Mode tabs — primary navigation for product surfaces */
     .modes {
-      display: flex; flex-wrap: wrap; gap: .4rem;
-      margin-bottom: 0.75rem;
-      padding: .3rem;
+      display: flex; flex-wrap: nowrap; gap: .25rem;
+      padding: .22rem;
       border: 1px solid var(--line);
-      border-radius: 14px;
+      border-radius: 12px;
       background: rgba(255,255,255,0.02);
       width: fit-content;
       max-width: 100%;
-      flex-shrink: 0;
+      overflow-x: auto;
     }
     .modes button {
       border: 0; background: transparent; color: var(--muted);
-      padding: .55rem .9rem; border-radius: 10px; cursor: pointer;
-      font-weight: 500; font-size: .9rem;
+      padding: .45rem .8rem; border-radius: 9px; cursor: pointer;
+      font-weight: 500; font-size: .84rem; white-space: nowrap;
       transition: background .12s, color .12s;
     }
     .modes button:hover { color: var(--fg); }
@@ -109,156 +111,82 @@
       box-shadow: inset 0 0 0 1px var(--line2);
     }
 
-    /*
-     * Studio: dual-pane shell fills remaining viewport.
-     * Preview (left) always stays on screen; only the controls column scrolls.
-     * This is the fix for "edit text/motion at the bottom → preview gone".
-     */
+    /* Studio shell */
     .studio {
       display: grid;
-      grid-template-columns: minmax(0, 1.2fr) minmax(300px, 400px);
-      gap: 0.9rem;
-      align-items: stretch;
-      width: 100%;
-      min-width: 0;
-      flex: 1 1 auto;
-      min-height: 0;
-      /* lock to remaining viewport so each pane owns its own scroll */
-      height: 0; /* flex grow fills; height:0 enables min-height:0 children */
-      flex-grow: 1;
-    }
-    .studio-preview,
-    .studio-controls {
-      display: flex;
-      flex-direction: column;
+      grid-template-columns: minmax(0, 1.35fr) minmax(320px, 420px);
+      gap: 0.75rem;
       min-height: 0;
       min-width: 0;
-      max-height: 100%;
-      overflow: hidden; /* pane owns scroll via .card-b */
-      background: rgba(14,17,23,0.94);
-      border: 1px solid var(--line);
-      border-radius: var(--radius);
-      backdrop-filter: blur(14px);
     }
-    .studio-preview {
-      position: relative;
-      z-index: 2;
-    }
-    .studio-preview .card-b {
-      overflow: auto;
-      flex: 1 1 auto;
-      min-height: 0;
-      overscroll-behavior: contain;
-      display: flex;
-      flex-direction: column;
-    }
-    .studio-controls .card-b {
-      overflow-y: auto;
-      overflow-x: hidden;
-      flex: 1 1 auto;
-      min-height: 0;
-      overscroll-behavior: contain;
-      scrollbar-gutter: stable;
-      padding-bottom: 1.75rem;
-    }
-    .studio-preview .card-h,
-    .studio-controls .card-h {
-      flex-shrink: 0;
-      background: rgba(8,10,14,0.55);
-      position: sticky;
-      top: 0;
-      z-index: 3;
-    }
-    @media (max-width: 920px) {
-      html, body, .app { height: auto; min-height: 100%; }
-      .app { display: block; height: auto; }
-      .studio {
-        display: flex;
-        flex-direction: column;
-        height: auto;
-        min-height: 0;
-      }
-      .studio-preview {
-        position: sticky;
-        top: 0;
-        z-index: 20;
-        order: -1;
-        max-height: min(46dvh, 380px);
-        box-shadow: 0 12px 28px rgba(0,0,0,0.45);
-      }
-      .studio-controls {
-        max-height: none;
-        overflow: visible;
-      }
-      .studio-controls .card-b {
-        overflow: visible;
-        max-height: none;
-      }
-    }
-
-    .card {
-      background: rgba(14,17,23,0.92);
+    .pane {
+      display: flex; flex-direction: column;
+      min-height: 0; min-width: 0;
+      background: rgba(12,15,21,0.92);
       border: 1px solid var(--line);
       border-radius: var(--radius);
       overflow: hidden;
-      min-width: 0;
-      max-width: 100%;
-      backdrop-filter: blur(12px);
+      backdrop-filter: blur(16px);
     }
-    .card-h {
+    .pane-h {
+      flex-shrink: 0;
       display: flex; align-items: center; justify-content: space-between;
       gap: .75rem;
-      padding: .9rem 1.1rem; border-bottom: 1px solid var(--line);
-      font-size: .85rem; color: var(--muted);
-      min-width: 0;
+      padding: .7rem 1rem;
+      border-bottom: 1px solid var(--line);
+      background: rgba(6,8,12,0.55);
+      font-size: .8rem; color: var(--muted);
     }
-    .card-h strong {
+    .pane-h strong {
       color: var(--fg); font-weight: 600; letter-spacing: -0.01em;
-      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-      min-width: 0;
     }
-    .card-b { padding: 1.1rem; min-width: 0; }
-
-    /* Big preview — never let intrinsic SVG width expand the page */
-    .stage {
-      min-height: 180px;
+    .pane-b {
       flex: 1 1 auto;
+      min-height: 0;
+      overflow: auto;
+      overscroll-behavior: contain;
+    }
+    .preview-body {
+      display: flex; flex-direction: column;
+      padding: 0.9rem;
+      gap: 0.75rem;
+    }
+    .controls-body {
+      padding: 0.85rem 0.95rem 1.5rem;
+    }
+
+    .stage {
+      flex: 1 1 auto;
+      min-height: 220px;
       display: grid; place-items: center;
-      padding: 1rem 0.9rem;
-      min-width: 0;
-      max-width: 100%;
+      padding: 1.1rem;
+      border-radius: 14px;
       overflow: hidden;
       background:
-        linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px) 0 0 / 28px 28px,
-        linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px) 0 0 / 28px 28px,
-        #090b10;
-      border-radius: 12px;
+        radial-gradient(ellipse 80% 60% at 50% 40%, rgba(255,255,255,0.03), transparent 70%),
+        linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px) 0 0 / 24px 24px,
+        linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px) 0 0 / 24px 24px,
+        #080a0f;
     }
     .stage img {
-      display: block;
-      max-width: 100%;
-      width: auto;
-      height: auto;
+      display: block; max-width: 100%; height: auto;
       border-radius: 10px;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.45);
+      box-shadow: 0 24px 64px rgba(0,0,0,0.5);
       transition: opacity .15s;
     }
     .stage.loading img { opacity: .4; }
 
     .export {
-      margin-top: 0.85rem;
       border: 1px solid var(--line);
       border-radius: 12px;
-      background: #0a0c11;
+      background: #080a0f;
       overflow: hidden;
-      min-width: 0;
-      max-width: 100%;
       flex-shrink: 0;
     }
-    .export-tabs { display: flex; border-bottom: 1px solid var(--line); min-width: 0; }
+    .export-tabs { display: flex; border-bottom: 1px solid var(--line); }
     .export-tabs button {
-      flex: 1 1 0; min-width: 0; border: 0; background: transparent; color: var(--muted);
-      padding: .6rem .35rem; cursor: pointer; font-size: .8rem; font-weight: 500;
+      flex: 1; border: 0; background: transparent; color: var(--muted);
+      padding: .55rem; cursor: pointer; font-size: .78rem; font-weight: 500;
     }
     .export-tabs button.on {
       color: var(--fg);
@@ -266,127 +194,172 @@
       background: rgba(255,255,255,0.03);
     }
     .export pre {
-      margin: 0; padding: .85rem;
-      font-family: var(--mono); font-size: .72rem; line-height: 1.5;
-      color: #c5cddc; white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word;
-      min-height: 3.8rem;
-      max-width: 100%;
-      overflow-x: auto;
+      margin: 0; padding: .75rem .85rem;
+      font-family: var(--mono); font-size: .7rem; line-height: 1.5;
+      color: #c5cddc; white-space: pre-wrap; overflow-wrap: anywhere;
+      max-height: 5.5rem; overflow: auto;
     }
-    .actions { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: .85rem; flex-shrink: 0; }
+    .actions { display: flex; flex-wrap: wrap; gap: .5rem; flex-shrink: 0; }
     .btn {
-      border: 0; border-radius: 11px; padding: .65rem 1rem;
-      font-weight: 600; font-size: .88rem; cursor: pointer;
+      border: 0; border-radius: 11px; padding: .6rem 1rem;
+      font-weight: 600; font-size: .86rem; cursor: pointer;
     }
     .btn-p {
-      background: linear-gradient(135deg, #e08712, #c45a00); color: #fff;
-      box-shadow: 0 10px 28px rgba(216,112,0,0.25);
+      background: linear-gradient(135deg, #e99522, #c45a00); color: #fff;
+      box-shadow: 0 8px 22px rgba(224,135,18,0.22);
     }
     .btn-s {
       background: transparent; color: var(--fg);
       box-shadow: inset 0 0 0 1px var(--line2);
     }
 
-    /* Controls */
-    .field { margin-bottom: .9rem; }
+    /* Control sections — the smart hierarchy */
+    .sec {
+      margin-bottom: 1rem;
+      padding-bottom: 0.95rem;
+      border-bottom: 1px solid var(--line);
+    }
+    .sec:last-child { border-bottom: 0; margin-bottom: 0; padding-bottom: 0; }
+    .sec-h {
+      display: flex; align-items: baseline; justify-content: space-between;
+      gap: .5rem; margin-bottom: .55rem;
+    }
+    .sec-h h3 {
+      margin: 0; font-size: .72rem; font-weight: 600;
+      letter-spacing: 0.06em; text-transform: uppercase; color: var(--faint);
+    }
+    .sec-h span { font-size: .72rem; color: var(--faint); }
+    .field { margin-bottom: .65rem; }
+    .field:last-child { margin-bottom: 0; }
     .field label {
-      display: block; font-size: .75rem; color: var(--muted);
-      margin-bottom: .35rem; font-weight: 500;
+      display: block; font-size: .74rem; color: var(--muted);
+      margin-bottom: .3rem; font-weight: 500;
     }
     .field input, .field select, .field textarea {
-      width: 100%; background: #0a0c11; border: 1px solid var(--line);
-      border-radius: 11px; padding: .65rem .75rem; outline: none;
+      width: 100%; background: #080a0f; border: 1px solid var(--line);
+      border-radius: 10px; padding: .6rem .7rem; outline: none;
     }
     .field input:focus, .field select:focus, .field textarea:focus {
-      border-color: rgba(106,168,255,0.45);
-      box-shadow: 0 0 0 3px rgba(106,168,255,0.1);
+      border-color: rgba(91,157,255,0.45);
+      box-shadow: 0 0 0 3px rgba(91,157,255,0.1);
     }
-    .field textarea { min-height: 64px; resize: vertical; }
     .row {
       display: grid;
       grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-      gap: .65rem;
-      min-width: 0;
+      gap: .55rem;
     }
 
-    /* Style gallery: curated visual tiles, click only */
-    .gallery {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: .5rem;
-      min-width: 0;
+    /* Horizontal style filmstrip — modern, scannable */
+    .film {
+      display: flex; gap: .5rem;
+      overflow-x: auto;
+      padding: .15rem .1rem .45rem;
+      scroll-snap-type: x mandatory;
+      -webkit-overflow-scrolling: touch;
     }
-    @media (max-width: 520px) { .gallery { grid-template-columns: repeat(2, 1fr); } }
     .tile {
-      position: relative; border: 1px solid var(--line); border-radius: 12px;
-      overflow: hidden; cursor: pointer; background: #090b10;
-      aspect-ratio: 16/9; padding: 0;
+      position: relative; flex: 0 0 118px;
+      border: 1px solid var(--line); border-radius: 12px;
+      overflow: hidden; cursor: pointer; background: #080a0f;
+      aspect-ratio: 16/10; padding: 0;
+      scroll-snap-align: start;
+      transition: border-color .12s, transform .12s, box-shadow .12s;
     }
+    .tile:hover { border-color: var(--line2); transform: translateY(-1px); }
     .tile img { width: 100%; height: 100%; object-fit: cover; display: block; }
     .tile span {
-      position: absolute; left: .4rem; bottom: .35rem;
-      font-size: .68rem; font-weight: 600; color: #fff;
-      text-shadow: 0 1px 4px rgba(0,0,0,.85);
+      position: absolute; left: .35rem; bottom: .3rem;
+      font-size: .65rem; font-weight: 600; color: #fff;
+      text-shadow: 0 1px 4px rgba(0,0,0,.9);
     }
     .tile.on {
-      border-color: rgba(216,112,0,0.85);
-      box-shadow: 0 0 0 1px rgba(216,112,0,0.4);
+      border-color: rgba(224,135,18,0.9);
+      box-shadow: 0 0 0 1px rgba(224,135,18,0.45), 0 8px 20px rgba(224,135,18,0.12);
     }
     .more-styles {
-      margin-top: .55rem; width: 100%;
+      margin-top: .35rem; width: 100%;
       border: 1px dashed var(--line); background: transparent;
-      color: var(--muted); border-radius: 10px; padding: .5rem;
-      cursor: pointer; font-size: .8rem;
+      color: var(--muted); border-radius: 10px; padding: .45rem;
+      cursor: pointer; font-size: .78rem;
     }
     .more-styles:hover { color: var(--fg); border-color: var(--line2); }
 
-    /* Theme pills as color orbs */
-    .themes { display: flex; flex-wrap: wrap; gap: .4rem; }
-    .theme {
-      display: inline-flex; align-items: center; gap: .4rem;
-      border: 1px solid var(--line); background: transparent;
-      border-radius: 999px; padding: .28rem .6rem .28rem .3rem;
-      cursor: pointer; font-size: .75rem; color: var(--muted);
-    }
-    .theme.on { border-color: var(--line2); color: var(--fg); background: rgba(255,255,255,0.04); }
-    .theme .orb {
-      width: 16px; height: 16px; border-radius: 50%;
-      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.15);
-    }
-
-    /* Icon multi-select */
-    .icon-grid { display: flex; flex-wrap: wrap; gap: .35rem; max-height: 200px; overflow: auto; }
-    .icon-chip {
-      border: 1px solid var(--line); background: #0a0c11; color: var(--muted);
-      border-radius: 999px; padding: .3rem .65rem; font-size: .75rem; cursor: pointer;
-    }
-    .icon-chip.on { color: var(--fg); border-color: rgba(106,168,255,0.45); background: rgba(74,144,226,0.1); }
-
-    /* Badge style chips */
+    /* Motion as chips (not a buried select) */
     .chips { display: flex; flex-wrap: wrap; gap: .35rem; }
     .chip {
       border: 1px solid var(--line); background: transparent; color: var(--muted);
-      border-radius: 999px; padding: .35rem .7rem; font-size: .78rem; cursor: pointer;
+      border-radius: 999px; padding: .32rem .65rem; font-size: .75rem; cursor: pointer;
+      transition: background .1s, color .1s, border-color .1s;
     }
-    .chip.on { color: var(--fg); border-color: var(--line2); background: rgba(255,255,255,0.05); }
+    .chip:hover { color: var(--fg); }
+    .chip.on {
+      color: var(--fg); border-color: rgba(91,157,255,0.45);
+      background: rgba(91,157,255,0.1);
+    }
 
-    .hint { color: var(--faint); font-size: .78rem; line-height: 1.45; margin: .35rem 0 0; }
+    .themes {
+      display: flex; flex-wrap: nowrap; gap: .35rem;
+      overflow-x: auto; padding-bottom: .25rem;
+    }
+    .theme {
+      display: inline-flex; align-items: center; gap: .35rem; flex-shrink: 0;
+      border: 1px solid var(--line); background: transparent;
+      border-radius: 999px; padding: .26rem .55rem .26rem .28rem;
+      cursor: pointer; font-size: .72rem; color: var(--muted);
+    }
+    .theme.on { border-color: var(--line2); color: var(--fg); background: rgba(255,255,255,0.04); }
+    .theme .orb {
+      width: 14px; height: 14px; border-radius: 50%;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.15);
+    }
+
+    .icon-grid { display: flex; flex-wrap: wrap; gap: .35rem; max-height: 180px; overflow: auto; }
+    .icon-chip {
+      border: 1px solid var(--line); background: #080a0f; color: var(--muted);
+      border-radius: 999px; padding: .28rem .6rem; font-size: .72rem; cursor: pointer;
+    }
+    .icon-chip.on { color: var(--fg); border-color: rgba(91,157,255,0.45); background: rgba(91,157,255,0.1); }
+
+    .hint { color: var(--faint); font-size: .74rem; line-height: 1.4; margin: .35rem 0 0; }
+    .range {
+      display: flex; align-items: center; gap: .65rem;
+    }
+    .range input[type=range] { flex: 1; accent-color: var(--accent); }
+    .range out {
+      font-family: var(--mono); font-size: .75rem; color: var(--muted);
+      min-width: 2.4rem; text-align: right;
+    }
 
     .toast {
-      position: fixed; left: 50%; bottom: 1.25rem; transform: translateX(-50%) translateY(140%);
+      position: fixed; left: 50%; bottom: 1.1rem; transform: translateX(-50%) translateY(140%);
       background: #151a24; border: 1px solid var(--line2); color: var(--fg);
-      padding: .65rem 1rem; border-radius: 999px; font-size: .85rem;
+      padding: .6rem .95rem; border-radius: 999px; font-size: .84rem;
       transition: transform .22s ease; z-index: 40;
     }
     .toast.show { transform: translateX(-50%) translateY(0); }
 
     footer {
-      margin-top: 0.65rem; padding-top: 0.55rem; border-top: 1px solid var(--line);
-      color: var(--faint); font-size: .75rem;
-      display: flex; flex-wrap: wrap; gap: .35rem 1rem; justify-content: space-between;
-      flex-shrink: 0;
+      color: var(--faint); font-size: .72rem;
+      display: flex; flex-wrap: wrap; gap: .3rem 1rem; justify-content: space-between;
     }
     code { font-family: var(--mono); font-size: .78em; }
+
+    @media (max-width: 920px) {
+      body { overflow: auto; }
+      .app {
+        height: auto; min-height: 100%;
+        grid-template-rows: auto auto auto auto;
+        overflow: visible;
+      }
+      .studio { display: flex; flex-direction: column; }
+      .pane.preview {
+        position: sticky; top: 0; z-index: 20;
+        max-height: min(44dvh, 360px);
+        box-shadow: 0 14px 32px rgba(0,0,0,0.5);
+      }
+      .preview-body { overflow: auto; }
+      .stage { min-height: 140px; padding: .7rem; }
+    }
   </style>
 </head>
 <body>
@@ -396,15 +369,7 @@
       <div class="live"><i></i> mark.sylphx.com</div>
     </div>
 
-    <header class="intro">
-      <h1>Make a mark worth pasting.</h1>
-      <p>
-        Live preview for every surface — banners, badges, stats, icons, brand kits.
-        Tune it until it feels right, then copy the snippet into your README.
-      </p>
-    </header>
-
-    <nav class="modes" id="modes" aria-label="Mark type">
+    <nav class="modes scroll" id="modes" aria-label="Mark type">
       <button type="button" data-mode="banner" class="active">Banner</button>
       <button type="button" data-mode="badge">Badge</button>
       <button type="button" data-mode="stats">Stats</button>
@@ -414,13 +379,12 @@
     </nav>
 
     <div class="studio">
-      <!-- Preview stays sticky while you tune controls -->
-      <section class="card studio-preview">
-        <div class="card-h">
+      <section class="pane preview">
+        <div class="pane-h">
           <strong id="previewTitle">Live preview</strong>
-          <span id="previewMeta">aurora · tokyonight</span>
+          <span id="previewMeta">wave · tokyonight</span>
         </div>
-        <div class="card-b">
+        <div class="pane-b preview-body scroll">
           <div class="stage" id="stage"><img id="preview" alt="Live preview" /></div>
           <div class="export">
             <div class="export-tabs">
@@ -428,24 +392,26 @@
               <button type="button" data-tab="html">HTML</button>
               <button type="button" data-tab="url">URL</button>
             </div>
-            <pre id="exportOut"></pre>
+            <pre class="scroll" id="exportOut"></pre>
           </div>
           <div class="actions">
-            <button type="button" class="btn btn-p" id="copyBtn">Copy</button>
+            <button type="button" class="btn btn-p" id="copyBtn">Copy snippet</button>
             <button type="button" class="btn btn-s" id="openBtn">Open image</button>
           </div>
         </div>
       </section>
 
-      <!-- Controls scroll independently -->
-      <aside class="card studio-controls">
-        <div class="card-h"><strong id="ctrlTitle">Banner</strong><span>Scroll to tune · preview stays</span></div>
-        <div class="card-b" id="controls"></div>
+      <aside class="pane controls">
+        <div class="pane-h">
+          <strong id="ctrlTitle">Banner</strong>
+          <span id="ctrlHint">Edit · preview stays</span>
+        </div>
+        <div class="pane-b controls-body scroll" id="controls"></div>
       </aside>
     </div>
 
     <footer>
-      <div>Product: <code>mark.sylphx.com</code> · runtime auto: <code>*.sylphx.app</code></div>
+      <div><code>mark.sylphx.com</code> · SVG embeds for READMEs</div>
       <div><a href="https://github.com/SylphxAI/mark">Source</a> · <a href="https://sylphx.com">Sylphx</a></div>
     </footer>
   </div>
@@ -453,14 +419,44 @@
 
   <script>
     const BASE = location.origin;
-    const FEATURED = ["plasma","holo","neon","meteor","liquid","prism","void","firefly","silk","iridescent","aurora","mesh","glass","orbit","wave","constellation"];
-    const ALL_STYLES = FEATURED.concat(["soft","horizon","dusk","beam","waving","terminal","grid","blur","ring","circuit","hud","pulse","noise","rounded","rect","slice","cylinder","checkered","egg","shark","venom","speech","product","oss","org","transparent"]);
+    // Wave first — signature classic; then SOTA + polished set
+    const FEATURED = [
+      "wave","waving","aurora","mesh","glass",
+      "plasma","holo","neon","meteor","liquid",
+      "prism","void","firefly","silk","iridescent",
+      "orbit","constellation"
+    ];
+    const ALL_STYLES = FEATURED.concat([
+      "soft","horizon","dusk","beam","terminal","grid","blur","ring","circuit","hud",
+      "pulse","noise","rounded","rect","slice","cylinder","checkered","egg","shark",
+      "venom","speech","product","oss","org","transparent"
+    ]);
+    const MOTIONS = [
+      ["ambient","Idle drift"],
+      ["rise","Rise in"],
+      ["fade","Fade in"],
+      ["wave","Wave text"],
+      ["float","Float"],
+      ["glow","Glow"],
+      ["bounce","Bounce"],
+      ["neon","Neon"],
+      ["type","Type"],
+      ["shimmer","Shimmer"],
+      ["glitch","Glitch"],
+      ["cascade","Cascade"],
+      ["slide","Slide"],
+      ["scale","Scale"],
+      ["orbit","Orbit"],
+      ["breathe","Breathe"],
+      ["none","Off"],
+    ];
     const THEMES = [
-      ["sylphx","#1A1A2E","#D87000"],["cubeage","#1A1A1A","#E03840"],["epiow","#0B1020","#7C3AED"],
-      ["ozyrix","#0A0A0A","#C9A227"],["kyle","#0F172A","#38BDF8"],["dark","#0D1117","#58A6FF"],
-      ["radical","#141321","#FE428E"],["tokyonight","#1A1B27","#7AA2F7"],["dracula","#282A36","#BD93F9"],
-      ["nord","#2E3440","#88C0D0"],["neon","#0A0A12","#00F5D4"],["ocean","#0B1D36","#00B4D8"],
-      ["sunset","#2B0A0A","#FF6B35"],["forest","#0B1F14","#52B788"],["github","#0D1117","#238636"],["light","#F6F8FA","#0969DA"]
+      ["tokyonight","#1A1B27","#7AA2F7"],["sylphx","#1A1A2E","#D87000"],["ocean","#0B1D36","#00B4D8"],
+      ["neon","#0A0A12","#00F5D4"],["dracula","#282A36","#BD93F9"],["nord","#2E3440","#88C0D0"],
+      ["dark","#0D1117","#58A6FF"],["radical","#141321","#FE428E"],["sunset","#2B0A0A","#FF6B35"],
+      ["forest","#0B1F14","#52B788"],["github","#0D1117","#238636"],["cubeage","#1A1A1A","#E03840"],
+      ["epiow","#0B1020","#7C3AED"],["ozyrix","#0A0A0A","#C9A227"],["kyle","#0F172A","#38BDF8"],
+      ["light","#F6F8FA","#0969DA"]
     ];
     const ICONS = ["rust","ts","js","go","python","react","node","docker","kubernetes","linux","git","github","postgres","redis","aws","bun","nextjs","vue","tailwind","graphql","nginx","cloudflare","vercel","sylphx"];
     const BADGE_STYLES = ["flat","plastic","for-the-badge","social","pill"];
@@ -469,7 +465,14 @@
       mode: "banner",
       tab: "md",
       showAllStyles: false,
-      banner: { type: "plasma", theme: "tokyonight", text: "Ship your next release", desc: "Paste this banner into your README", height: 220, animation: "rise" },
+      banner: {
+        type: "wave",
+        theme: "tokyonight",
+        text: "Ship your next release",
+        desc: "Paste this banner into your README",
+        height: 220,
+        animation: "rise",
+      },
       badge: { label: "build", message: "passing", color: "brightgreen", style: "flat" },
       stats: { user: "shtse8", theme: "dark" },
       icons: { selected: ["rust","ts","docker","kubernetes"], theme: "dark" },
@@ -491,7 +494,7 @@
     }
 
     function thumb(type) {
-      return `${BASE}/api/v1/banner?type=${type}&theme=dark&height=70&width=130&text=${encodeURIComponent(type)}&fontSize=16&credit=0`;
+      return `${BASE}/api/v1/banner?type=${type}&theme=tokyonight&height=72&width=140&text=${encodeURIComponent(type)}&fontSize=15&credit=0&animation=ambient`;
     }
 
     function currentUrl() {
@@ -542,26 +545,25 @@
     function schedule() {
       clearTimeout(timer);
       stage.classList.add("loading");
-      timer = setTimeout(refresh, 120);
+      timer = setTimeout(refresh, 100);
     }
 
     function refresh() {
-      // Bust browser/CDN cache so motion changes are visible immediately.
       const url = currentUrl();
       const bust = url.includes("?") ? `&_=${Date.now()}` : `?_=${Date.now()}`;
       preview.src = url + bust;
       exportOut.textContent = exportText();
       $("previewMeta").textContent = metaLabel();
       $("previewTitle").textContent = ({
-        banner: "Banner preview", badge: "Badge preview", stats: "Stats card",
-        icons: "Icon row", brand: "Brand card", deploy: "Deploy badge",
-      })[state.mode];
+        banner: "Banner", badge: "Badge", stats: "Stats",
+        icons: "Icons", brand: "Brand", deploy: "Deploy",
+      })[state.mode] + " preview";
     }
     preview.addEventListener("load", () => stage.classList.remove("loading"));
     preview.addEventListener("error", () => stage.classList.remove("loading"));
 
     function metaLabel() {
-      if (state.mode === "banner") return `${state.banner.type} · ${state.banner.theme}`;
+      if (state.mode === "banner") return `${state.banner.type} · ${state.banner.theme} · ${state.banner.animation}`;
       if (state.mode === "badge") return `${state.badge.style} · ${state.badge.color}`;
       if (state.mode === "stats") return `@${state.stats.user} · ${state.stats.theme}`;
       if (state.mode === "icons") return `${state.icons.selected.length} icons · ${state.icons.theme}`;
@@ -570,130 +572,189 @@
       return "";
     }
 
-    function themePills(selected, onPick) {
-      return `<div class="themes">${THEMES.map(([id,a,b]) =>
+    function themePills(selected) {
+      return `<div class="themes scroll">${THEMES.map(([id,a,b]) =>
         `<button type="button" class="theme ${selected===id?"on":""}" data-t="${id}">
           <span class="orb" style="background:linear-gradient(135deg,${a},${b})"></span>${id}
         </button>`).join("")}</div>`;
     }
 
-    function renderControls() {
-      const m = state.mode;
-      $("ctrlTitle").textContent = m[0].toUpperCase() + m.slice(1);
+    function styleFilm(styles, selected) {
+      return `<div class="film scroll" id="gallery">
+        ${styles.map(t => `
+          <button type="button" class="tile ${selected===t?"on":""}" data-type="${t}" title="${t}">
+            <img src="${thumb(t)}" alt="" loading="lazy" /><span>${t}</span>
+          </button>`).join("")}
+      </div>`;
+    }
 
-      if (m === "banner") {
-        const styles = state.showAllStyles ? ALL_STYLES : FEATURED;
-        controls.innerHTML = `
-          <div class="field">
-            <label>Style</label>
-            <div class="gallery" id="gallery">
-              ${styles.map(t => `
-                <button type="button" class="tile ${state.banner.type===t?"on":""}" data-type="${t}" title="${t}">
-                  <img src="${thumb(t)}" alt="" loading="lazy" /><span>${t}</span>
-                </button>`).join("")}
-            </div>
-            <button type="button" class="more-styles" id="moreStyles">${state.showAllStyles ? "Show curated only" : "Show all styles"}</button>
-            <p class="hint">Curated first. Everything else is available if you need it.</p>
-          </div>
-          <div class="field"><label>Theme</label>${themePills(state.banner.theme)}</div>
-          <div class="field"><label>Title</label><input id="f-text" value="${esc(state.banner.text)}" /></div>
-          <div class="field"><label>Description</label><input id="f-desc" value="${esc(state.banner.desc)}" /></div>
-          <div class="row">
-            <div class="field"><label>Height</label><input id="f-h" type="number" min="100" max="500" value="${state.banner.height}" /></div>
-            <div class="field"><label>Motion</label>
-              <select id="f-anim">
-                ${["none","ambient","fade","rise","scale","float","glow","breathe","slide","cascade","shimmer","glitch","wave","orbit","neon","bounce","type"].map(a =>
-                  `<option value="${a}" ${state.banner.animation===a?"selected":""}>${a}</option>`).join("")}
-              </select>
-              <p class="hint">SMIL motion works in the browser preview. Backgrounds always drift when motion ≠ none.</p>
-            </div>
-          </div>`;
-        bindBanner();
-        return;
-      }
-
-      if (m === "badge") {
-        controls.innerHTML = `
-          <div class="field"><label>Style</label>
-            <div class="chips" id="badgeStyles">${BADGE_STYLES.map(s =>
-              `<button type="button" class="chip ${state.badge.style===s?"on":""}" data-s="${s}">${s}</button>`).join("")}</div>
-          </div>
-          <div class="field"><label>Label</label><input id="f-label" value="${esc(state.badge.label)}" /></div>
-          <div class="field"><label>Message</label><input id="f-msg" value="${esc(state.badge.message)}" /></div>
-          <div class="field"><label>Color</label>
-            <input id="f-color" value="${esc(state.badge.color)}" list="colors" />
-            <datalist id="colors">
-              <option value="brightgreen"/><option value="green"/><option value="blue"/><option value="red"/>
-              <option value="orange"/><option value="yellow"/><option value="sylphx"/><option value="success"/>
-            </datalist>
-          </div>
-          <p class="hint">Same idea as shields.io — label + message + color.</p>`;
-        bindBadge();
-        return;
-      }
-
-      if (m === "stats") {
-        controls.innerHTML = `
-          <div class="field"><label>GitHub username</label><input id="f-user" value="${esc(state.stats.user)}" placeholder="octocat" /></div>
-          <div class="field"><label>Theme</label>${themePills(state.stats.theme)}</div>
-          <p class="hint">Uses the GitHub API (cached). Add GITHUB_TOKEN on the service for higher rate limits.</p>`;
-        bindStats();
-        return;
-      }
-
-      if (m === "icons") {
-        controls.innerHTML = `
-          <div class="field"><label>Stack</label>
-            <div class="icon-grid" id="iconGrid">${ICONS.map(i =>
-              `<button type="button" class="icon-chip ${state.icons.selected.includes(i)?"on":""}" data-i="${i}">${i}</button>`).join("")}</div>
-          </div>
-          <div class="field"><label>Theme</label>${themePills(state.icons.theme)}</div>
-          <p class="hint">Click to toggle. Order follows selection order.</p>`;
-        bindIcons();
-        return;
-      }
-
-      if (m === "brand") {
-        controls.innerHTML = `
-          <div class="field"><label>Brand</label>
-            <div class="chips" id="brands">${["sylphx","cubeage","epiow","ozyrix","kyle"].map(b =>
-              `<button type="button" class="chip ${state.brand.name===b?"on":""}" data-b="${b}">${b}</button>`).join("")}</div>
-          </div>
-          <div class="field"><label>Tagline (optional)</label><input id="f-tag" value="${esc(state.brand.tagline)}" placeholder="Leave blank for default" /></div>`;
-        bindBrand();
-        return;
-      }
-
-      if (m === "deploy") {
-        controls.innerHTML = `
-          <div class="field"><label>Service name</label><input id="f-svc" value="${esc(state.deploy.service)}" placeholder="my-app" /></div>
-          <div class="field"><label>Badge style</label>
-            <div class="chips" id="depStyles">${BADGE_STYLES.map(s =>
-              `<button type="button" class="chip ${state.deploy.style===s?"on":""}" data-s="${s}">${s}</button>`).join("")}</div>
-          </div>
-          <p class="hint">Promotion badge: “deployed on Sylphx”.</p>`;
-        bindDeploy();
-      }
+    function motionChips(selected) {
+      return `<div class="chips" id="motionChips">
+        ${MOTIONS.map(([id, label]) =>
+          `<button type="button" class="chip ${selected===id?"on":""}" data-a="${id}" title="${id}">${label}</button>`
+        ).join("")}
+      </div>`;
     }
 
     function esc(s) {
       return String(s ?? "").replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;");
     }
 
+    function renderControls() {
+      const m = state.mode;
+      $("ctrlTitle").textContent = m[0].toUpperCase() + m.slice(1);
+      $("ctrlHint").textContent = m === "banner" ? "Content → style → look" : "Tune live";
+
+      if (m === "banner") {
+        const styles = state.showAllStyles ? ALL_STYLES : FEATURED;
+        const b = state.banner;
+        controls.innerHTML = `
+          <section class="sec">
+            <div class="sec-h"><h3>Content</h3><span>What people read</span></div>
+            <div class="field"><label>Title</label><input id="f-text" value="${esc(b.text)}" autocomplete="off" /></div>
+            <div class="field"><label>Description</label><input id="f-desc" value="${esc(b.desc)}" autocomplete="off" /></div>
+          </section>
+
+          <section class="sec">
+            <div class="sec-h"><h3>Style</h3><span>Swipe · click to apply</span></div>
+            ${styleFilm(styles, b.type)}
+            <button type="button" class="more-styles" id="moreStyles">${state.showAllStyles ? "Show featured only" : "Browse all styles"}</button>
+          </section>
+
+          <section class="sec">
+            <div class="sec-h"><h3>Look</h3><span>Theme + motion</span></div>
+            <div class="field"><label>Theme</label>${themePills(b.theme)}</div>
+            <div class="field"><label>Motion</label>${motionChips(b.animation)}</div>
+          </section>
+
+          <section class="sec">
+            <div class="sec-h"><h3>Size</h3><span>Banner height</span></div>
+            <div class="range">
+              <input id="f-h" type="range" min="140" max="360" step="10" value="${b.height}" />
+              <out id="hOut">${b.height}px</out>
+            </div>
+          </section>`;
+        bindBanner();
+        // keep selected style visible in filmstrip
+        const on = controls.querySelector(".tile.on");
+        if (on) on.scrollIntoView({ inline: "center", block: "nearest", behavior: "smooth" });
+        return;
+      }
+
+      if (m === "badge") {
+        controls.innerHTML = `
+          <section class="sec">
+            <div class="sec-h"><h3>Content</h3></div>
+            <div class="field"><label>Label</label><input id="f-label" value="${esc(state.badge.label)}" /></div>
+            <div class="field"><label>Message</label><input id="f-msg" value="${esc(state.badge.message)}" /></div>
+            <div class="field"><label>Color</label>
+              <input id="f-color" value="${esc(state.badge.color)}" list="colors" />
+              <datalist id="colors">
+                <option value="brightgreen"/><option value="green"/><option value="blue"/><option value="red"/>
+                <option value="orange"/><option value="yellow"/><option value="success"/>
+              </datalist>
+            </div>
+          </section>
+          <section class="sec">
+            <div class="sec-h"><h3>Style</h3></div>
+            <div class="chips" id="badgeStyles">${BADGE_STYLES.map(s =>
+              `<button type="button" class="chip ${state.badge.style===s?"on":""}" data-s="${s}">${s}</button>`).join("")}</div>
+          </section>`;
+        bindBadge();
+        return;
+      }
+
+      if (m === "stats") {
+        controls.innerHTML = `
+          <section class="sec">
+            <div class="sec-h"><h3>GitHub</h3></div>
+            <div class="field"><label>Username</label><input id="f-user" value="${esc(state.stats.user)}" placeholder="octocat" /></div>
+          </section>
+          <section class="sec">
+            <div class="sec-h"><h3>Look</h3></div>
+            <div class="field"><label>Theme</label>${themePills(state.stats.theme)}</div>
+          </section>`;
+        bindStats();
+        return;
+      }
+
+      if (m === "icons") {
+        controls.innerHTML = `
+          <section class="sec">
+            <div class="sec-h"><h3>Stack</h3><span>Toggle · order preserved</span></div>
+            <div class="icon-grid scroll" id="iconGrid">${ICONS.map(i =>
+              `<button type="button" class="icon-chip ${state.icons.selected.includes(i)?"on":""}" data-i="${i}">${i}</button>`).join("")}</div>
+          </section>
+          <section class="sec">
+            <div class="sec-h"><h3>Look</h3></div>
+            <div class="field"><label>Theme</label>${themePills(state.icons.theme)}</div>
+          </section>`;
+        bindIcons();
+        return;
+      }
+
+      if (m === "brand") {
+        controls.innerHTML = `
+          <section class="sec">
+            <div class="sec-h"><h3>Brand</h3></div>
+            <div class="chips" id="brands">${["sylphx","cubeage","epiow","ozyrix","kyle"].map(b =>
+              `<button type="button" class="chip ${state.brand.name===b?"on":""}" data-b="${b}">${b}</button>`).join("")}</div>
+          </section>
+          <section class="sec">
+            <div class="sec-h"><h3>Copy</h3></div>
+            <div class="field"><label>Tagline (optional)</label><input id="f-tag" value="${esc(state.brand.tagline)}" placeholder="Leave blank for default" /></div>
+          </section>`;
+        bindBrand();
+        return;
+      }
+
+      if (m === "deploy") {
+        controls.innerHTML = `
+          <section class="sec">
+            <div class="sec-h"><h3>Service</h3></div>
+            <div class="field"><label>Name</label><input id="f-svc" value="${esc(state.deploy.service)}" placeholder="my-app" /></div>
+          </section>
+          <section class="sec">
+            <div class="sec-h"><h3>Badge style</h3></div>
+            <div class="chips" id="depStyles">${BADGE_STYLES.map(s =>
+              `<button type="button" class="chip ${state.deploy.style===s?"on":""}" data-s="${s}">${s}</button>`).join("")}</div>
+          </section>`;
+        bindDeploy();
+      }
+    }
+
     function bindBanner() {
-      document.querySelectorAll("#gallery .tile").forEach(el => el.onclick = () => {
-        state.banner.type = el.dataset.type; renderControls(); schedule();
+      document.querySelectorAll("#gallery .tile").forEach(el => {
+        el.onclick = () => {
+          state.banner.type = el.dataset.type;
+          // update selection without full re-render of inputs (keeps focus)
+          document.querySelectorAll("#gallery .tile").forEach(t => t.classList.toggle("on", t === el));
+          schedule();
+        };
       });
       $("moreStyles")?.addEventListener("click", () => {
-        state.showAllStyles = !state.showAllStyles; renderControls();
+        state.showAllStyles = !state.showAllStyles;
+        renderControls();
       });
       document.querySelectorAll(".theme").forEach(el => el.onclick = () => {
-        state.banner.theme = el.dataset.t; renderControls(); schedule();
+        state.banner.theme = el.dataset.t;
+        document.querySelectorAll(".theme").forEach(t => t.classList.toggle("on", t === el));
+        schedule();
+      });
+      document.querySelectorAll("#motionChips .chip").forEach(el => el.onclick = () => {
+        state.banner.animation = el.dataset.a;
+        document.querySelectorAll("#motionChips .chip").forEach(c => c.classList.toggle("on", c === el));
+        schedule();
       });
       $("f-text").oninput = e => { state.banner.text = e.target.value; schedule(); };
       $("f-desc").oninput = e => { state.banner.desc = e.target.value; schedule(); };
-      $("f-h").oninput = e => { state.banner.height = Number(e.target.value) || 220; schedule(); };
-      $("f-anim").onchange = e => { state.banner.animation = e.target.value; schedule(); };
+      const h = $("f-h");
+      const hOut = $("hOut");
+      h.oninput = e => {
+        state.banner.height = Number(e.target.value) || 220;
+        hOut.textContent = `${state.banner.height}px`;
+        schedule();
+      };
     }
     function bindBadge() {
       document.querySelectorAll("#badgeStyles .chip").forEach(el => el.onclick = () => {
@@ -735,7 +796,6 @@
       });
     }
 
-    // Modes
     document.querySelectorAll("#modes button").forEach(btn => {
       btn.onclick = () => {
         state.mode = btn.dataset.mode;
@@ -744,7 +804,6 @@
       };
     });
 
-    // Export tabs
     document.querySelectorAll(".export-tabs button").forEach(btn => {
       btn.onclick = () => {
         state.tab = btn.dataset.tab;

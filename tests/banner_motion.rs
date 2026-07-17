@@ -84,6 +84,27 @@ fn ambient_orbit_and_wave_have_background_smil() {
 }
 
 #[test]
+fn wave_and_waving_have_multi_layer_path_smil() {
+    for ty in ["wave", "waving"] {
+        let svg = banner::render(&BannerInput {
+            type_name: Some(ty.into()),
+            text: Some("Waves".into()),
+            animation: Some("ambient".into()),
+            credit: false,
+            height: Some(200),
+            ..Default::default()
+        });
+        let bg = strip_text_elements(&svg);
+        let path_anims = bg.matches("attributeName=\"d\"").count();
+        assert!(
+            path_anims >= 3,
+            "{ty} should morph multiple wave layers; path_anims={path_anims}"
+        );
+        assert!(bg.contains("stroke"), "{ty} should include foam crest stroke");
+    }
+}
+
+#[test]
 fn neon_bounce_type_text_motion_emit_smil() {
     for anim in ["neon", "bounce", "type"] {
         let svg = banner::render(&BannerInput {
