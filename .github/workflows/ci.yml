@@ -1,0 +1,22 @@
+name: CI
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  rust:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+      - name: Test
+        run: cargo test --locked
+      - name: Clippy (residual informational)
+        continue-on-error: true
+        run: cargo clippy --all-targets -- -D warnings
