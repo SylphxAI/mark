@@ -2,8 +2,6 @@ version = "1"
 
 [project]
 name = "Mark"
-slug = "mark"
-org = "sylphx"
 default_env = "production"
 
 [build]
