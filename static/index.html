@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Sylphx Mark</title>
+  <title>Mark — embeddable README art</title>
   <meta name="description" content="Beautiful embeddable SVG marks — product plates, banners, badges. Art-first." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -59,8 +59,9 @@
       margin: 0 auto;
       padding: 0.75rem 1rem 0.75rem;
       display: grid;
-      grid-template-rows: auto auto minmax(0, 1fr) auto;
-      gap: 0.65rem;
+      /* top | modes | optional more | studio | footer — only studio grows */
+      grid-template-rows: auto auto auto minmax(0, 1fr) auto;
+      gap: 0.55rem;
       min-width: 0;
     }
 
@@ -348,7 +349,7 @@
       body { overflow: auto; }
       .app {
         height: auto; min-height: 100%;
-        grid-template-rows: auto auto auto auto;
+        grid-template-rows: auto auto auto auto auto;
         overflow: visible;
       }
       .studio { display: flex; flex-direction: column; }
@@ -397,13 +398,21 @@
     }
     .modes .adv.on { opacity: 1; }
     .subnav {
-      display:flex; gap:.4rem; flex-wrap:wrap; margin-top: .35rem;
+      display: flex; gap: .45rem; flex-wrap: wrap; align-items: center;
+      margin: 0; min-height: 0;
+    }
+    .subnav[hidden] {
+      display: none !important;
     }
     .subnav button {
-      border: 1px dashed var(--line); background: transparent; color: var(--faint);
-      border-radius: 8px; padding: .25rem .5rem; font-size: .7rem; cursor: pointer;
+      border: 1px solid var(--line); background: rgba(255,255,255,0.02); color: var(--muted);
+      border-radius: 999px; padding: .28rem .65rem; font-size: .72rem; cursor: pointer;
+      min-height: 0; height: auto; width: auto;
     }
-    .subnav button:hover, .subnav button.on { color: var(--muted); border-color: var(--line2); }
+    .subnav button:hover, .subnav button.on {
+      color: var(--fg); border-color: var(--line2); background: rgba(255,255,255,0.04);
+    }
+    .subnav .hint { margin: 0; }
     .brand-name { display:flex; flex-direction:column; line-height:1.1; }
     .brand-name strong { font-size: 1rem; }
     .brand-name span { font-size: .68rem; color: var(--faint); font-weight: 500; }
@@ -562,7 +571,9 @@
     function randomOf(arr) {
       return arr[Math.floor(Math.random() * arr.length)];
     }
-    function surpriseLook(keepText = true) {
+    function surpriseLook(opts = {}) {
+      const keepText = opts.keepText !== false;
+      const base = opts.base || {};
       const palette = randomOf(PALETTES.filter(p => p.id !== "mono-ink"));
       return {
         type: randomOf(STYLES_POOL),
@@ -571,9 +582,9 @@
         theme: "", // palette mode — no IDE theme
         animation: randomOf(MOTION_POOL),
         layout: Math.random() < 0.18 ? "plate" : "default",
-        text: keepText ? state.banner.text : "Ship your next release",
-        desc: keepText ? state.banner.desc : "Multi-color art for your README",
-        height: state.banner.height || 220,
+        text: keepText && base.text != null ? base.text : "Ship your next release",
+        desc: keepText && base.desc != null ? base.desc : "Multi-color art for your README",
+        height: base.height || 220,
       };
     }
 
@@ -586,7 +597,7 @@
           if (parsed && parsed.color) return parsed;
         }
       } catch (_) {}
-      const look = surpriseLook(false);
+      const look = surpriseLook({ keepText: false, base: { height: 220 } });
       // Prefer a vivid default if surprise rolls mono
       if (!look.color) {
         const p = findPalette("orchid-mint");
@@ -1056,28 +1067,43 @@
     };
     $("openBtn").onclick = () => window.open(currentUrl(), "_blank");
     $("surpriseBtn").onclick = () => {
-      const text = state.banner.text;
-      const desc = state.banner.desc;
-      const height = state.banner.height;
-      Object.assign(state.banner, surpriseLook(true));
-      state.banner.text = text;
-      state.banner.desc = desc;
-      state.banner.height = height;
+      Object.assign(
+        state.banner,
+        surpriseLook({
+          keepText: true,
+          base: {
+            text: state.banner.text,
+            desc: state.banner.desc,
+            height: state.banner.height,
+          },
+        }),
+      );
       state.mode = "banner";
       setMode("banner");
       toast("New multi-color look");
     };
 
     // Ensure first paint has a multi-color palette
-    if (!state.banner.color && !state.banner.theme) {
-      applyPalette("orchid-mint");
-    } else if (state.banner.color && !state.banner.paletteId) {
-      const hit = PALETTES.find(p => paletteColorParam(p) === state.banner.color);
-      if (hit) state.banner.paletteId = hit.id;
+    try {
+      if (!state.banner.color && !state.banner.theme) {
+        applyPalette("orchid-mint");
+      } else if (state.banner.color && !state.banner.paletteId) {
+        const hit = PALETTES.find(p => paletteColorParam(p) === state.banner.color);
+        if (hit) state.banner.paletteId = hit.id;
+      }
+      // Keep optional tools collapsed on boot
+      state.showMoreNav = false;
+      const moreNav = $("moreNav");
+      if (moreNav) moreNav.hidden = true;
+      renderControls();
+      schedule();
+    } catch (err) {
+      console.error(err);
+      const el = $("controls");
+      if (el) {
+        el.innerHTML = `<section class="sec"><p class="hint">Studio failed to start: ${String(err && err.message || err)}</p></section>`;
+      }
     }
-
-    renderControls();
-    schedule();
   </script>
 </body>
 </html>
