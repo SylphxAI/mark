@@ -1,6 +1,11 @@
 # Mark — local agent notes
 
-Doctrine law lives in the host constitution. This file is local commands/hazards only.
+Static engineering and delivery standards load from the active Skills runtime
+([SylphxAI/skills](https://github.com/SylphxAI/skills) is binding instruction
+SSOT). Doctrine and Mission Control are retired historical lineage and must not
+be loaded as current instruction authority.
+
+This file is local commands/hazards only.
 
 ## Local commands
 
