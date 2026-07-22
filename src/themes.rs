@@ -230,20 +230,25 @@ pub const PALETTE: &[&str] = &[
 ];
 
 pub const GRADIENTS: &[(&str, &str)] = &[
-    ("667EEA", "764BA2"),
+    // High-chroma signature pairs (capsule-class liquid fields)
+    ("667EEA", "F093FB"),
     ("F093FB", "F5576C"),
     ("4FACFE", "00F2FE"),
     ("43E97B", "38F9D7"),
     ("FA709A", "FEE140"),
-    ("D87000", "4A90E2"),
-    ("4338CA", "7C3AED"),
-    ("E03840", "1A1A1A"),
-    ("0B1020", "7C3AED"),
+    ("FF6B35", "F15BB5"),
+    ("7C3AED", "00F5D4"),
+    ("E03840", "FF6B35"),
     ("00F5D4", "F15BB5"),
-    ("FF6B35", "F7C59F"),
-    ("2D6A4F", "95D5B2"),
+    ("FF6B35", "FEE140"),
+    ("4338CA", "F093FB"),
+    ("0EA5E9", "A78BFA"),
+    ("F43F5E", "FB923C"),
+    ("14B8A6", "6366F1"),
+    ("D87000", "4A90E2"),
     ("1A1B27", "7AA2F7"),
-    ("282A36", "BD93F9"),
+    ("282A36", "FF79C6"),
+    ("2D6A4F", "95D5B2"),
 ];
 
 pub fn hash_seed(s: &str) -> u32 {

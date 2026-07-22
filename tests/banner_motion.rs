@@ -188,3 +188,21 @@ fn credit_on_uses_mark_product_watermark_not_company_brand() {
     assert!(svg.contains(">mark</text>"));
     assert!(!svg.contains(">sylphx</text>"));
 }
+
+#[test]
+fn animation_none_freezes_wave_blobs_too() {
+    let svg = banner::render(&BannerInput {
+        type_name: Some("wave".into()),
+        theme: Some("sunset".into()),
+        text: Some("Static Wave".into()),
+        animation: Some("none".into()),
+        credit: false,
+        ..Default::default()
+    });
+    let bg = strip_text_elements(&svg);
+    assert_eq!(
+        count_smil(&bg),
+        0,
+        "wave + animation=none must freeze blob and path SMIL"
+    );
+}

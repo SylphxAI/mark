@@ -135,39 +135,29 @@ fn typewriter_line(
     nodes
 }
 
-fn plate_chrome(width: u32, height: u32, mono: &str, accent: &str, ink: &str) -> String {
-    let wf = width as f32;
+fn plate_chrome(
+    width: u32,
+    height: u32,
+    mono: &str,
+    accent: &str,
+    base: &str,
+    warm: &str,
+    glow: &str,
+    ink: &str,
+) -> String {
     let hf = height as f32;
-    // Left calm field so type always wins over decorative backgrounds
-    let scrim_w = wf * 0.62;
-    let tile = (hf * 0.12).clamp(48.0, 80.0);
-    let tile_x = wf * 0.052;
-    let tile_y = hf * 0.12;
-    let mono_size = (tile * 0.36).clamp(18.0, 30.0);
-    let rule_y = tile_y + tile + hf * 0.04;
-    let rule_w = (wf * 0.055).clamp(36.0, 72.0);
+    let wf = width as f32;
+    // Left calm field so type always wins — tinted, not pure black.
+    let scrim_w = (wf * 0.46).clamp(180.0, 420.0);
+    let tile = (hf * 0.28).clamp(56.0, 120.0);
+    let tile_x = wf * 0.055;
+    let tile_y = hf * 0.14;
     format!(
-        "<defs>\
-           <linearGradient id=\"plateScrim\" x1=\"0%\" y1=\"0%\" x2=\"100%\" y2=\"0%\">\
-             <stop offset=\"0%\" stop-color=\"#000000\" stop-opacity=\"0.48\"/>\
-             <stop offset=\"55%\" stop-color=\"#000000\" stop-opacity=\"0.18\"/>\
-             <stop offset=\"100%\" stop-color=\"#000000\" stop-opacity=\"0\"/>\
-           </linearGradient>\
-           <linearGradient id=\"plateTile\" x1=\"0%\" y1=\"0%\" x2=\"100%\" y2=\"100%\">\
-             <stop offset=\"0%\" stop-color=\"{accent}\" stop-opacity=\"0.22\"/>\
-             <stop offset=\"100%\" stop-color=\"{accent}\" stop-opacity=\"0.08\"/>\
-           </linearGradient>\
-         </defs>\
-         <rect x=\"0\" y=\"0\" width=\"{scrim_w}\" height=\"{hf}\" fill=\"url(#plateScrim)\"/>\
-         <rect x=\"{tile_x}\" y=\"{tile_y}\" width=\"{tile}\" height=\"{tile}\" rx=\"{rx}\" \
-           fill=\"url(#plateTile)\" stroke=\"{accent}\" stroke-opacity=\"0.62\" stroke-width=\"1.5\"/>\
-         <text x=\"{mx}\" y=\"{my}\" text-anchor=\"middle\" dominant-baseline=\"middle\" \
-           font-family=\"ui-sans-serif,system-ui,sans-serif\" font-weight=\"700\" font-size=\"{mono_size}\" \
-           fill=\"{ink}\" letter-spacing=\"0.06em\">{mono}</text>\
-         <rect x=\"{tile_x}\" y=\"{rule_y}\" width=\"{rule_w}\" height=\"2\" rx=\"1\" fill=\"{accent}\" fill-opacity=\"0.55\"/>",
-        rx = tile * 0.24,
-        mx = tile_x + tile / 2.0,
-        my = tile_y + tile / 2.0,
+        "         <defs>           <linearGradient id=\"plateScrim\" x1=\"0%\" y1=\"0%\" x2=\"100%\" y2=\"0%\">             <stop offset=\"0%\" stop-color=\"{base}\" stop-opacity=\"0.72\"/>             <stop offset=\"55%\" stop-color=\"{base}\" stop-opacity=\"0.28\"/>             <stop offset=\"100%\" stop-color=\"{base}\" stop-opacity=\"0\"/>           </linearGradient>           <linearGradient id=\"plateTile\" x1=\"0%\" y1=\"0%\" x2=\"100%\" y2=\"100%\">             <stop offset=\"0%\" stop-color=\"{accent}\" stop-opacity=\"0.95\"/>             <stop offset=\"55%\" stop-color=\"{warm}\" stop-opacity=\"0.72\"/>             <stop offset=\"100%\" stop-color=\"{glow}\" stop-opacity=\"0.55\"/>           </linearGradient>           <radialGradient id=\"plateGlow\" cx=\"35%\" cy=\"30%\" r=\"70%\">             <stop offset=\"0%\" stop-color=\"{glow}\" stop-opacity=\"0.55\"/>             <stop offset=\"100%\" stop-color=\"{accent}\" stop-opacity=\"0\"/>           </radialGradient>         </defs>         <rect x=\"0\" y=\"0\" width=\"{scrim_w}\" height=\"{hf}\" fill=\"url(#plateScrim)\"/>         <rect x=\"{tile_x}\" y=\"{tile_y}\" width=\"{tile}\" height=\"{tile}\" rx=\"{rx}\"            fill=\"url(#plateTile)\" stroke=\"{accent}\" stroke-opacity=\"0.75\" stroke-width=\"1.5\"/>         <rect x=\"{tile_x}\" y=\"{tile_y}\" width=\"{tile}\" height=\"{tile}\" rx=\"{rx}\" fill=\"url(#plateGlow)\"/>         <text x=\"{tx}\" y=\"{ty}\" text-anchor=\"middle\" dominant-baseline=\"middle\"            font-family=\"ui-sans-serif,system-ui,sans-serif\" font-weight=\"750\"            font-size=\"{fs}\" letter-spacing=\"-0.04em\" fill=\"{ink}\">{mono}</text>",
+        rx = (tile * 0.18).clamp(10.0, 22.0),
+        tx = tile_x + tile / 2.0,
+        ty = tile_y + tile / 2.0 + 1.0,
+        fs = (tile * 0.38).clamp(22.0, 48.0),
         mono = esc(mono),
     )
 }
@@ -370,7 +360,10 @@ pub fn render(input: &BannerInput) -> String {
             width,
             height,
             &monogram(text),
-            &font_color,
+            &fill.accent,
+            &fill.base,
+            &fill.warm,
+            &fill.glow,
             &font_color,
         )
     } else {
@@ -392,8 +385,8 @@ pub fn render(input: &BannerInput) -> String {
     let body = format!(
         "<defs>{}{}</defs>{}{}{}{}{}{}",
         fill.defs,
-        shape_defs(ty, gain),
-        shape_background(ty, width, height, &fill.fill, section, input.reversal, gain),
+        shape_defs(ty, gain, &fill),
+        shape_background(ty, width, height, &fill, section, input.reversal, gain),
         plate,
         terminal_rule,
         text_nodes,

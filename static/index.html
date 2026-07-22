@@ -472,12 +472,12 @@
       showAllStyles: false,
       banner: {
         type: "wave",
-        theme: "tokyonight",
+        theme: "sunset",
         text: "Ship your next release",
-        desc: "Quiet field. Clear name. Your brand.",
+        desc: "Living color. Clear name. Your brand.",
         height: 220,
-        animation: "none",
-        layout: "plate",
+        animation: "ambient",
+        layout: "default",
       },
       badge: { label: "build", message: "passing", color: "brightgreen", style: "flat" },
       stats: { user: "shtse8", theme: "dark" },
@@ -500,7 +500,7 @@
     }
 
     function thumb(type) {
-      return `${BASE}/api/v1/banner?type=${type}&theme=tokyonight&height=72&width=140&text=${encodeURIComponent(type)}&fontSize=15&credit=0&animation=ambient`;
+      return `${BASE}/api/v1/banner?type=${type}&theme=sunset&height=72&width=140&text=${encodeURIComponent(type)}&fontSize=15&credit=0&animation=ambient`;
     }
 
     function currentUrl() {

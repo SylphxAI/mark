@@ -2,6 +2,8 @@
 //!
 //! `gain` (0..1) scales motion intensity; 0 freezes decorative layers.
 
+use crate::color::FillPlan;
+
 pub const BANNER_TYPES: &[&str] = &[
     // SOTA showcase first
     "plasma",
@@ -83,47 +85,14 @@ pub fn normalize_type(v: &str) -> &'static str {
         .unwrap_or("aurora")
 }
 
-pub fn shape_defs(ty: &str, gain: f32) -> String {
-    let mut d = String::new();
-    d.push_str(
+pub fn shape_defs(ty: &str, gain: f32, plan: &FillPlan) -> String {
+    // Filters only — chromatic gradients live on FillPlan (mgSheen/mgHolo/mgDrift…).
+    let mut d = String::from(
         r##"<filter id="softGlow" x="-30%" y="-30%" width="160%" height="160%">
           <feGaussianBlur stdDeviation="26" result="b"/>
           <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
         </filter>
         <filter id="blurf"><feGaussianBlur stdDeviation="34"/></filter>
-        <linearGradient id="shine" x1="0%" y1="0%" x2="0%" y2="100%">
-          <stop offset="0%" stop-color="#ffffff" stop-opacity="0.14"/>
-          <stop offset="45%" stop-color="#ffffff" stop-opacity="0"/>
-        </linearGradient>
-        <radialGradient id="vignette" cx="50%" cy="40%" r="75%">
-          <stop offset="0%" stop-color="#ffffff" stop-opacity="0"/>
-          <stop offset="100%" stop-color="#000000" stop-opacity="0.28"/>
-        </radialGradient>
-        <linearGradient id="scan" x1="0%" y1="0%" x2="0%" y2="100%">
-          <stop offset="0%" stop-color="#ffffff" stop-opacity="0"/>
-          <stop offset="45%" stop-color="#ffffff" stop-opacity="0.12"/>
-          <stop offset="55%" stop-color="#ffffff" stop-opacity="0.12"/>
-          <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
-        </linearGradient>"##,
-    );
-    if ty == "glass" {
-        d.push_str(
-            r##"<linearGradient id="glassEdge" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stop-color="#ffffff" stop-opacity="0.38"/>
-              <stop offset="50%" stop-color="#ffffff" stop-opacity="0.06"/>
-              <stop offset="100%" stop-color="#ffffff" stop-opacity="0.2"/>
-            </linearGradient>"##,
-        );
-    }
-    // Shared SOTA filters/gradients (always present — styles reference them even when gain=0).
-    d.push_str(
-        r##"<linearGradient id="holoSweep" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stop-color="#ff6ad5" stop-opacity="0"/>
-          <stop offset="35%" stop-color="#7a5cff" stop-opacity="0.35"/>
-          <stop offset="55%" stop-color="#3de7ff" stop-opacity="0.28"/>
-          <stop offset="75%" stop-color="#ffe66d" stop-opacity="0.22"/>
-          <stop offset="100%" stop-color="#ff6ad5" stop-opacity="0"/>
-        </linearGradient>
         <filter id="neonGlow" x="-40%" y="-40%" width="180%" height="180%">
           <feGaussianBlur stdDeviation="6" result="b"/>
           <feMerge><feMergeNode in="b"/><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
@@ -134,24 +103,56 @@ pub fn shape_defs(ty: &str, gain: f32) -> String {
           <feMerge><feMergeNode in="c"/><feMergeNode in="SourceGraphic"/></feMerge>
         </filter>"##,
     );
-    // slow drifting gradient for ambient sheen (animated only when gain > 0)
-    if gain > 0.01 {
-        d.push_str(
-            r##"<linearGradient id="drift" x1="0%" y1="0%" x2="100%" y2="0%">
-              <stop offset="0%" stop-color="#ffffff" stop-opacity="0">
-                <animate attributeName="offset" values="-0.2;1.2;-0.2" dur="9s" repeatCount="indefinite"/>
-              </stop>
-              <stop offset="50%" stop-color="#ffffff" stop-opacity="0.16">
-                <animate attributeName="offset" values="0.15;0.85;0.15" dur="9s" repeatCount="indefinite"/>
-              </stop>
-              <stop offset="100%" stop-color="#ffffff" stop-opacity="0">
-                <animate attributeName="offset" values="0.5;1.4;0.5" dur="9s" repeatCount="indefinite"/>
-              </stop>
+    if ty == "glass" {
+        d.push_str(&format!(
+            r##"<linearGradient id="glassEdge" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="{glow}" stop-opacity="0.42"/>
+              <stop offset="50%" stop-color="{accent}" stop-opacity="0.08"/>
+              <stop offset="100%" stop-color="{warm}" stop-opacity="0.28"/>
             </linearGradient>"##,
-        );
+            glow = plan.glow,
+            accent = plan.accent,
+            warm = plan.warm,
+        ));
+    }
+    // Keep aliases so legacy shape markup still resolves when gain freezes drift animation.
+    d.push_str(
+        r##"<linearGradient id="shine" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stop-color="#ffffff" stop-opacity="0.06"/>
+          <stop offset="45%" stop-color="#ffffff" stop-opacity="0"/>
+        </linearGradient>
+        <radialGradient id="vignette" cx="50%" cy="40%" r="75%">
+          <stop offset="0%" stop-color="#ffffff" stop-opacity="0"/>
+          <stop offset="100%" stop-color="#000000" stop-opacity="0.18"/>
+        </radialGradient>
+        <linearGradient id="holoSweep" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#ffffff" stop-opacity="0"/>
+          <stop offset="50%" stop-color="#ffffff" stop-opacity="0.08"/>
+          <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
+        </linearGradient>"##,
+    );
+    if gain > 0.01 {
+        d.push_str(&format!(
+            concat!(
+                r##"<linearGradient id="mgDriftAnim" x1="0%" y1="0%" x2="100%" y2="0%">"##,
+                r##"<stop offset="0%" stop-color="{edge}" stop-opacity="0">"##,
+                r##"<animate attributeName="offset" values="-0.25;1.15;-0.25" dur="8.5s" repeatCount="indefinite"/>"##,
+                r##"</stop>"##,
+                r##"<stop offset="45%" stop-color="{warm}" stop-opacity="0.28">"##,
+                r##"<animate attributeName="offset" values="0.1;0.9;0.1" dur="8.5s" repeatCount="indefinite"/>"##,
+                r##"</stop>"##,
+                r##"<stop offset="100%" stop-color="{end}" stop-opacity="0">"##,
+                r##"<animate attributeName="offset" values="0.45;1.35;0.45" dur="8.5s" repeatCount="indefinite"/>"##,
+                r##"</stop></linearGradient>"##,
+            ),
+            edge = plan.accent,
+            warm = plan.warm,
+            end = plan.accent2,
+        ));
     }
     d
 }
+
 
 fn wrap(transforms: &[String], inner: String) -> String {
     if transforms.is_empty() {
@@ -165,20 +166,33 @@ fn base_fill(w: u32, h: u32, fill: &str) -> String {
     format!("<rect width=\"{w}\" height=\"{h}\" fill=\"{fill}\"/>")
 }
 
-fn sheen(w: u32, h: u32, gain: f32) -> String {
+fn field_stack(w: u32, h: u32, plan: &FillPlan) -> String {
+    format!(
+        "{base}<rect width=\"{w}\" height=\"{h}\" fill=\"url(#mgBloom)\" opacity=\"0.85\"/>\
+         <rect width=\"{w}\" height=\"{h}\" fill=\"url(#mgBloom2)\" opacity=\"0.7\"/>",
+        base = base_fill(w, h, &plan.fill),
+    )
+}
+
+fn sheen(w: u32, h: u32, gain: f32, _plan: &FillPlan) -> String {
+    // Accent-tinted gloss — never a heavy white wash.
     if gain > 0.01 {
         format!(
-            "<rect width=\"{w}\" height=\"{h}\" fill=\"url(#shine)\"/>\
-             <rect width=\"{w}\" height=\"{h}\" fill=\"url(#drift)\" opacity=\"{o:.2}\"/>",
-            o = 0.55 * gain
+            "<rect width=\"{w}\" height=\"{h}\" fill=\"url(#mgSheen)\" opacity=\"0.9\"/>\
+             <rect width=\"{w}\" height=\"{h}\" fill=\"url(#mgDriftAnim)\" opacity=\"{o:.2}\"/>\
+             <rect width=\"{w}\" height=\"{h}\" fill=\"url(#mgBloom)\" opacity=\"0.55\"/>",
+            o = 0.72 * gain
         )
     } else {
-        format!("<rect width=\"{w}\" height=\"{h}\" fill=\"url(#shine)\"/>")
+        format!(
+            "<rect width=\"{w}\" height=\"{h}\" fill=\"url(#mgSheen)\" opacity=\"0.75\"/>\
+             <rect width=\"{w}\" height=\"{h}\" fill=\"url(#mgBloom)\" opacity=\"0.4\"/>"
+        )
     }
 }
 
-fn vignette(w: u32, h: u32) -> String {
-    format!("<rect width=\"{w}\" height=\"{h}\" fill=\"url(#vignette)\"/>")
+fn vignette(w: u32, h: u32, _plan: &FillPlan) -> String {
+    format!("<rect width=\"{w}\" height=\"{h}\" fill=\"url(#mgVig)\"/>")
 }
 
 /// Soft blob that drifts when gain > 0.
@@ -234,11 +248,19 @@ pub fn shape_background(
     ty: &str,
     w: u32,
     h: u32,
-    fill: &str,
+    plan: &FillPlan,
     section: &str,
     reversal: bool,
     gain: f32,
 ) -> String {
+    let fill = plan.fill.as_str();
+    let accent = plan.accent.as_str();
+    let accent2 = plan.accent2.as_str();
+    let warm = plan.warm.as_str();
+    let glow = plan.glow.as_str();
+    let base = plan.base.as_str();
+    let mid = plan.mid.as_str();
+    let _ = mid; // available for type arms that want mid-field paint
     let mut transforms = Vec::new();
     if reversal {
         transforms.push(format!("translate({w},0) scale(-1,1)"));
@@ -257,38 +279,39 @@ pub fn shape_background(
         "plasma" => {
             let layers = format!(
                 "{a}{b}{c}{d}{e}",
-                a = blob(wf * 0.15, hf * 0.4, wf * 0.34, hf * 0.7, "#ff4ecd", 0.28, g, wf * 0.1, hf * 0.12, 8.0, 0.0),
-                b = blob(wf * 0.55, hf * 0.2, wf * 0.4, hf * 0.55, "#6c5ce7", 0.32, g, -wf * 0.08, hf * 0.1, 9.5, 0.4),
-                c = blob(wf * 0.85, hf * 0.55, wf * 0.32, hf * 0.6, "#00d2ff", 0.26, g, -wf * 0.06, -hf * 0.1, 7.5, 0.9),
-                d = blob(wf * 0.4, hf * 0.85, wf * 0.28, hf * 0.4, "#ffe66d", 0.18, g, wf * 0.05, -hf * 0.08, 10.0, 1.2),
-                e = blob(wf * 0.7, hf * 0.15, wf * 0.22, hf * 0.35, "#ffffff", 0.12, g, -wf * 0.04, hf * 0.06, 6.5, 0.2),
+                a = blob(wf * 0.15, hf * 0.4, wf * 0.34, hf * 0.7, accent, 0.36, g, wf * 0.1, hf * 0.12, 8.0, 0.0),
+                b = blob(wf * 0.55, hf * 0.2, wf * 0.4, hf * 0.55, accent2, 0.38, g, -wf * 0.08, hf * 0.1, 9.5, 0.4),
+                c = blob(wf * 0.85, hf * 0.55, wf * 0.32, hf * 0.6, warm, 0.32, g, -wf * 0.06, -hf * 0.1, 7.5, 0.9),
+                d = blob(wf * 0.4, hf * 0.85, wf * 0.28, hf * 0.4, glow, 0.24, g, wf * 0.05, -hf * 0.08, 10.0, 1.2),
+                e = blob(wf * 0.72, hf * 0.18, wf * 0.24, hf * 0.36, accent, 0.18, g, -wf * 0.04, hf * 0.06, 6.5, 0.2),
             );
             format!(
-                "{base}{layers}\
-                 <rect width=\"{w}\" height=\"{h}\" fill=\"url(#holoSweep)\" opacity=\"0.35\">\
-                   {sweep}\
-                 </rect>\
-                 {sheen}{vig}",
-                base = base_fill(w, h, fill),
+                "{base}{layers}                 <rect width=\"{w}\" height=\"{h}\" fill=\"url(#mgHolo)\" opacity=\"0.58\">                   {sweep}                 </rect>                 {sheen}{vig}",
+                base = field_stack(w, h, plan),
                 sweep = if g > 0.01 {
-                    "<animateTransform attributeName=\"transform\" type=\"translate\" values=\"-80 0; 80 0; -80 0\" dur=\"7s\" repeatCount=\"indefinite\"/>"
+                    "<animateTransform attributeName=\"transform\" type=\"translate\" values=\"-90 0; 90 0; -90 0\" dur=\"7s\" repeatCount=\"indefinite\"/>"
                 } else {
                     ""
                 },
-                sheen = sheen(w, h, g),
-                vig = vignette(w, h),
+                sheen = sheen(w, h, g, plan),
+                vig = vignette(w, h, plan),
             )
         }
 
-        "holo" => {
+                "holo" => {
             let bars: String = (0..8)
                 .map(|i| {
                     let x = wf * (0.05 + i as f32 * 0.12);
-                    let o = 0.04 + (i % 3) as f32 * 0.03;
+                    let o = 0.05 + (i % 3) as f32 * 0.035;
+                    let color = match i % 3 {
+                        0 => accent,
+                        1 => warm,
+                        _ => glow,
+                    };
                     let anim = if g > 0.01 {
                         format!(
                             "<animate attributeName=\"opacity\" values=\"{o};{o2};{o}\" dur=\"{dur}s\" begin=\"{b}s\" repeatCount=\"indefinite\"/>",
-                            o2 = o * 2.4,
+                            o2 = (o * 2.6).min(0.42),
                             dur = 2.8 + (i as f32) * 0.25,
                             b = i as f32 * 0.15,
                         )
@@ -296,36 +319,30 @@ pub fn shape_background(
                         String::new()
                     };
                     format!(
-                        "<rect x=\"{x}\" y=\"0\" width=\"{bw}\" height=\"{h}\" fill=\"#ffffff\" opacity=\"{o}\">{anim}</rect>",
-                        bw = wf * 0.04,
+                        "<rect x=\"{x}\" y=\"0\" width=\"{bw}\" height=\"{h}\" fill=\"{color}\" opacity=\"{o}\">{anim}</rect>",
+                        bw = wf * 0.045,
                     )
                 })
                 .collect();
             format!(
-                "{base}\
-                 <rect width=\"{w}\" height=\"{h}\" fill=\"url(#holoSweep)\">\
-                   {holo_anim}\
-                 </rect>\
-                 {bars}\
-                 {glow}\
-                 {sheen}{vig}",
-                base = base_fill(w, h, fill),
+                "{base}                 <rect width=\"{w}\" height=\"{h}\" fill=\"url(#mgHolo)\" opacity=\"0.85\">                   {holo_anim}                 </rect>                 {bars}                 {glow_blob}                 {sheen}{vig}",
+                base = field_stack(w, h, plan),
                 holo_anim = if g > 0.01 {
                     format!(
                         "<animateTransform attributeName=\"transform\" type=\"translate\" values=\"0 0; {dx} {dy}; 0 0\" dur=\"6s\" repeatCount=\"indefinite\"/>",
-                        dx = wf * 0.08,
-                        dy = -hf * 0.04,
+                        dx = wf * 0.1,
+                        dy = -hf * 0.05,
                     )
                 } else {
                     String::new()
                 },
-                glow = blob(wf * 0.5, hf * 0.5, wf * 0.35, hf * 0.45, "#a78bfa", 0.15, g, wf * 0.05, hf * 0.04, 8.0, 0.0),
-                sheen = sheen(w, h, g),
-                vig = vignette(w, h),
+                glow_blob = blob(wf * 0.7, hf * 0.35, wf * 0.28, hf * 0.45, accent, 0.2, g, -wf * 0.05, hf * 0.04, 8.0, 0.3),
+                sheen = sheen(w, h, g, plan),
+                vig = vignette(w, h, plan),
             )
         }
 
-        "neon" => {
+                "neon" => {
             let frame = if g > 0.01 {
                 format!(
                     "<rect x=\"10\" y=\"10\" width=\"{iw}\" height=\"{ih}\" rx=\"14\" fill=\"none\" stroke=\"#00f5d4\" stroke-width=\"2\" filter=\"url(#neonGlow)\">\
@@ -348,10 +365,10 @@ pub fn shape_background(
             };
             format!(
                 "{base}{blob}{frame}{sheen}{vig}",
-                base = base_fill(w, h, fill),
+                base = field_stack(w, h, plan),
                 blob = blob(wf * 0.75, hf * 0.35, wf * 0.2, hf * 0.4, "#00f5d4", 0.12, g, -wf * 0.04, hf * 0.05, 7.0, 0.0),
-                sheen = sheen(w, h, g),
-                vig = vignette(w, h),
+                sheen = sheen(w, h, g, plan),
+                vig = vignette(w, h, plan),
             )
         }
 
@@ -388,11 +405,11 @@ pub fn shape_background(
             }
             format!(
                 "{}{}{}{}{}",
-                base_fill(w, h, fill),
-                blob(wf * 0.2, hf * 0.3, wf * 0.25, hf * 0.4, "#818cf8", 0.14, g, wf * 0.04, hf * 0.05, 9.0, 0.0),
+                field_stack(w, h, plan),
+                blob(wf * 0.2, hf * 0.3, wf * 0.25, hf * 0.4, accent2, 0.14, g, wf * 0.04, hf * 0.05, 9.0, 0.0),
                 streaks,
-                sheen(w, h, g),
-                vignette(w, h)
+                sheen(w, h, g, plan),
+                vignette(w, h, plan)
             )
         }
 
@@ -422,7 +439,7 @@ M0,{a} C{c1},{a1} {c2},{a2} {w},{a3} L{w},{h} L0,{h} Z\"/>",
                  <path d=\"M0,{y} C{c1},{y1} {c2},{y2} {w},{y3} L{w},{h} L0,{h} Z\" fill=\"#ffffff\" fill-opacity=\"0.1\" filter=\"url(#softBloom)\">{path_anim}</path>\
                  <path d=\"M0,{y4} C{c3},{y5} {c4},{y6} {w},{y7} L{w},{h} L0,{h} Z\" fill=\"#a5b4fc\" fill-opacity=\"0.12\">{path_anim2}</path>\
                  {blob}{sheen}{vig}",
-                base = base_fill(w, h, fill),
+                base = field_stack(w, h, plan),
                 y = hf * 0.45,
                 c1 = wf * 0.28,
                 y1 = hf * 0.25,
@@ -453,9 +470,9 @@ M0,{y4} C{c3},{y5} {c4},{y6} {w},{y7} L{w},{h} L0,{h} Z\"/>",
                 } else {
                     String::new()
                 },
-                blob = blob(wf * 0.7, hf * 0.3, wf * 0.25, hf * 0.4, "#67e8f9", 0.16, g, -wf * 0.05, hf * 0.06, 8.0, 0.3),
-                sheen = sheen(w, h, g),
-                vig = vignette(w, h),
+                blob = blob(wf * 0.7, hf * 0.3, wf * 0.25, hf * 0.4, warm, 0.16, g, -wf * 0.05, hf * 0.06, 8.0, 0.3),
+                sheen = sheen(w, h, g, plan),
+                vig = vignette(w, h, plan),
             )
         }
 
@@ -463,7 +480,7 @@ M0,{y4} C{c3},{y5} {c4},{y6} {w},{y7} L{w},{h} L0,{h} Z\"/>",
             let beams: String = (0..5)
                 .map(|i| {
                     let x = wf * (0.15 + i as f32 * 0.15);
-                    let colors = ["#ff6ad5", "#7b61ff", "#3de7ff", "#5efc8d", "#ffe66d"];
+                    let colors = ["#ff6ad5", "#7b61ff", warm, "#5efc8d", "#ffe66d"];
                     let color = colors[i % colors.len()];
                     let anim = if g > 0.01 {
                         format!(
@@ -484,11 +501,11 @@ M0,{y4} C{c3},{y5} {c4},{y6} {w},{y7} L{w},{h} L0,{h} Z\"/>",
                 .collect();
             format!(
                 "{}{}{}{}{}",
-                base_fill(w, h, fill),
+                field_stack(w, h, plan),
                 beams,
-                blob(wf * 0.5, hf * 0.2, wf * 0.3, hf * 0.3, "#ffffff", 0.12, g, 0.0, hf * 0.05, 7.0, 0.0),
-                sheen(w, h, g),
-                vignette(w, h)
+                blob(wf * 0.5, hf * 0.2, wf * 0.3, hf * 0.3, glow, 0.16, g, 0.0, hf * 0.05, 7.0, 0.0),
+                sheen(w, h, g, plan),
+                vignette(w, h, plan)
             )
         }
 
@@ -517,12 +534,12 @@ M0,{y4} C{c3},{y5} {c4},{y6} {w},{y7} L{w},{h} L0,{h} Z\"/>",
             }
             format!(
                 "{}{}{}{}{}{}",
-                base_fill(w, h, fill),
+                field_stack(w, h, plan),
                 blob(wf * 0.25, hf * 0.55, wf * 0.3, hf * 0.45, "#4c1d95", 0.35, g, wf * 0.05, -hf * 0.04, 11.0, 0.0),
                 blob(wf * 0.75, hf * 0.35, wf * 0.28, hf * 0.4, "#1e3a8a", 0.28, g, -wf * 0.05, hf * 0.05, 10.0, 0.6),
                 stars,
-                sheen(w, h, g),
-                vignette(w, h)
+                sheen(w, h, g, plan),
+                vignette(w, h, plan)
             )
         }
 
@@ -560,11 +577,11 @@ M0,{y4} C{c3},{y5} {c4},{y6} {w},{y7} L{w},{h} L0,{h} Z\"/>",
             }
             format!(
                 "{}{}{}{}{}",
-                base_fill(w, h, fill),
+                field_stack(w, h, plan),
                 blob(wf * 0.5, hf * 0.7, wf * 0.4, hf * 0.35, "#78350f", 0.2, g, 0.0, -hf * 0.03, 9.0, 0.0),
                 dots,
-                sheen(w, h, g),
-                vignette(w, h)
+                sheen(w, h, g, plan),
+                vignette(w, h, plan)
             )
         }
 
@@ -599,11 +616,11 @@ M0,{y} Q{q1},{y1} {m},{y} T{w},{y}\"/>",
             }
             format!(
                 "{}{}{}{}{}",
-                base_fill(w, h, fill),
+                field_stack(w, h, plan),
                 blob(wf * 0.3, hf * 0.4, wf * 0.3, hf * 0.5, "#e9d5ff", 0.14, g, wf * 0.05, hf * 0.04, 10.0, 0.0),
                 waves,
-                sheen(w, h, g),
-                vignette(w, h)
+                sheen(w, h, g, plan),
+                vignette(w, h, plan)
             )
         }
 
@@ -621,20 +638,20 @@ M0,{y} Q{q1},{y1} {m},{y} T{w},{y}\"/>",
             };
             format!(
                 "{}{}{}{}{}{}",
-                base_fill(w, h, fill),
+                field_stack(w, h, plan),
                 blob(wf * 0.2, hf * 0.3, wf * 0.28, hf * 0.45, "#f0abfc", 0.22, g, wf * 0.06, hf * 0.05, 8.0, 0.0),
-                blob(wf * 0.8, hf * 0.65, wf * 0.3, hf * 0.4, "#67e8f9", 0.2, g, -wf * 0.05, -hf * 0.05, 9.0, 0.5),
+                blob(wf * 0.8, hf * 0.65, wf * 0.3, hf * 0.4, warm, 0.2, g, -wf * 0.05, -hf * 0.05, 9.0, 0.5),
                 sweep,
-                sheen(w, h, g),
-                vignette(w, h)
+                sheen(w, h, g, plan),
+                vignette(w, h, plan)
             )
         }
 
         "rect" => format!(
             "{}{}{}",
-            base_fill(w, h, fill),
-            sheen(w, h, g),
-            vignette(w, h)
+            field_stack(w, h, plan),
+            sheen(w, h, g, plan),
+            vignette(w, h, plan)
         ),
 
         "soft" | "rounded" => {
@@ -663,8 +680,8 @@ M0,{y} Q{q1},{y1} {m},{y} T{w},{y}\"/>",
                  {pulse}{}{}{}{}",
                 format!("<rect width=\"{w}\" height=\"{h}\" rx=\"{rx}\" fill=\"url(#shine)\"/>"),
                 border,
-                sheen(w, h, g),
-                vignette(w, h)
+                sheen(w, h, g, plan),
+                vignette(w, h, plan)
             )
         }
 
@@ -687,46 +704,51 @@ M0,{y} Q{q1},{y1} {m},{y} T{w},{y}\"/>",
             let y4b = hf * 0.58;
             let wave = if g > 0.01 {
                 format!(
-                    "<animate attributeName=\"d\" dur=\"8s\" repeatCount=\"indefinite\" \
-                       values=\"M0,{y1} C{w1},{y2} {w2},{y3} {w},{y4} L{w},{h} L0,{h} Z;\
-M0,{y1b} C{w1},{y2b} {w2},{y3b} {w},{y4b} L{w},{h} L0,{h} Z;\
-M0,{y1} C{w1},{y2} {w2},{y3} {w},{y4} L{w},{h} L0,{h} Z\"/>"
+                    "<animate attributeName=\"d\" dur=\"8s\" repeatCount=\"indefinite\"                        values=\"M0,{y1} C{w1},{y2} {w2},{y3} {w},{y4} L{w},{h} L0,{h} Z;M0,{y1b} C{w1},{y2b} {w2},{y3b} {w},{y4b} L{w},{h} L0,{h} Z;M0,{y1} C{w1},{y2} {w2},{y3} {w},{y4} L{w},{h} L0,{h} Z\"/>"
+                )
+            } else {
+                String::new()
+            };
+            let wave2 = if g > 0.01 {
+                format!(
+                    "<animate attributeName=\"d\" dur=\"10.5s\" begin=\"0.4s\" repeatCount=\"indefinite\"                        values=\"M0,{y5} C{w3},{y6} {w4},{y7} {w},{y8} L{w},{h} L0,{h} Z;M0,{y5b} C{w3},{y6b} {w4},{y7b} {w},{y8b} L{w},{h} L0,{h} Z;M0,{y5} C{w3},{y6} {w4},{y7} {w},{y8} L{w},{h} L0,{h} Z\"/>",
+                    y5b = hf * 0.62,
+                    y6b = hf * 0.88,
+                    y7b = hf * 0.48,
+                    y8b = hf * 0.72,
                 )
             } else {
                 String::new()
             };
             format!(
-                "{base}{b1}{b2}{b3}\
-                 <path d=\"M0,{y1} C{w1},{y2} {w2},{y3} {w},{y4} L{w},{h} L0,{h} Z\" fill=\"#ffffff\" fill-opacity=\"0.06\">{wave}</path>\
-                 <path d=\"M0,{y5} C{w3},{y6} {w4},{y7} {w},{y8} L{w},{h} L0,{h} Z\" fill=\"#000000\" fill-opacity=\"0.12\"/>\
-                 {sheen}{vig}",
-                base = base_fill(w, h, fill),
-                b1 = blob(wf * 0.18, hf * 0.35, wf * 0.28, hf * 0.55, "#ffffff", 0.16, g, wf * 0.06, hf * 0.08, 11.0, 0.0),
-                b2 = blob(wf * 0.72, hf * 0.25, wf * 0.32, hf * 0.5, "#a5b4fc", 0.22, g, -wf * 0.05, hf * 0.1, 13.0, 1.2),
-                b3 = blob(wf * 0.55, hf * 0.85, wf * 0.22, hf * 0.35, "#fbbf24", 0.12, g, wf * 0.04, -hf * 0.06, 9.5, 0.6),
-                sheen = sheen(w, h, g),
-                vig = vignette(w, h),
+                "{base}{b1}{b2}{b3}                 <path d=\"M0,{y1} C{w1},{y2} {w2},{y3} {w},{y4} L{w},{h} L0,{h} Z\" fill=\"{accent}\" fill-opacity=\"0.22\">{wave}</path>                 <path d=\"M0,{y5} C{w3},{y6} {w4},{y7} {w},{y8} L{w},{h} L0,{h} Z\" fill=\"{warm}\" fill-opacity=\"0.18\">{wave2}</path>                 <path d=\"M0,{y1} C{w1},{y2} {w2},{y3} {w},{y4} L{w},{h} L0,{h} Z\" fill=\"url(#mgWaveA)\" fill-opacity=\"0.28\"/>                 {sheen}{vig}",
+                base = field_stack(w, h, plan),
+                b1 = blob(wf * 0.25, hf * 0.35, wf * 0.3, hf * 0.5, accent, 0.22, g, wf * 0.05, -hf * 0.04, 9.0, 0.0),
+                b2 = blob(wf * 0.7, hf * 0.45, wf * 0.32, hf * 0.48, accent2, 0.24, g, -wf * 0.06, hf * 0.05, 10.0, 0.5),
+                b3 = blob(wf * 0.5, hf * 0.2, wf * 0.22, hf * 0.3, warm, 0.16, g, wf * 0.03, hf * 0.04, 8.0, 1.0),
+                sheen = sheen(w, h, g, plan),
+                vig = vignette(w, h, plan),
             )
         }
 
-        "mesh" => format!(
+                "mesh" => format!(
             "{base}{a}{b}{c}{d}{sheen}{vig}",
-            base = base_fill(w, h, fill),
-            a = blob(wf * 0.2, hf * 0.3, hf * 0.7, hf * 0.7, "#ffffff", 0.14, g, wf * 0.08, hf * 0.1, 12.0, 0.0),
-            b = blob(wf * 0.85, hf * 0.2, hf * 0.65, hf * 0.65, "#c4b5fd", 0.18, g, -wf * 0.07, hf * 0.09, 14.0, 0.8),
-            c = blob(wf * 0.55, hf * 0.95, hf * 0.55, hf * 0.55, "#67e8f9", 0.12, g, wf * 0.05, -hf * 0.08, 10.0, 1.5),
-            d = blob(wf * 0.4, hf * 0.15, hf * 0.4, hf * 0.4, "#fcd34d", 0.1, g, -wf * 0.04, hf * 0.06, 11.5, 0.4),
-            sheen = sheen(w, h, g),
-            vig = vignette(w, h),
+            base = field_stack(w, h, plan),
+            a = blob(wf * 0.2, hf * 0.35, wf * 0.36, hf * 0.55, accent, 0.3, g, wf * 0.07, hf * 0.05, 8.5, 0.0),
+            b = blob(wf * 0.7, hf * 0.3, wf * 0.38, hf * 0.52, accent2, 0.32, g, -wf * 0.06, hf * 0.06, 9.5, 0.4),
+            c = blob(wf * 0.5, hf * 0.75, wf * 0.34, hf * 0.42, warm, 0.24, g, wf * 0.04, -hf * 0.05, 10.5, 0.9),
+            d = blob(wf * 0.85, hf * 0.65, wf * 0.26, hf * 0.36, glow, 0.18, g, -wf * 0.04, -hf * 0.04, 7.5, 1.3),
+            sheen = sheen(w, h, g, plan),
+            vig = vignette(w, h, plan),
         ),
 
-        "glass" => {
+                "glass" => {
             let panel = if g > 0.01 {
                 format!(
                     "<g>\
                        <animateTransform attributeName=\"transform\" type=\"translate\" values=\"0 0; 0 -3; 0 0; 0 2; 0 0\" dur=\"7s\" repeatCount=\"indefinite\"/>\
                        <rect x=\"{x}\" y=\"{y}\" width=\"{rw}\" height=\"{rh}\" rx=\"22\" fill=\"#ffffff\" fill-opacity=\"0.08\" stroke=\"url(#glassEdge)\" stroke-width=\"1.2\"/>\
-                       <rect x=\"{x2}\" y=\"{y2}\" width=\"{rw2}\" height=\"{rh2}\" rx=\"18\" fill=\"#ffffff\" fill-opacity=\"0.05\">\
+                       <rect x=\"{x2}\" y=\"{y2}\" width=\"{rw2}\" height=\"{rh2}\" rx=\"18\" fill=\"{glow}\" fill-opacity=\"0.1\">\
                          <animate attributeName=\"fill-opacity\" values=\"0.03;0.08;0.03\" dur=\"4s\" repeatCount=\"indefinite\"/>\
                        </rect>\
                      </g>",
@@ -755,10 +777,10 @@ M0,{y1} C{w1},{y2} {w2},{y3} {w},{y4} L{w},{h} L0,{h} Z\"/>"
             };
             format!(
                 "{base}{blob}{panel}{sheen}{vig}",
-                base = base_fill(w, h, fill),
-                blob = blob(wf * 0.75, hf * 0.3, wf * 0.25, hf * 0.45, "#ffffff", 0.1, g, -wf * 0.04, hf * 0.05, 9.0, 0.0),
-                sheen = sheen(w, h, g),
-                vig = vignette(w, h),
+                base = field_stack(w, h, plan),
+                blob = blob(wf * 0.75, hf * 0.3, wf * 0.25, hf * 0.45, glow, 0.14, g, -wf * 0.04, hf * 0.05, 9.0, 0.0),
+                sheen = sheen(w, h, g, plan),
+                vig = vignette(w, h, plan),
             )
         }
 
@@ -812,65 +834,68 @@ M0,{hy} Q{w1},{hy2} {w2},{hy} T{w},{hy} L{w},{h} L0,{h} Z\"/>\
                 "{base}{sun}\
                  <rect y=\"{band}\" width=\"{w}\" height=\"{bh}\" fill=\"#000000\" fill-opacity=\"0.18\"/>\
                  {ground}{sheen}{vig}",
-                base = base_fill(w, h, fill),
+                base = field_stack(w, h, plan),
                 band = hf * (mid - 0.02),
                 bh = hf * 0.04,
-                sheen = sheen(w, h, g),
-                vig = vignette(w, h),
+                sheen = sheen(w, h, g, plan),
+                vig = vignette(w, h, plan),
             )
         }
 
         // Signature liquid-banner waves (multi-layer SMIL morph — readable at README size).
         "wave" | "waving" => {
-            // `waving` = taller, faster, more aggressive crest motion.
+            // Liquid multi-band crest — colors come from the theme kit, not fixed pastels.
             let wild = ty == "waving";
-            let gain = g.max(0.2);
-            let layers: [(f32, f32, f32, f32, &str); 4] = if wild {
+            // Keep a lively floor only when motion is enabled — never override animation=none.
+            let gain = if g < 0.01 { 0.0 } else { g.max(0.25) };
+            // mid_y_ratio, amp_ratio, opacity, dur, paint
+            let layers: [(f32, f32, f32, f32, &str); 5] = if wild {
                 [
-                    (0.48, 0.14, 0.16, 3.6, "#7dd3fc"),
-                    (0.58, 0.12, 0.20, 4.4, "#ffffff"),
-                    (0.70, 0.10, 0.18, 5.2, "#38bdf8"),
-                    (0.82, 0.08, 0.22, 6.0, "#000000"),
+                    (0.46, 0.15, 0.34, 3.4, accent2),
+                    (0.56, 0.13, 0.38, 4.1, accent),
+                    (0.66, 0.11, 0.32, 4.8, warm),
+                    (0.76, 0.09, 0.28, 5.6, glow),
+                    (0.86, 0.07, 0.22, 6.4, base),
                 ]
             } else {
                 [
-                    (0.52, 0.11, 0.14, 5.0, "#a5b4fc"),
-                    (0.62, 0.10, 0.18, 6.2, "#ffffff"),
-                    (0.74, 0.08, 0.16, 7.4, "#67e8f9"),
-                    (0.84, 0.06, 0.20, 8.8, "#000000"),
+                    (0.50, 0.12, 0.32, 4.6, accent2),
+                    (0.60, 0.11, 0.36, 5.5, accent),
+                    (0.70, 0.09, 0.30, 6.4, warm),
+                    (0.80, 0.075, 0.26, 7.4, glow),
+                    (0.88, 0.055, 0.18, 8.6, base),
                 ]
             };
-            let mut body = base_fill(w, h, fill);
-            // soft sky bloom so waves sit on a living backdrop
+            let mut body = field_stack(w, h, plan);
             body.push_str(&blob(
-                wf * 0.22,
-                hf * 0.28,
-                wf * 0.32,
-                hf * 0.4,
-                "#ffffff",
-                0.1,
+                wf * 0.2,
+                hf * 0.26,
+                wf * 0.34,
+                hf * 0.42,
+                accent,
+                0.18,
                 gain,
-                wf * 0.05,
-                hf * 0.04,
-                10.0,
+                wf * 0.06,
+                hf * 0.05,
+                9.5,
                 0.0,
             ));
             body.push_str(&blob(
-                wf * 0.78,
-                hf * 0.22,
-                wf * 0.28,
-                hf * 0.36,
-                if wild { "#38bdf8" } else { "#818cf8" },
-                0.14,
+                wf * 0.8,
+                hf * 0.2,
+                wf * 0.3,
+                hf * 0.38,
+                warm,
+                0.2,
                 gain,
-                -wf * 0.04,
-                hf * 0.05,
-                11.0,
-                0.5,
+                -wf * 0.05,
+                hf * 0.06,
+                10.5,
+                0.45,
             ));
-            for (i, (mid, amp_r, opac, dur, color)) in layers.iter().enumerate() {
-                let y = hf * mid;
-                let amp = (hf * amp_r * gain).max(hf * 0.05);
+            for (i, (mid_y, amp_r, opac, dur, color)) in layers.iter().enumerate() {
+                let y = hf * mid_y;
+                let amp = (hf * amp_r * gain).max(hf * 0.055);
                 let a = wf * 0.16;
                 let b = wf * 0.34;
                 let c = wf * 0.5;
@@ -880,59 +905,52 @@ M0,{hy} Q{w1},{hy2} {w2},{hy} T{w},{hy} L{w},{h} L0,{h} Z\"/>\
                 let y_dn = y + amp;
                 let y_up2 = y - amp * 0.55;
                 let y_dn2 = y + amp * 0.7;
-                let fill_op = if *color == "#000000" {
-                    opac * 0.85
-                } else {
-                    *opac
-                };
                 let anim = if g > 0.01 {
-                    // two-phase morph keeps crests traveling left↔right
                     format!(
-                        "<animate attributeName=\"d\" dur=\"{dur}s\" begin=\"{beg}s\" repeatCount=\"indefinite\" values=\"\
-M0,{y} C{a},{y_up} {b},{y_dn} {c},{y} S{d},{y_up2} {w},{y} L{w},{h} L0,{h} Z;\
-M0,{y} C{a},{y_dn} {b},{y_up} {c},{y} S{d},{y_dn2} {w},{y} L{w},{h} L0,{h} Z;\
-M0,{y} C{a},{y_up2} {b},{y_dn2} {c},{y} S{e},{y_up} {w},{y} L{w},{h} L0,{h} Z;\
-M0,{y} C{a},{y_up} {b},{y_dn} {c},{y} S{d},{y_up2} {w},{y} L{w},{h} L0,{h} Z\"/>",
-                        beg = i as f32 * 0.35,
+                        "<animate attributeName=\"d\" dur=\"{dur}s\" begin=\"{beg}s\" repeatCount=\"indefinite\" values=\"M0,{y} C{a},{y_up} {b},{y_dn} {c},{y} S{d},{y_up2} {w},{y} L{w},{h} L0,{h} Z;M0,{y} C{a},{y_dn} {b},{y_up} {c},{y} S{d},{y_dn2} {w},{y} L{w},{h} L0,{h} Z;M0,{y} C{a},{y_up2} {b},{y_dn2} {c},{y} S{e},{y_up} {w},{y} L{w},{h} L0,{h} Z;M0,{y} C{a},{y_up} {b},{y_dn} {c},{y} S{d},{y_up2} {w},{y} L{w},{h} L0,{h} Z\"/>",
+                        beg = i as f32 * 0.28,
                     )
                 } else {
                     String::new()
                 };
+                // Prefer chroma wave gradients on the brighter crests.
+                let paint = if i == 0 {
+                    "url(#mgWaveA)"
+                } else if i == 1 {
+                    "url(#mgWaveB)"
+                } else if i == 2 {
+                    "url(#mgWaveC)"
+                } else {
+                    *color
+                };
                 body.push_str(&format!(
-                    "<path d=\"M0,{y} C{a},{y_up} {b},{y_dn} {c},{y} S{d},{y_up2} {w},{y} L{w},{h} L0,{h} Z\" \
-                       fill=\"{color}\" fill-opacity=\"{fill_op}\">{anim}</path>"
+                    "<path d=\"M0,{y} C{a},{y_up} {b},{y_dn} {c},{y} S{d},{y_up2} {w},{y} L{w},{h} L0,{h} Z\"                        fill=\"{paint}\" fill-opacity=\"{opac}\">{anim}</path>"
                 ));
             }
-            // bright foam crest riding the primary wave
+            // Foam crest rides the primary wave in warm/glow.
             if g > 0.01 {
-                let cy = hf * if wild { 0.58 } else { 0.62 };
-                let camp = hf * if wild { 0.1 } else { 0.08 } * gain;
+                let cy = hf * if wild { 0.56 } else { 0.61 };
+                let camp = hf * if wild { 0.11 } else { 0.085 } * gain;
+                let y1 = cy - camp;
+                let y2 = cy + camp;
+                let y3 = cy - camp * 0.55;
+                let y4 = cy + camp * 0.65;
+                let dur = if wild { 4.2 } else { 5.6 };
                 body.push_str(&format!(
-                    "<path d=\"M0,{cy} C{a},{y1} {b},{y2} {c},{cy} S{d},{y3} {w},{cy}\" fill=\"none\" \
-                       stroke=\"#ffffff\" stroke-opacity=\"0.45\" stroke-width=\"1.6\" stroke-linecap=\"round\">\
-                       <animate attributeName=\"d\" dur=\"{dur}s\" repeatCount=\"indefinite\" values=\"\
-M0,{cy} C{a},{y1} {b},{y2} {c},{cy} S{d},{y3} {w},{cy};\
-M0,{cy} C{a},{y2} {b},{y1} {c},{cy} S{d},{y4} {w},{cy};\
-M0,{cy} C{a},{y1} {b},{y2} {c},{cy} S{d},{y3} {w},{cy}\"/>\
-                       <animate attributeName=\"stroke-opacity\" values=\"0.25;0.7;0.3;0.65;0.25\" dur=\"{dur}s\" repeatCount=\"indefinite\"/>\
-                     </path>",
+                    "<path d=\"M0,{cy} C{a},{y1} {b},{y2} {c},{cy} S{d},{y3} {w},{cy}\" fill=\"none\"                        stroke=\"{stroke}\" stroke-opacity=\"0.55\" stroke-width=\"2\" stroke-linecap=\"round\">                       <animate attributeName=\"d\" dur=\"{dur}s\" repeatCount=\"indefinite\" values=\"M0,{cy} C{a},{y1} {b},{y2} {c},{cy} S{d},{y3} {w},{cy};M0,{cy} C{a},{y2} {b},{y1} {c},{cy} S{d},{y4} {w},{cy};M0,{cy} C{a},{y1} {b},{y2} {c},{cy} S{d},{y3} {w},{cy}\"/>                       <animate attributeName=\"stroke-opacity\" values=\"0.28;0.78;0.34;0.7;0.28\" dur=\"{dur}s\" repeatCount=\"indefinite\"/>                     </path>",
                     a = wf * 0.18,
                     b = wf * 0.4,
                     c = wf * 0.55,
-                    d = wf * 0.8,
-                    y1 = cy - camp,
-                    y2 = cy + camp,
-                    y3 = cy - camp * 0.5,
-                    y4 = cy + camp * 0.55,
-                    dur = if wild { 4.2 } else { 5.6 },
+                    d = wf * 0.78,
+                    stroke = glow,
                 ));
             }
-            body.push_str(&sheen(w, h, g));
-            body.push_str(&vignette(w, h));
+            body.push_str(&sheen(w, h, g, plan));
+            body.push_str(&vignette(w, h, plan));
             body
         }
 
-        "orbit" => {
+                "orbit" => {
             let cx = wf * 0.78;
             let cy = hf * 0.5;
             let rx = hf * 0.38;
@@ -981,7 +999,7 @@ M0,{cy} C{a},{y1} {b},{y2} {c},{cy} S{d},{y3} {w},{cy}\"/>\
                 "{base}{rings}\
                  <circle cx=\"{cx}\" cy=\"{cy}\" r=\"{core}\" fill=\"#ffffff\" fill-opacity=\"0.2\" filter=\"url(#softGlow)\">{core_anim}</circle>\
                  {planet}{sheen}{vig}",
-                base = base_fill(w, h, fill),
+                base = field_stack(w, h, plan),
                 core = hf * 0.07,
                 core_anim = if g > 0.01 {
                     format!(
@@ -992,8 +1010,8 @@ M0,{cy} C{a},{y1} {b},{y2} {c},{cy} S{d},{y3} {w},{cy}\"/>\
                 } else {
                     String::new()
                 },
-                sheen = sheen(w, h, g),
-                vig = vignette(w, h),
+                sheen = sheen(w, h, g, plan),
+                vig = vignette(w, h, plan),
             )
         }
 
@@ -1022,10 +1040,10 @@ M0,{cy} C{a},{y1} {b},{y2} {c},{cy} S{d},{y3} {w},{cy}\"/>\
                 "{base}{spin}\
                  <circle cx=\"{cx}\" cy=\"{cy}\" r=\"{r3}\" fill=\"#ffffff\" fill-opacity=\"0.08\"/>\
                  {sheen}{vig}",
-                base = base_fill(w, h, fill),
+                base = field_stack(w, h, plan),
                 r3 = hf * 0.12,
-                sheen = sheen(w, h, g),
-                vig = vignette(w, h),
+                sheen = sheen(w, h, g, plan),
+                vig = vignette(w, h, plan),
             )
         }
 
@@ -1054,7 +1072,7 @@ M0,{cy} C{a},{y1} {b},{y2} {c},{cy} S{d},{y3} {w},{cy}\"/>\
                 format!(
                     "<polygon points=\"{p1}\" fill=\"#ffffff\" fill-opacity=\"0.07\"/>\
                      <polygon points=\"{p2}\" fill=\"#ffffff\" fill-opacity=\"0.1\"/>\
-                     <polygon points=\"{p3}\" fill=\"#ffffff\" fill-opacity=\"0.05\"/>",
+                     <polygon points=\"{p3}\" fill=\"{glow}\" fill-opacity=\"0.1\"/>",
                     p1 = format!("0,{h} {} ,0 {} ,0 {w},{h}", wf * 0.42, wf * 0.58),
                     p2 = format!(
                         "{},{} {} ,{} {} ,{} {},{}",
@@ -1068,9 +1086,9 @@ M0,{cy} C{a},{y1} {b},{y2} {c},{cy} S{d},{y3} {w},{cy}\"/>\
             };
             format!(
                 "{base}{beams}{sheen}{vig}",
-                base = base_fill(w, h, fill),
-                sheen = sheen(w, h, g),
-                vig = vignette(w, h),
+                base = field_stack(w, h, plan),
+                sheen = sheen(w, h, g, plan),
+                vig = vignette(w, h, plan),
             )
         }
 
@@ -1093,7 +1111,7 @@ M0,{cy} C{a},{y1} {b},{y2} {c},{cy} S{d},{y3} {w},{cy}\"/>\
                  <circle cx=\"{d1}\" cy=\"{dy}\" r=\"5\" fill=\"#FF5F56\"/><circle cx=\"{d2}\" cy=\"{dy}\" r=\"5\" fill=\"#FFBD2E\"/><circle cx=\"{d3}\" cy=\"{dy}\" r=\"5\" fill=\"#27C93F\"/>\
                  <rect x=\"{ix}\" y=\"{iy}\" width=\"{iw}\" height=\"{ih}\" rx=\"8\" fill=\"#000000\" fill-opacity=\"0.22\"/>\
                  {cursor}{sheen}",
-                base = base_fill(w, h, fill),
+                base = field_stack(w, h, plan),
                 x = wf * 0.04,
                 y = hf * 0.1,
                 rw = wf * 0.92,
@@ -1106,7 +1124,7 @@ M0,{cy} C{a},{y1} {b},{y2} {c},{cy} S{d},{y3} {w},{cy}\"/>\
                 iy = hf * 0.32,
                 iw = wf * 0.86,
                 ih = hf * 0.5,
-                sheen = sheen(w, h, g),
+                sheen = sheen(w, h, g, plan),
             )
         }
 
@@ -1166,21 +1184,21 @@ M0,{cy} C{a},{y1} {b},{y2} {c},{cy} S{d},{y3} {w},{cy}\"/>\
                 .collect();
             format!(
                 "{}{}{}{}{}",
-                base_fill(w, h, fill),
+                field_stack(w, h, plan),
                 edges,
                 stars,
-                sheen(w, h, g),
-                vignette(w, h)
+                sheen(w, h, g, plan),
+                vignette(w, h, plan)
             )
         }
 
         "blur" => format!(
             "{base}{a}{b}{sheen}{vig}",
-            base = base_fill(w, h, fill),
+            base = field_stack(w, h, plan),
             a = blob(wf * 0.28, hf * 0.4, wf * 0.35, hf * 0.55, "#ffffff", 0.2, g, wf * 0.06, hf * 0.07, 10.0, 0.0),
             b = blob(wf * 0.78, hf * 0.65, wf * 0.3, hf * 0.45, "#c4b5fd", 0.16, g, -wf * 0.05, -hf * 0.06, 12.0, 1.0),
-            sheen = sheen(w, h, g),
-            vig = vignette(w, h),
+            sheen = sheen(w, h, g, plan),
+            vig = vignette(w, h, plan),
         ),
 
         "grid" => {
@@ -1212,11 +1230,11 @@ M0,{cy} C{a},{y1} {b},{y2} {c},{cy} S{d},{y3} {w},{cy}\"/>\
             };
             format!(
                 "{}{}{}{}{}",
-                base_fill(w, h, fill),
+                field_stack(w, h, plan),
                 lines,
                 scan,
-                sheen(w, h, g),
-                vignette(w, h)
+                sheen(w, h, g, plan),
+                vignette(w, h, plan)
             )
         }
 
@@ -1260,10 +1278,10 @@ M0,{cy} C{a},{y1} {b},{y2} {c},{cy} S{d},{y3} {w},{cy}\"/>\
             }
             format!(
                 "{}{}{}{}",
-                base_fill(w, h, fill),
+                field_stack(w, h, plan),
                 traces,
-                sheen(w, h, g),
-                vignette(w, h)
+                sheen(w, h, g, plan),
+                vignette(w, h, plan)
             )
         }
 
@@ -1288,7 +1306,7 @@ M0,{cy} C{a},{y1} {b},{y2} {c},{cy} S{d},{y3} {w},{cy}\"/>\
                  <path d=\"M16,{b} H40 M16,{bb} V{b}\" stroke=\"#ffffff\" stroke-opacity=\"0.45\" fill=\"none\" stroke-width=\"1.5\"/>\
                  <path d=\"M{r},{b} H{r2} M{r},{bb} V{b}\" stroke=\"#ffffff\" stroke-opacity=\"0.45\" fill=\"none\" stroke-width=\"1.5\"/>\
                  {sweep}{sheen}{vig}",
-                base = base_fill(w, h, fill),
+                base = field_stack(w, h, plan),
                 iw = w.saturating_sub(32),
                 ih = h.saturating_sub(32),
                 r = w - 16,
@@ -1300,8 +1318,8 @@ M0,{cy} C{a},{y1} {b},{y2} {c},{cy} S{d},{y3} {w},{cy}\"/>\
                 } else {
                     ""
                 },
-                sheen = sheen(w, h, g),
-                vig = vignette(w, h),
+                sheen = sheen(w, h, g, plan),
+                vig = vignette(w, h, plan),
             )
         }
 
@@ -1333,9 +1351,9 @@ M0,{cy} C{a},{y1} {b},{y2} {c},{cy} S{d},{y3} {w},{cy}\"/>\
             };
             format!(
                 "{base}{rings}{sheen}{vig}",
-                base = base_fill(w, h, fill),
-                sheen = sheen(w, h, g),
-                vig = vignette(w, h),
+                base = field_stack(w, h, plan),
+                sheen = sheen(w, h, g, plan),
+                vig = vignette(w, h, plan),
             )
         }
 
@@ -1366,10 +1384,10 @@ M0,{cy} C{a},{y1} {b},{y2} {c},{cy} S{d},{y3} {w},{cy}\"/>\
             }
             format!(
                 "{}{}{}{}",
-                base_fill(w, h, fill),
+                field_stack(w, h, plan),
                 dots,
-                sheen(w, h, g),
-                vignette(w, h)
+                sheen(w, h, g, plan),
+                vignette(w, h, plan)
             )
         }
 
@@ -1394,8 +1412,8 @@ M0,{cy} C{a},{y1} {b},{y2} {c},{cy} S{d},{y3} {w},{cy}\"/>\
                  {gloss}{}{}",
                 w - r,
                 w - r,
-                sheen(w, h, g),
-                vignette(w, h)
+                sheen(w, h, g, plan),
+                vignette(w, h, plan)
             )
         }
 
@@ -1415,8 +1433,8 @@ M0,{cy} C{a},{y1} {b},{y2} {c},{cy} S{d},{y3} {w},{cy}\"/>\
             format!(
                 "<polygon fill=\"{fill}\" points=\"0,0 {w},0 {},{h} 0,{h}\"/>{edge}{}{}",
                 wf * 0.88,
-                sheen(w, h, g),
-                vignette(w, h)
+                sheen(w, h, g, plan),
+                vignette(w, h, plan)
             )
         }
 
@@ -1443,10 +1461,10 @@ M0,{cy} C{a},{y1} {b},{y2} {c},{cy} S{d},{y3} {w},{cy}\"/>\
             };
             format!(
                 "{}{}{}{}",
-                base_fill(w, h, fill),
+                field_stack(w, h, plan),
                 ell,
-                sheen(w, h, g),
-                vignette(w, h)
+                sheen(w, h, g, plan),
+                vignette(w, h, plan)
             )
         }
 
@@ -1487,10 +1505,10 @@ M0,{y} C{a},{y1} {b},{y2} {c},{y3} S{d},{y4} {w},{y5} L{w},{h} L0,{h} Z\"/>\
             };
             format!(
                 "{}{}{}{}",
-                base_fill(w, h, fill),
+                field_stack(w, h, plan),
                 path,
-                sheen(w, h, g),
-                vignette(w, h)
+                sheen(w, h, g, plan),
+                vignette(w, h, plan)
             )
         }
 
@@ -1530,7 +1548,7 @@ M0,{y} C{a},{y1} {b},{y2} {c},{y3} S{d},{y4} {w},{y5} L{w},{h} L0,{h} Z\"/>\
                     hf * 0.72 - r,
                 )
             };
-            format!("{}{}{}", bob, sheen(w, h, g), vignette(w, h))
+            format!("{}{}{}", bob, sheen(w, h, g, plan), vignette(w, h, plan))
         }
 
         "checkered" => {
@@ -1544,14 +1562,14 @@ M0,{y} C{a},{y1} {b},{y2} {c},{y3} S{d},{y4} {w},{y5} L{w},{h} L0,{h} Z\"/>\
                     if ((x / s) + (y / s)) % 2 == 0 {
                         if g > 0.01 && i % 4 == 0 {
                             cells.push_str(&format!(
-                                "<rect x=\"{x}\" y=\"{y}\" width=\"{s}\" height=\"{s}\" fill=\"#ffffff\" fill-opacity=\"0.05\">\
+                                "<rect x=\"{x}\" y=\"{y}\" width=\"{s}\" height=\"{s}\" fill=\"{glow}\" fill-opacity=\"0.1\">\
                                    <animate attributeName=\"fill-opacity\" values=\"0.03;0.1;0.03\" dur=\"3s\" begin=\"{b}s\" repeatCount=\"indefinite\"/>\
                                  </rect>",
                                 b = (i % 8) as f32 * 0.15,
                             ));
                         } else {
                             cells.push_str(&format!(
-                                "<rect x=\"{x}\" y=\"{y}\" width=\"{s}\" height=\"{s}\" fill=\"#ffffff\" fill-opacity=\"0.05\"/>"
+                                "<rect x=\"{x}\" y=\"{y}\" width=\"{s}\" height=\"{s}\" fill=\"{glow}\" fill-opacity=\"0.1\"/>"
                             ));
                         }
                         i += 1;
@@ -1562,23 +1580,17 @@ M0,{y} C{a},{y1} {b},{y2} {c},{y3} S{d},{y4} {w},{y5} L{w},{h} L0,{h} Z\"/>\
             }
             format!(
                 "{}{}{}{}",
-                base_fill(w, h, fill),
+                field_stack(w, h, plan),
                 cells,
-                sheen(w, h, g),
-                vignette(w, h)
+                sheen(w, h, g, plan),
+                vignette(w, h, plan)
             )
         }
 
         "product" | "oss" | "org" => {
             let card = if g > 0.01 {
                 format!(
-                    "<g>\
-                       <animateTransform attributeName=\"transform\" type=\"translate\" values=\"0 0; 0 -3; 0 0\" dur=\"4.5s\" repeatCount=\"indefinite\"/>\
-                       <rect x=\"{x}\" y=\"{y}\" width=\"{rw}\" height=\"{rh}\" rx=\"16\" fill=\"#ffffff\" fill-opacity=\"0.08\" stroke=\"#ffffff\" stroke-opacity=\"0.12\"/>\
-                       <rect x=\"{x2}\" y=\"{y2}\" width=\"{rw2}\" height=\"{rh2}\" rx=\"8\" fill=\"#ffffff\" fill-opacity=\"0.06\">\
-                         <animate attributeName=\"fill-opacity\" values=\"0.04;0.12;0.04\" dur=\"2.8s\" repeatCount=\"indefinite\"/>\
-                       </rect>\
-                     </g>",
+                    "<g>                       <animateTransform attributeName=\"transform\" type=\"translate\" values=\"0 0; 0 -3; 0 0\" dur=\"4.5s\" repeatCount=\"indefinite\"/>                       <rect x=\"{x}\" y=\"{y}\" width=\"{rw}\" height=\"{rh}\" rx=\"16\" fill=\"{glow}\" fill-opacity=\"0.12\" stroke=\"{accent}\" stroke-opacity=\"0.35\" stroke-width=\"1.2\"/>                       <rect x=\"{x2}\" y=\"{y2}\" width=\"{rw2}\" height=\"{rh2}\" rx=\"8\" fill=\"{accent}\" fill-opacity=\"0.16\">                         <animate attributeName=\"fill-opacity\" values=\"0.1;0.28;0.1\" dur=\"2.8s\" repeatCount=\"indefinite\"/>                       </rect>                     </g>",
                     x = wf * 0.72,
                     y = hf * 0.22,
                     rw = wf * 0.2,
@@ -1590,7 +1602,7 @@ M0,{y} C{a},{y1} {b},{y2} {c},{y3} S{d},{y4} {w},{y5} L{w},{h} L0,{h} Z\"/>\
                 )
             } else {
                 format!(
-                    "<rect x=\"{x}\" y=\"{y}\" width=\"{rw}\" height=\"{rh}\" rx=\"16\" fill=\"#ffffff\" fill-opacity=\"0.08\" stroke=\"#ffffff\" stroke-opacity=\"0.1\"/>",
+                    "<rect x=\"{x}\" y=\"{y}\" width=\"{rw}\" height=\"{rh}\" rx=\"16\" fill=\"{glow}\" fill-opacity=\"0.12\" stroke=\"{accent}\" stroke-opacity=\"0.3\"/>",
                     x = wf * 0.72,
                     y = hf * 0.22,
                     rw = wf * 0.2,
@@ -1598,19 +1610,20 @@ M0,{y} C{a},{y1} {b},{y2} {c},{y3} S{d},{y4} {w},{y5} L{w},{h} L0,{h} Z\"/>\
                 )
             };
             format!(
-                "{}{}{}{}",
-                base_fill(w, h, fill),
+                "{}{}{}{}{}",
+                field_stack(w, h, plan),
+                blob(wf * 0.3, hf * 0.4, wf * 0.28, hf * 0.4, accent, 0.16, g, wf * 0.04, 0.0, 9.0, 0.0),
                 card,
-                sheen(w, h, g),
-                vignette(w, h)
+                sheen(w, h, g, plan),
+                vignette(w, h, plan)
             )
         }
 
-        _ => format!(
+                _ => format!(
             "{}{}{}",
-            base_fill(w, h, fill),
-            sheen(w, h, g),
-            vignette(w, h)
+            field_stack(w, h, plan),
+            sheen(w, h, g, plan),
+            vignette(w, h, plan)
         ),
     };
 
