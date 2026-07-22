@@ -60,7 +60,7 @@ Env (see `.env.example`):
 ### Banner
 
 ```markdown
-![header](https://mark.sylphx.com/api/v1/banner?type=wave&theme=sunset&text=Ship%20your%20next%20release&desc=Living%20color.%20Clear%20name.&height=220&animation=ambient)
+![header](https://mark.sylphx.com/api/v1/banner?type=wave&color=7C3AED,00F5D4,F15BB5&text=Ship%20your%20next%20release&desc=Multi-color%20art%20for%20your%20README&height=220&animation=ambient)
 ```
 
 **Types (v1):**  

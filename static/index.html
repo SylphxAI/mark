@@ -360,29 +360,89 @@
       .preview-body { overflow: auto; }
       .stage { min-height: 140px; padding: .7rem; }
     }
-  </style>
+  
+    .top-actions { display:flex; gap:.45rem; align-items:center; flex-wrap:wrap; }
+    .btn-ghost {
+      border: 1px solid var(--line); background: transparent; color: var(--muted);
+      border-radius: 999px; padding: .35rem .7rem; font-size: .78rem; cursor: pointer;
+    }
+    .btn-ghost:hover { color: var(--fg); border-color: var(--line2); }
+    .btn-surprise {
+      border: 1px solid rgba(91,157,255,0.35);
+      background: linear-gradient(135deg, rgba(124,58,237,0.22), rgba(0,245,212,0.14));
+      color: var(--fg); border-radius: 999px; padding: .38rem .85rem; font-size: .78rem;
+      font-weight: 600; cursor: pointer;
+    }
+    .btn-surprise:hover { border-color: rgba(91,157,255,0.7); }
+    .palette {
+      display: flex; flex-wrap: wrap; gap: .4rem;
+    }
+    .palette button {
+      display: flex; align-items: center; gap: .4rem;
+      border: 1px solid var(--line); background: rgba(255,255,255,0.02);
+      border-radius: 999px; padding: .28rem .55rem .28rem .3rem;
+      cursor: pointer; font-size: .72rem; color: var(--muted);
+    }
+    .palette button.on {
+      border-color: rgba(91,157,255,0.55); color: var(--fg);
+      background: rgba(91,157,255,0.08);
+    }
+    .palette .swatch {
+      width: 34px; height: 16px; border-radius: 999px;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.12);
+      flex-shrink: 0;
+    }
+    .modes .adv {
+      opacity: 0.55; font-size: .78rem;
+    }
+    .modes .adv.on { opacity: 1; }
+    .subnav {
+      display:flex; gap:.4rem; flex-wrap:wrap; margin-top: .35rem;
+    }
+    .subnav button {
+      border: 1px dashed var(--line); background: transparent; color: var(--faint);
+      border-radius: 8px; padding: .25rem .5rem; font-size: .7rem; cursor: pointer;
+    }
+    .subnav button:hover, .subnav button.on { color: var(--muted); border-color: var(--line2); }
+    .brand-name { display:flex; flex-direction:column; line-height:1.1; }
+    .brand-name strong { font-size: 1rem; }
+    .brand-name span { font-size: .68rem; color: var(--faint); font-weight: 500; }
+</style>
 </head>
 <body>
   <div class="app">
     <div class="top">
-      <div class="brand"><span class="logo" aria-hidden="true"></span> Sylphx Mark</div>
-      <div class="live"><i></i> mark.sylphx.com</div>
+      <div class="brand">
+        <span class="logo" aria-hidden="true"></span>
+        <div class="brand-name">
+          <strong>Mark</strong>
+          <span>embeddable art for READMEs</span>
+        </div>
+      </div>
+      <div class="top-actions">
+        <button type="button" class="btn-surprise" id="surpriseBtn" title="Random multi-color look">✦ Surprise me</button>
+        <div class="live"><i></i> mark.sylphx.com</div>
+      </div>
     </div>
 
     <nav class="modes scroll" id="modes" aria-label="Mark type">
       <button type="button" data-mode="banner" class="active">Banner</button>
       <button type="button" data-mode="badge">Badge</button>
-      <button type="button" data-mode="stats">Stats</button>
       <button type="button" data-mode="icons">Icons</button>
-      <button type="button" data-mode="brand">Brand</button>
-      <button type="button" data-mode="deploy">Deploy</button>
+      <button type="button" data-mode="stats">Stats</button>
+      <button type="button" class="adv" data-mode="more" id="moreModeBtn" title="Optional tools">More</button>
     </nav>
+    <div class="subnav" id="moreNav" hidden>
+      <button type="button" data-mode="brand">Brand kits</button>
+      <button type="button" data-mode="deploy">Deploy badge</button>
+      <span class="hint" style="margin:0">Optional · not required for README art</span>
+    </div>
 
     <div class="studio">
       <section class="pane preview">
         <div class="pane-h">
           <strong id="previewTitle">Live preview</strong>
-          <span id="previewMeta">wave · tokyonight</span>
+          <span id="previewMeta">loading…</span>
         </div>
         <div class="pane-b preview-body scroll">
           <div class="stage" id="stage"><img id="preview" alt="Live preview" /></div>
@@ -404,14 +464,14 @@
       <aside class="pane controls">
         <div class="pane-h">
           <strong id="ctrlTitle">Banner</strong>
-          <span id="ctrlHint">Edit · preview stays</span>
+          <span id="ctrlHint">Color first · then style</span>
         </div>
         <div class="pane-b controls-body scroll" id="controls"></div>
       </aside>
     </div>
 
     <footer>
-      <div><code>mark.sylphx.com</code> · Art-first embeds · plate · typewriter</div>
+      <div><code>mark.sylphx.com</code> · Art-first SVG embeds · multi-color palettes</div>
       <div><a href="https://github.com/SylphxAI/mark">Source</a> · <a href="https://sylphx.com">Sylphx</a></div>
     </footer>
   </div>
@@ -419,72 +479,140 @@
 
   <script>
     const BASE = location.origin;
-    // Wave first — signature classic; then SOTA + polished set
-    // Classics first — commercial default; showcase secondary
+
     const FEATURED = [
-      "wave","waving","soft","glass","aurora","product","oss","terminal","mesh","rounded",
-      "plasma","holo","neon","liquid","void","silk","constellation","orbit"
+      "wave","waving","aurora","mesh","glass","plasma","holo","neon","liquid","soft",
+      "product","silk","constellation","orbit","void"
     ];
     const ALL_STYLES = FEATURED.concat([
-      "soft","horizon","dusk","beam","terminal","grid","blur","ring","circuit","hud",
+      "horizon","dusk","beam","terminal","grid","blur","ring","circuit","hud",
       "pulse","noise","rounded","rect","slice","cylinder","checkered","egg","shark",
-      "venom","speech","product","oss","org","transparent"
+      "venom","speech","oss","org","transparent"
     ]);
     const MOTIONS = [
+      ["ambient","Living"],
       ["none","Still"],
-      ["ambient","Idle drift"],
       ["type","Typewriter"],
-      ["rise","Rise in"],
-      ["fade","Fade in"],
+      ["rise","Rise"],
+      ["fade","Fade"],
       ["float","Float"],
-      ["glow","Glow"],
       ["shimmer","Shimmer"],
+      ["glow","Glow"],
       ["cascade","Cascade"],
-      ["slide","Slide"],
       ["wave","Wave text"],
       ["bounce","Bounce"],
-      ["neon","Neon"],
-      ["glitch","Glitch"],
-      ["scale","Scale"],
-      ["orbit","Orbit"],
-      ["breathe","Breathe"],
+      ["slide","Slide"],
     ];
     const LAYOUTS = [
+      ["default","Banner strip"],
       ["plate","Product plate"],
-      ["signal","Signal (center)"],
+      ["signal","Centered signal"],
       ["terminal","Terminal"],
-      ["default","Default"],
     ];
+
+    // Multi-color palettes are the product. Each is 2–3 stops → color= query.
+    const PALETTES = [
+      { id: "orchid-mint", name: "Orchid mint", colors: ["7C3AED","00F5D4","F15BB5"] },
+      { id: "coral-gold", name: "Coral gold", colors: ["FF6B6B","F8B500","FF9F1C"] },
+      { id: "ocean-lime", name: "Ocean lime", colors: ["0077B6","00B4D8","43E97B"] },
+      { id: "violet-rose", name: "Violet rose", colors: ["667EEA","F093FB","F5576C"] },
+      { id: "cyber", name: "Cyber", colors: ["00F5D4","7C3AED","F15BB5"] },
+      { id: "sunset-dual", name: "Sunset dual", colors: ["FF6B35","F15BB5","7C3AED"] },
+      { id: "aurora-ice", name: "Aurora ice", colors: ["4FACFE","00F2FE","A18CD1"] },
+      { id: "ember", name: "Ember", colors: ["E03840","FF6B35","FEE140"] },
+      { id: "forest-glow", name: "Forest glow", colors: ["2D6A4F","52B788","FEE140"] },
+      { id: "candy", name: "Candy", colors: ["FA709A","FEE140","F093FB"] },
+      { id: "indigo-sky", name: "Indigo sky", colors: ["4338CA","4FACFE","00F2FE"] },
+      { id: "mono-ink", name: "Mono ink", colors: ["0F172A","334155","94A3B8"] },
+    ];
+
+    // Public IDE skins only — fleet company kits stay out of the default strip.
     const THEMES = [
-      ["tokyonight","#1A1B27","#7AA2F7"],["sylphx","#1A1A2E","#D87000"],["ocean","#0B1D36","#00B4D8"],
-      ["neon","#0A0A12","#00F5D4"],["dracula","#282A36","#BD93F9"],["nord","#2E3440","#88C0D0"],
-      ["dark","#0D1117","#58A6FF"],["radical","#141321","#FE428E"],["sunset","#2B0A0A","#FF6B35"],
-      ["forest","#0B1F14","#52B788"],["github","#0D1117","#238636"],["cubeage","#1A1A1A","#E03840"],
-      ["epiow","#0B1020","#7C3AED"],["ozyrix","#0A0A0A","#C9A227"],["kyle","#0F172A","#38BDF8"],
-      ["light","#F6F8FA","#0969DA"]
+      ["tokyonight","#1A1B27","#7AA2F7"],
+      ["dracula","#282A36","#BD93F9"],
+      ["nord","#2E3440","#88C0D0"],
+      ["ocean","#0B1D36","#00B4D8"],
+      ["neon","#0A0A12","#00F5D4"],
+      ["radical","#141321","#FE428E"],
+      ["sunset","#2B0A0A","#FF6B35"],
+      ["forest","#0B1F14","#52B788"],
+      ["github","#0D1117","#238636"],
+      ["dark","#0D1117","#58A6FF"],
+      ["light","#F6F8FA","#0969DA"],
     ];
-    const ICONS = ["rust","ts","js","go","python","react","node","docker","kubernetes","linux","git","github","postgres","redis","aws","bun","nextjs","vue","tailwind","graphql","nginx","cloudflare","vercel","sylphx"];
+
+    const ICONS = ["rust","ts","js","go","python","react","node","docker","kubernetes","linux","git","github","postgres","redis","aws","bun","nextjs","vue","tailwind","graphql","nginx","cloudflare","vercel"];
     const BADGE_STYLES = ["flat","plastic","for-the-badge","social","pill"];
+    const STYLES_POOL = ["wave","waving","aurora","plasma","holo","mesh","liquid","neon","glass","soft"];
+    const MOTION_POOL = ["ambient","rise","float","shimmer","type"];
+
+    function paletteGradient(p) {
+      const stops = p.colors.map((c, i) => {
+        const pct = p.colors.length === 1 ? 50 : (i / (p.colors.length - 1)) * 100;
+        return `#${c} ${pct}%`;
+      }).join(", ");
+      return `linear-gradient(90deg, ${stops})`;
+    }
+    function paletteColorParam(p) {
+      return p.colors.join(",");
+    }
+    function findPalette(id) {
+      return PALETTES.find(p => p.id === id) || PALETTES[0];
+    }
+    function randomOf(arr) {
+      return arr[Math.floor(Math.random() * arr.length)];
+    }
+    function surpriseLook(keepText = true) {
+      const palette = randomOf(PALETTES.filter(p => p.id !== "mono-ink"));
+      return {
+        type: randomOf(STYLES_POOL),
+        paletteId: palette.id,
+        color: paletteColorParam(palette),
+        theme: "", // palette mode — no IDE theme
+        animation: randomOf(MOTION_POOL),
+        layout: Math.random() < 0.18 ? "plate" : "default",
+        text: keepText ? state.banner.text : "Ship your next release",
+        desc: keepText ? state.banner.desc : "Multi-color art for your README",
+        height: state.banner.height || 220,
+      };
+    }
+
+    function initialBanner() {
+      // Session inspiration: one surprise look per tab session, stable until Surprise me.
+      try {
+        const raw = sessionStorage.getItem("mark.studio.banner");
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (parsed && parsed.color) return parsed;
+        }
+      } catch (_) {}
+      const look = surpriseLook(false);
+      // Prefer a vivid default if surprise rolls mono
+      if (!look.color) {
+        const p = findPalette("orchid-mint");
+        look.paletteId = p.id;
+        look.color = paletteColorParam(p);
+      }
+      return look;
+    }
 
     const state = {
       mode: "banner",
       tab: "md",
       showAllStyles: false,
-      banner: {
-        type: "wave",
-        theme: "sunset",
-        text: "Ship your next release",
-        desc: "Living color. Clear name. Your brand.",
-        height: 220,
-        animation: "ambient",
-        layout: "default",
-      },
+      showIdeThemes: false,
+      showMoreNav: false,
+      banner: initialBanner(),
       badge: { label: "build", message: "passing", color: "brightgreen", style: "flat" },
-      stats: { user: "shtse8", theme: "dark" },
+      stats: { user: "octocat", theme: "dark" },
       icons: { selected: ["rust","ts","docker","kubernetes"], theme: "dark" },
       brand: { name: "sylphx", tagline: "" },
-      deploy: { service: "mark", style: "for-the-badge" },
+      deploy: { service: "app", style: "for-the-badge" },
     };
+
+    function persistBanner() {
+      try { sessionStorage.setItem("mark.studio.banner", JSON.stringify(state.banner)); } catch (_) {}
+    }
 
     const $ = (id) => document.getElementById(id);
     const preview = $("preview");
@@ -500,16 +628,37 @@
     }
 
     function thumb(type) {
-      return `${BASE}/api/v1/banner?type=${type}&theme=sunset&height=72&width=140&text=${encodeURIComponent(type)}&fontSize=15&credit=0&animation=ambient`;
+      const b = state.banner;
+      const p = new URLSearchParams({
+        type,
+        height: "72",
+        width: "140",
+        text: type,
+        fontSize: "15",
+        credit: "0",
+        animation: "ambient",
+      });
+      if (b.color) p.set("color", b.color);
+      else if (b.theme) p.set("theme", b.theme);
+      else p.set("color", "7C3AED,00F5D4,F15BB5");
+      return `${BASE}/api/v1/banner?${p}`;
     }
 
     function currentUrl() {
       const m = state.mode;
       if (m === "banner") {
         const b = state.banner;
-        const p = new URLSearchParams({ type: b.type, theme: b.theme, text: b.text, desc: b.desc, height: String(b.height) });
-        if (b.layout) p.set("layout", b.layout);
+        const p = new URLSearchParams({
+          type: b.type || "wave",
+          text: b.text || "",
+          desc: b.desc || "",
+          height: String(b.height || 220),
+        });
+        if (b.layout && b.layout !== "default") p.set("layout", b.layout);
         if (b.animation) p.set("animation", b.animation);
+        // Color is first-class. Theme only when user picked an IDE skin.
+        if (b.color) p.set("color", b.color);
+        else if (b.theme) p.set("theme", b.theme);
         p.set("credit", "0");
         return `${BASE}/api/v1/banner?${p}`;
       }
@@ -520,7 +669,7 @@
       }
       if (m === "stats") {
         const s = state.stats;
-        return `${BASE}/api/v1/stats/${encodeURIComponent(s.user || "shtse8")}?theme=${encodeURIComponent(s.theme)}`;
+        return `${BASE}/api/v1/stats/${encodeURIComponent(s.user || "octocat")}?theme=${encodeURIComponent(s.theme)}`;
       }
       if (m === "icons") {
         const i = state.icons;
@@ -552,10 +701,11 @@
     function schedule() {
       clearTimeout(timer);
       stage.classList.add("loading");
-      timer = setTimeout(refresh, 100);
+      timer = setTimeout(refresh, 80);
     }
 
     function refresh() {
+      if (state.mode === "banner") persistBanner();
       const url = currentUrl();
       const bust = url.includes("?") ? `&_=${Date.now()}` : `?_=${Date.now()}`;
       preview.src = url + bust;
@@ -563,20 +713,31 @@
       $("previewMeta").textContent = metaLabel();
       $("previewTitle").textContent = ({
         banner: "Banner", badge: "Badge", stats: "Stats",
-        icons: "Icons", brand: "Brand", deploy: "Deploy",
+        icons: "Icons", brand: "Brand kit", deploy: "Deploy badge",
       })[state.mode] + " preview";
     }
     preview.addEventListener("load", () => stage.classList.remove("loading"));
     preview.addEventListener("error", () => stage.classList.remove("loading"));
 
     function metaLabel() {
-      if (state.mode === "banner") return `${state.banner.layout || "default"} · ${state.banner.type} · ${state.banner.theme} · ${state.banner.animation}`;
+      if (state.mode === "banner") {
+        const b = state.banner;
+        const colorBit = b.paletteId || b.color || b.theme || "color";
+        return `${b.layout || "default"} · ${b.type} · ${colorBit} · ${b.animation}`;
+      }
       if (state.mode === "badge") return `${state.badge.style} · ${state.badge.color}`;
       if (state.mode === "stats") return `@${state.stats.user} · ${state.stats.theme}`;
       if (state.mode === "icons") return `${state.icons.selected.length} icons · ${state.icons.theme}`;
       if (state.mode === "brand") return state.brand.name;
       if (state.mode === "deploy") return state.deploy.service || "app";
       return "";
+    }
+
+    function palettePills(selectedId) {
+      return `<div class="palette" id="palettePills">${PALETTES.map(p =>
+        `<button type="button" class="${selectedId===p.id?"on":""}" data-palette="${p.id}" title="${p.colors.join(" → ")}">
+          <span class="swatch" style="background:${paletteGradient(p)}"></span>${p.name}
+        </button>`).join("")}</div>`;
     }
 
     function themePills(selected) {
@@ -615,15 +776,34 @@
       return String(s ?? "").replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;");
     }
 
+    function applyPalette(id) {
+      const p = findPalette(id);
+      state.banner.paletteId = p.id;
+      state.banner.color = paletteColorParam(p);
+      state.banner.theme = ""; // palette wins over IDE theme
+    }
+
     function renderControls() {
       const m = state.mode;
-      $("ctrlTitle").textContent = m[0].toUpperCase() + m.slice(1);
-      $("ctrlHint").textContent = m === "banner" ? "Content → style → look" : "Tune live";
+      $("ctrlTitle").textContent = ({
+        banner: "Banner", badge: "Badge", icons: "Icons", stats: "Stats",
+        brand: "Brand kits", deploy: "Deploy badge",
+      })[m] || m;
+      $("ctrlHint").textContent = m === "banner" ? "Color → style → copy" : "Tune live";
 
       if (m === "banner") {
         const styles = state.showAllStyles ? ALL_STYLES : FEATURED;
         const b = state.banner;
+        const selectedPalette = b.paletteId || (PALETTES.find(p => paletteColorParam(p) === b.color)?.id) || "";
         controls.innerHTML = `
+          <section class="sec">
+            <div class="sec-h"><h3>Color</h3><span>2–3 color fields · not a single orange</span></div>
+            ${palettePills(selectedPalette)}
+            <p class="hint">Click a palette, or use <strong>Surprise me</strong> for a fresh multi-color look. Export URLs keep the exact colors.</p>
+            <button type="button" class="more-styles" id="toggleIdeThemes">${state.showIdeThemes ? "Hide IDE themes" : "IDE themes (optional)"}</button>
+            ${state.showIdeThemes ? `<div class="field" style="margin-top:.55rem"><label>IDE skin (replaces palette)</label>${themePills(b.theme || "")}</div>` : ""}
+          </section>
+
           <section class="sec">
             <div class="sec-h"><h3>Content</h3><span>What people read</span></div>
             <div class="field"><label>Title</label><input id="f-text" value="${esc(b.text)}" autocomplete="off" /></div>
@@ -631,22 +811,19 @@
           </section>
 
           <section class="sec">
-            <div class="sec-h"><h3>Style</h3><span>Swipe · click to apply</span></div>
+            <div class="sec-h"><h3>Style</h3><span>Shape language · colors follow palette above</span></div>
             ${styleFilm(styles, b.type)}
             <button type="button" class="more-styles" id="moreStyles">${state.showAllStyles ? "Show featured only" : "Browse all styles"}</button>
           </section>
 
           <section class="sec">
-            <div class="sec-h"><h3>Composition</h3><span>Hierarchy first</span></div>
-            <div class="field"><label>Layout</label>${layoutChips(b.layout || "plate")}</div>
-            <p class="hint">Product plate = monogram + left title. Signal = centered hero. Terminal = systems look.</p>
+            <div class="sec-h"><h3>Composition</h3><span>Hierarchy</span></div>
+            <div class="field"><label>Layout</label>${layoutChips(b.layout || "default")}</div>
           </section>
 
           <section class="sec">
-            <div class="sec-h"><h3>Look</h3><span>Theme + motion</span></div>
-            <div class="field"><label>Theme</label>${themePills(b.theme)}</div>
-            <div class="field"><label>Motion</label>${motionChips(b.animation)}</div>
-            <p class="hint">Still is the commercial default. Typewriter is pure SVG SMIL.</p>
+            <div class="sec-h"><h3>Motion</h3><span>Living color by default</span></div>
+            <div class="field">${motionChips(b.animation || "ambient")}</div>
           </section>
 
           <section class="sec">
@@ -657,7 +834,6 @@
             </div>
           </section>`;
         bindBanner();
-        // keep selected style visible in filmstrip
         const on = controls.querySelector(".tile.on");
         if (on) on.scrollIntoView({ inline: "center", block: "nearest", behavior: "smooth" });
         return;
@@ -666,14 +842,14 @@
       if (m === "badge") {
         controls.innerHTML = `
           <section class="sec">
-            <div class="sec-h"><h3>Content</h3></div>
+            <div class="sec-h"><h3>Badge</h3></div>
             <div class="field"><label>Label</label><input id="f-label" value="${esc(state.badge.label)}" /></div>
             <div class="field"><label>Message</label><input id="f-msg" value="${esc(state.badge.message)}" /></div>
             <div class="field"><label>Color</label>
               <input id="f-color" value="${esc(state.badge.color)}" list="colors" />
               <datalist id="colors">
-                <option value="brightgreen"/><option value="green"/><option value="blue"/><option value="red"/>
-                <option value="orange"/><option value="yellow"/><option value="success"/>
+                <option value="brightgreen"><option value="green"><option value="yellow">
+                <option value="orange"><option value="red"><option value="blue"><option value="purple">
               </datalist>
             </div>
           </section>
@@ -703,8 +879,8 @@
       if (m === "icons") {
         controls.innerHTML = `
           <section class="sec">
-            <div class="sec-h"><h3>Stack</h3><span>Toggle · order preserved</span></div>
-            <div class="icon-grid scroll" id="iconGrid">${ICONS.map(i =>
+            <div class="sec-h"><h3>Stack</h3><span>Click to toggle</span></div>
+            <div class="chips" id="iconChips">${ICONS.map(i =>
               `<button type="button" class="icon-chip ${state.icons.selected.includes(i)?"on":""}" data-i="${i}">${i}</button>`).join("")}</div>
           </section>
           <section class="sec">
@@ -718,13 +894,11 @@
       if (m === "brand") {
         controls.innerHTML = `
           <section class="sec">
-            <div class="sec-h"><h3>Brand</h3></div>
+            <div class="sec-h"><h3>Brand kits</h3><span>Optional fleet demos</span></div>
+            <p class="hint">These are sample brand cards — not required for README banners.</p>
             <div class="chips" id="brands">${["sylphx","cubeage","epiow","ozyrix","kyle"].map(b =>
               `<button type="button" class="chip ${state.brand.name===b?"on":""}" data-b="${b}">${b}</button>`).join("")}</div>
-          </section>
-          <section class="sec">
-            <div class="sec-h"><h3>Copy</h3></div>
-            <div class="field"><label>Tagline (optional)</label><input id="f-tag" value="${esc(state.brand.tagline)}" placeholder="Leave blank for default" /></div>
+            <div class="field" style="margin-top:.6rem"><label>Tagline (optional)</label><input id="f-tag" value="${esc(state.brand.tagline)}" placeholder="Leave blank for default" /></div>
           </section>`;
         bindBrand();
         return;
@@ -733,11 +907,9 @@
       if (m === "deploy") {
         controls.innerHTML = `
           <section class="sec">
-            <div class="sec-h"><h3>Service</h3></div>
-            <div class="field"><label>Name</label><input id="f-svc" value="${esc(state.deploy.service)}" placeholder="my-app" /></div>
-          </section>
-          <section class="sec">
-            <div class="sec-h"><h3>Badge style</h3></div>
+            <div class="sec-h"><h3>Deploy badge</h3><span>Optional platform promo</span></div>
+            <p class="hint">Shows a “deployed on …” pill. Main banner art never requires this.</p>
+            <div class="field"><label>Service name</label><input id="f-svc" value="${esc(state.deploy.service)}" placeholder="my-app" /></div>
             <div class="chips" id="depStyles">${BADGE_STYLES.map(s =>
               `<button type="button" class="chip ${state.deploy.style===s?"on":""}" data-s="${s}">${s}</button>`).join("")}</div>
           </section>`;
@@ -746,10 +918,16 @@
     }
 
     function bindBanner() {
+      document.querySelectorAll("#palettePills button").forEach(el => {
+        el.onclick = () => {
+          applyPalette(el.dataset.palette);
+          renderControls();
+          schedule();
+        };
+      });
       document.querySelectorAll("#gallery .tile").forEach(el => {
         el.onclick = () => {
           state.banner.type = el.dataset.type;
-          // update selection without full re-render of inputs (keeps focus)
           document.querySelectorAll("#gallery .tile").forEach(t => t.classList.toggle("on", t === el));
           schedule();
         };
@@ -758,9 +936,16 @@
         state.showAllStyles = !state.showAllStyles;
         renderControls();
       });
+      $("toggleIdeThemes")?.addEventListener("click", () => {
+        state.showIdeThemes = !state.showIdeThemes;
+        renderControls();
+      });
       document.querySelectorAll(".theme").forEach(el => el.onclick = () => {
         state.banner.theme = el.dataset.t;
+        state.banner.color = "";
+        state.banner.paletteId = "";
         document.querySelectorAll(".theme").forEach(t => t.classList.toggle("on", t === el));
+        document.querySelectorAll("#palettePills button").forEach(t => t.classList.remove("on"));
         schedule();
       });
       document.querySelectorAll("#motionChips .chip").forEach(el => el.onclick = () => {
@@ -778,32 +963,32 @@
       const h = $("f-h");
       const hOut = $("hOut");
       h.oninput = e => {
-        state.banner.height = Number(e.target.value) || 220;
+        state.banner.height = Number(e.target.value);
         hOut.textContent = `${state.banner.height}px`;
         schedule();
       };
     }
+
     function bindBadge() {
-      document.querySelectorAll("#badgeStyles .chip").forEach(el => el.onclick = () => {
-        state.badge.style = el.dataset.s; renderControls(); schedule();
-      });
       $("f-label").oninput = e => { state.badge.label = e.target.value; schedule(); };
       $("f-msg").oninput = e => { state.badge.message = e.target.value; schedule(); };
       $("f-color").oninput = e => { state.badge.color = e.target.value; schedule(); };
+      document.querySelectorAll("#badgeStyles .chip").forEach(el => el.onclick = () => {
+        state.badge.style = el.dataset.s; renderControls(); schedule();
+      });
     }
     function bindStats() {
-      $("f-user").oninput = e => { state.stats.user = e.target.value.trim() || "shtse8"; schedule(); };
+      $("f-user").oninput = e => { state.stats.user = e.target.value; schedule(); };
       document.querySelectorAll(".theme").forEach(el => el.onclick = () => {
         state.stats.theme = el.dataset.t; renderControls(); schedule();
       });
     }
     function bindIcons() {
-      document.querySelectorAll("#iconGrid .icon-chip").forEach(el => el.onclick = () => {
+      document.querySelectorAll("#iconChips .icon-chip").forEach(el => el.onclick = () => {
         const i = el.dataset.i;
-        const set = state.icons.selected;
-        if (set.includes(i)) state.icons.selected = set.filter(x => x !== i);
-        else state.icons.selected = [...set, i];
-        if (!state.icons.selected.length) state.icons.selected = ["rust"];
+        const set = new Set(state.icons.selected);
+        if (set.has(i)) set.delete(i); else set.add(i);
+        state.icons.selected = [...set];
         renderControls(); schedule();
       });
       document.querySelectorAll(".theme").forEach(el => el.onclick = () => {
@@ -823,27 +1008,73 @@
       });
     }
 
-    document.querySelectorAll("#modes button").forEach(btn => {
-      btn.onclick = () => {
-        state.mode = btn.dataset.mode;
-        document.querySelectorAll("#modes button").forEach(b => b.classList.toggle("active", b === btn));
-        renderControls(); schedule();
-      };
-    });
+    function setMode(mode) {
+      if (mode === "more") {
+        state.showMoreNav = !state.showMoreNav;
+        $("moreNav").hidden = !state.showMoreNav;
+        $("moreModeBtn").classList.toggle("on", state.showMoreNav);
+        return;
+      }
+      state.mode = mode;
+      document.querySelectorAll("#modes [data-mode]").forEach(btn => {
+        if (btn.dataset.mode === "more") return;
+        btn.classList.toggle("active", btn.dataset.mode === mode);
+      });
+      document.querySelectorAll("#moreNav [data-mode]").forEach(btn => {
+        btn.classList.toggle("on", btn.dataset.mode === mode);
+      });
+      if (mode === "brand" || mode === "deploy") {
+        state.showMoreNav = true;
+        $("moreNav").hidden = false;
+        $("moreModeBtn").classList.add("on");
+      }
+      $("surpriseBtn").style.display = mode === "banner" ? "" : "none";
+      renderControls();
+      schedule();
+    }
 
-    document.querySelectorAll(".export-tabs button").forEach(btn => {
-      btn.onclick = () => {
+    document.querySelectorAll("#modes [data-mode]").forEach(btn => {
+      btn.addEventListener("click", () => setMode(btn.dataset.mode));
+    });
+    document.querySelectorAll("#moreNav [data-mode]").forEach(btn => {
+      btn.addEventListener("click", () => setMode(btn.dataset.mode));
+    });
+    document.querySelectorAll("[data-tab]").forEach(btn => {
+      btn.addEventListener("click", () => {
         state.tab = btn.dataset.tab;
-        document.querySelectorAll(".export-tabs button").forEach(b => b.classList.toggle("on", b === btn));
+        document.querySelectorAll("[data-tab]").forEach(b => b.classList.toggle("on", b === btn));
         exportOut.textContent = exportText();
-      };
+      });
     });
-
     $("copyBtn").onclick = async () => {
-      await navigator.clipboard.writeText(exportText());
-      toast("Copied");
+      try {
+        await navigator.clipboard.writeText(exportText());
+        toast("Copied");
+      } catch {
+        toast("Copy failed");
+      }
     };
     $("openBtn").onclick = () => window.open(currentUrl(), "_blank");
+    $("surpriseBtn").onclick = () => {
+      const text = state.banner.text;
+      const desc = state.banner.desc;
+      const height = state.banner.height;
+      Object.assign(state.banner, surpriseLook(true));
+      state.banner.text = text;
+      state.banner.desc = desc;
+      state.banner.height = height;
+      state.mode = "banner";
+      setMode("banner");
+      toast("New multi-color look");
+    };
+
+    // Ensure first paint has a multi-color palette
+    if (!state.banner.color && !state.banner.theme) {
+      applyPalette("orchid-mint");
+    } else if (state.banner.color && !state.banner.paletteId) {
+      const hit = PALETTES.find(p => paletteColorParam(p) === state.banner.color);
+      if (hit) state.banner.paletteId = hit.id;
+    }
 
     renderControls();
     schedule();

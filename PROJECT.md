@@ -32,6 +32,8 @@ badges, GitHub stats cards, icon rows, brand kits, and deploy badges.
 name craft, contrast, crop-honest surfaces. Stats/badges/icons are thin
 completeness so users need not leave for a second host — not the product thesis.
 Layout families (`layout=plate|signal|terminal`) outrank novelty background types.
+Studio is **palette-first** (2–3 color fields, Surprise me, session inspiration).
+Fleet brand/deploy tools stay under optional More — not the main path.
 Every banner owns a **chromatic system** (base/mid/accent/accent2/warm/glow):
 theme drives motif color, not only the field wash. Ambient motion is color-bearing
 (gradient drift + motif phase), not monochrome opacity flicker.
