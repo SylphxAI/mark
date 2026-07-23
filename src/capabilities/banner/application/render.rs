@@ -1,61 +1,11 @@
-//! Banner / hero SVG renderer.
+//! Banner application: pure BannerInput → SVG composition.
 
-mod motion;
-mod shapes;
-
-pub use motion::ANIMATIONS;
-pub use shapes::{is_banner_type, normalize_type, BANNER_TYPES, FEATURED_TYPES};
-
-use crate::color::resolve_fill;
-use crate::svg::{credit_mark, ensure_hash, esc, svg_doc};
-use motion::{ambient_gain, normalize_animation, text_children, text_open_attrs};
-use shapes::{shape_background, shape_defs};
-
-/// Layout families (composition, not background recipe).
-pub const LAYOUTS: &[&str] = &["default", "plate", "signal", "terminal"];
-
-#[derive(Debug, Clone, Default)]
-pub struct BannerInput {
-    pub type_name: Option<String>,
-    pub color: Option<String>,
-    pub theme: Option<String>,
-    pub section: Option<String>,
-    pub reversal: bool,
-    pub height: Option<u32>,
-    pub width: Option<u32>,
-    pub text: Option<String>,
-    pub desc: Option<String>,
-    pub font_size: Option<u32>,
-    pub desc_size: Option<u32>,
-    pub font_color: Option<String>,
-    pub font_align: Option<f32>,
-    pub font_align_y: Option<f32>,
-    pub desc_align: Option<f32>,
-    pub desc_align_y: Option<f32>,
-    pub rotate: Option<f32>,
-    pub stroke: Option<String>,
-    pub stroke_width: Option<f32>,
-    pub text_bg: bool,
-    pub animation: Option<String>,
-    pub credit: bool,
-    pub seed: Option<String>,
-    /// Composition: `default` | `plate` | `signal` | `terminal`
-    pub layout: Option<String>,
-}
-
-pub fn normalize_layout(raw: Option<&str>) -> &'static str {
-    match raw
-        .map(|s| s.trim().to_ascii_lowercase())
-        .filter(|s| !s.is_empty())
-        .as_deref()
-    {
-        None | Some("default") | Some("center") => "default",
-        Some("plate") | Some("product") | Some("card") | Some("oss") => "plate",
-        Some("signal") | Some("hero") => "signal",
-        Some("terminal") | Some("cli") | Some("mono") => "terminal",
-        _ => "default",
-    }
-}
+use crate::capabilities::banner::domain::{
+    ambient_gain, normalize_animation, normalize_layout, normalize_type, shape_background,
+    shape_defs, text_children, text_open_attrs, BannerInput,
+};
+use crate::shared::color::resolve_fill;
+use crate::shared::svg::{credit_mark, ensure_hash, esc, svg_doc};
 
 fn monogram(text: &str) -> String {
     let parts: Vec<&str> = text
@@ -400,6 +350,7 @@ pub fn render(input: &BannerInput) -> String {
 #[cfg(test)]
 mod layout_tests {
     use super::*;
+    use crate::capabilities::banner::domain::normalize_layout;
 
     #[test]
     fn normalize_layout_aliases() {

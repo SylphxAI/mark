@@ -1,50 +1,13 @@
-//! Stats / repo / org cards.
+//! Pure GitHub card SVG rendering (functional core).
 
-use crate::color::resolve_fill;
-use crate::github::{self, Aggregate, GhRepo, GhUser};
-use crate::svg::{credit_mark, ensure_hash, esc, svg_doc};
-use crate::themes;
-
-#[derive(Debug, Clone)]
-pub struct CardOpts {
-    pub theme: Option<String>,
-    pub color: Option<String>,
-    pub credit: bool,
-    pub width: u32,
-}
-
-impl Default for CardOpts {
-    fn default() -> Self {
-        Self {
-            theme: Some("dark".into()),
-            color: None,
-            credit: true,
-            width: 420,
-        }
-    }
-}
-
-pub async fn user_stats(username: &str, opts: &CardOpts) -> Result<String, String> {
-    let user = github::get_user(username).await?;
-    let repos = github::get_user_repos(username).await.unwrap_or_default();
-    let agg = github::aggregate(&repos);
-    Ok(render_user_card(&user, &agg, opts))
-}
-
-pub async fn org_stats(org: &str, opts: &CardOpts) -> Result<String, String> {
-    let repos = github::get_org_repos(org).await?;
-    let agg = github::aggregate(&repos);
-    Ok(render_org_card(org, &agg, opts))
-}
-
-pub async fn repo_card(owner: &str, repo: &str, opts: &CardOpts) -> Result<String, String> {
-    let r = github::get_repo(owner, repo).await?;
-    Ok(render_repo_card(&r, opts))
-}
+use crate::capabilities::github_card::domain::{Aggregate, CardOpts, GhRepo, GhUser};
+use crate::shared::color::resolve_fill;
+use crate::shared::svg::{credit_mark, ensure_hash, esc, svg_doc};
+use crate::shared::theme;
 
 fn palette(opts: &CardOpts, seed: &str) -> (String, String, String, String) {
     if let Some(name) = opts.theme.as_deref() {
-        if let Some(t) = themes::get(name) {
+        if let Some(t) = theme::get(name) {
             return (
                 ensure_hash(t.bg),
                 ensure_hash(t.fg),
@@ -67,7 +30,7 @@ fn palette(opts: &CardOpts, seed: &str) -> (String, String, String, String) {
     )
 }
 
-fn render_user_card(user: &GhUser, agg: &Aggregate, opts: &CardOpts) -> String {
+pub fn render_user_card(user: &GhUser, agg: &Aggregate, opts: &CardOpts) -> String {
     let w = opts.width.clamp(280, 800);
     let h = 160u32;
     let (bg, fg, muted, accent) = palette(opts, &user.login);
@@ -133,7 +96,7 @@ fn render_user_card(user: &GhUser, agg: &Aggregate, opts: &CardOpts) -> String {
     svg_doc(w, h + extra, &body)
 }
 
-fn render_org_card(org: &str, agg: &Aggregate, opts: &CardOpts) -> String {
+pub fn render_org_card(org: &str, agg: &Aggregate, opts: &CardOpts) -> String {
     let w = opts.width.clamp(280, 800);
     let h = 140u32;
     let (bg, fg, muted, accent) = palette(opts, org);
@@ -174,7 +137,7 @@ fn render_org_card(org: &str, agg: &Aggregate, opts: &CardOpts) -> String {
     svg_doc(w, h, &body)
 }
 
-fn render_repo_card(r: &GhRepo, opts: &CardOpts) -> String {
+pub fn render_repo_card(r: &GhRepo, opts: &CardOpts) -> String {
     let w = opts.width.clamp(280, 800);
     let h = 120u32;
     let (bg, fg, muted, accent) = palette(opts, &r.full_name);
@@ -224,18 +187,3 @@ fn format_num(n: u32) -> String {
     }
 }
 
-/// Deployed-on-Sylphx promo badge (static template).
-pub fn deploy_badge(service: &str, theme: Option<&str>, style: &str) -> String {
-    crate::badge::render(&crate::badge::BadgeInput {
-        label: Some("deployed on".into()),
-        message: if service.is_empty() {
-            "Sylphx".into()
-        } else {
-            format!("{service} · Sylphx")
-        },
-        color: Some("sylphx".into()),
-        label_color: Some("1A1A2E".into()),
-        style: crate::badge::BadgeStyle::parse(style),
-        theme: theme.map(|s| s.to_string()),
-    })
-}

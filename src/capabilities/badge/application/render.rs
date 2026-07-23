@@ -1,63 +1,9 @@
-//! Shields-like badges.
+//! Badge application: pure BadgeInput → SVG.
 
-use crate::color::contrasting_fg;
-use crate::svg::{ensure_hash, esc, is_hex_color, strip_hash, svg_doc};
-use crate::themes;
-
-#[derive(Debug, Clone)]
-pub struct BadgeInput {
-    pub label: Option<String>,
-    pub message: String,
-    pub color: Option<String>,
-    pub label_color: Option<String>,
-    pub style: BadgeStyle,
-    pub theme: Option<String>,
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
-pub enum BadgeStyle {
-    #[default]
-    Flat,
-    Plastic,
-    ForTheBadge,
-    Social,
-    Pill,
-}
-
-impl BadgeStyle {
-    pub fn parse(s: &str) -> Self {
-        match s.to_ascii_lowercase().as_str() {
-            "plastic" => Self::Plastic,
-            "for-the-badge" | "forthebadge" => Self::ForTheBadge,
-            "social" => Self::Social,
-            "pill" => Self::Pill,
-            _ => Self::Flat,
-        }
-    }
-}
-
-fn named_color(c: &str) -> Option<&'static str> {
-    Some(match c.to_ascii_lowercase().as_str() {
-        "brightgreen" => "4C1",
-        "green" => "97CA00",
-        "yellow" => "DFB317",
-        "yellowgreen" => "A4A61D",
-        "orange" => "FE7D37",
-        "red" => "E05D44",
-        "blue" => "007EC6",
-        "lightgrey" | "lightgray" => "9F9F9F",
-        "success" => "27AE60",
-        "important" => "FE7D37",
-        "critical" => "E05D44",
-        "informational" => "007EC6",
-        "inactive" => "9F9F9F",
-        "sylphx" => "D87000",
-        "cubeage" => "E03840",
-        "epiow" => "7C3AED",
-        "ozyrix" => "C9A227",
-        _ => return None,
-    })
-}
+use crate::capabilities::badge::domain::{named_color, BadgeInput, BadgeStyle};
+use crate::shared::color::contrasting_fg;
+use crate::shared::svg::{ensure_hash, esc, is_hex_color, strip_hash, svg_doc};
+use crate::shared::theme;
 
 fn resolve_color(c: Option<&str>, fallback: &str) -> String {
     let Some(c) = c else {
@@ -98,7 +44,7 @@ fn measure(text: &str, style: BadgeStyle) -> u32 {
 
 pub fn render(input: &BadgeInput) -> String {
     let style = input.style;
-    let theme = input.theme.as_deref().and_then(themes::get);
+    let theme = input.theme.as_deref().and_then(theme::get);
 
     let msg_color = if let Some(t) = theme {
         t.accent.to_string()

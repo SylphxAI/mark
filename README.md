@@ -116,6 +116,16 @@ GitHub already runs on third-party image hosts (capsule-render, readme-stats, sk
 
 ---
 
+## Architecture
+
+Capability-first Modular DDD (single crate, module boundaries): see
+[`docs/adr/ADR-0001-capability-first-architecture.md`](docs/adr/ADR-0001-capability-first-architecture.md).
+
+- `src/capabilities/*` — product outcomes (banner, badge, github_card, …)
+- `src/shared/*` — pure color/theme/svg kernel
+- `src/interfaces/http` — HTTP composition root
+- `src/bootstrap.rs` — config + process shell
+
 ## License
 
 MIT — see product intent in `PROJECT.md`.

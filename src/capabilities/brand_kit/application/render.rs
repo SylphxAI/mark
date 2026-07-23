@@ -1,9 +1,9 @@
 //! Brand kit cards for fleet orgs.
 
-use crate::svg::{credit_mark, ensure_hash, esc, svg_doc};
-use crate::themes;
+use crate::shared::svg::{credit_mark, ensure_hash, esc, svg_doc};
+use crate::shared::theme;
 
-pub fn render_brand_card(brand: &str, tagline: Option<&str>, credit: bool) -> String {
+pub fn render(brand: &str, tagline: Option<&str>, credit: bool) -> String {
     let key = brand.to_ascii_lowercase();
     let (name, theme_key, default_tag) = match key.as_str() {
         "sylphx" | "sylphxai" => ("Sylphx", "sylphx", "AI-native platform for developers"),
@@ -14,7 +14,7 @@ pub fn render_brand_card(brand: &str, tagline: Option<&str>, credit: bool) -> St
         other => (brand, other, "Brand mark"),
     };
 
-    let t = themes::get(theme_key).unwrap_or_else(|| themes::get("dark").unwrap());
+    let t = theme::get(theme_key).unwrap_or_else(|| theme::get("dark").unwrap());
     let w = 640u32;
     let h = 200u32;
     let bg = ensure_hash(t.bg);

@@ -4,8 +4,8 @@
 //! Theme/base color becomes a multi-stop field + accent/secondary/warm orbs so
 //! shapes never fall back to pure white wash or theme-blind hardcodes.
 
-use crate::svg::{ensure_hash, is_hex_color, strip_hash};
-use crate::themes::{self, Theme};
+use crate::shared::svg::{ensure_hash, is_hex_color, strip_hash};
+use crate::shared::theme::{self, Theme};
 
 /// Resolved paint kit consumed by banner shapes + chrome.
 #[derive(Clone, Debug)]
@@ -41,7 +41,7 @@ impl FillPlan {
 
 pub fn resolve_fill(color: Option<&str>, theme: Option<&str>, seed: &str, gid: &str) -> FillPlan {
     if let Some(name) = theme {
-        if let Some(t) = themes::get(name) {
+        if let Some(t) = theme::get(name) {
             return theme_fill(t, gid);
         }
     }
@@ -49,14 +49,14 @@ pub fn resolve_fill(color: Option<&str>, theme: Option<&str>, seed: &str, gid: &
     let color = color.unwrap_or("gradient").trim();
 
     match color {
-        "auto" => solid_kit(gid, themes::pick_auto(seed)),
-        "timeAuto" => solid_kit(gid, themes::pick_auto(&themes::time_seed())),
+        "auto" => solid_kit(gid, theme::pick_auto(seed)),
+        "timeAuto" => solid_kit(gid, theme::pick_auto(&theme::time_seed())),
         "gradient" | "random" => {
-            let (a, b) = themes::pick_gradient(seed);
+            let (a, b) = theme::pick_gradient(seed);
             gradient_kit(gid, a, b)
         }
         "timeGradient" => {
-            let (a, b) = themes::pick_gradient(&themes::time_seed());
+            let (a, b) = theme::pick_gradient(&theme::time_seed());
             gradient_kit(gid, a, b)
         }
         other => {
@@ -67,7 +67,7 @@ pub fn resolve_fill(color: Option<&str>, theme: Option<&str>, seed: &str, gid: &
             if is_hex_color(h) {
                 solid_kit(gid, h)
             } else {
-                let (a, b) = themes::pick_gradient(seed);
+                let (a, b) = theme::pick_gradient(seed);
                 gradient_kit(gid, a, b)
             }
         }

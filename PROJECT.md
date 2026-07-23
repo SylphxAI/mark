@@ -44,6 +44,13 @@ theme drives motif color, not only the field wash. Ambient motion is color-beari
 - Generator UI: `/` (`static/index.html`)
 - Repo: https://github.com/SylphxAI/mark
 
+## Architecture
+
+- Binding shape: Capability-first Modular DDD + Clean/Hexagonal + FCIS
+- Decision: `docs/adr/ADR-0001-capability-first-architecture.md`
+- Code roots: `src/capabilities/*`, `src/shared/*`, `src/interfaces/*`, `src/bootstrap.rs`
+- Default semantic unit: Rust module (single crate)
+
 ## Delivery
 
 - Ordinary reversible work: roleless direct-trunk to `main`
