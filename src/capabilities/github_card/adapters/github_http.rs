@@ -1,12 +1,13 @@
 //! GitHub HTTP adapter with short-TTL positive/negative caches.
 //!
 //! Effects (network, env token, process-global client/cache) stay here.
-//! Domain aggregation is pure and lives in `domain`.
+//! JSON wire DTOs are adapter-local; domain models stay serde-free.
 
 use crate::capabilities::github_card::application::GitHubSource;
-use crate::capabilities::github_card::domain::{GhRepo, GhUser};
+use crate::capabilities::github_card::domain::{GhLicense, GhRepo, GhUser};
 use moka::future::Cache;
 use once_cell::sync::Lazy;
+use serde::Deserialize;
 use std::future::Future;
 use std::pin::Pin;
 use std::time::Duration;
@@ -38,6 +39,73 @@ static CLIENT: Lazy<reqwest::Client> = Lazy::new(|| {
 /// Production GitHub API source.
 #[derive(Debug, Default, Clone, Copy)]
 pub struct HttpGitHubSource;
+
+#[derive(Debug, Deserialize)]
+struct GhUserDto {
+    login: String,
+    name: Option<String>,
+    public_repos: u32,
+    followers: u32,
+    following: u32,
+    avatar_url: String,
+    bio: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
+struct GhRepoDto {
+    name: String,
+    full_name: String,
+    description: Option<String>,
+    stargazers_count: u32,
+    forks_count: u32,
+    language: Option<String>,
+    html_url: String,
+    open_issues_count: u32,
+    license: Option<GhLicenseDto>,
+}
+
+#[derive(Debug, Deserialize)]
+struct GhLicenseDto {
+    spdx_id: Option<String>,
+}
+
+impl From<GhUserDto> for GhUser {
+    fn from(d: GhUserDto) -> Self {
+        Self {
+            login: d.login,
+            name: d.name,
+            public_repos: d.public_repos,
+            followers: d.followers,
+            following: d.following,
+            avatar_url: d.avatar_url,
+            bio: d.bio,
+        }
+    }
+}
+
+impl From<GhLicenseDto> for GhLicense {
+    fn from(d: GhLicenseDto) -> Self {
+        Self {
+            spdx_id: d.spdx_id,
+        }
+    }
+}
+
+impl From<GhRepoDto> for GhRepo {
+    fn from(d: GhRepoDto) -> Self {
+        Self {
+            name: d.name,
+            full_name: d.full_name,
+            description: d.description,
+            stargazers_count: d.stargazers_count,
+            forks_count: d.forks_count,
+            language: d.language,
+            html_url: d.html_url,
+            open_issues_count: d.open_issues_count,
+            license: d.license.map(Into::into),
+        }
+    }
+}
 
 fn github_token() -> Option<String> {
     for key in ["GITHUB_TOKEN", "GH_TOKEN", "SYLPHX_GITHUB_TOKEN"] {
@@ -107,7 +175,8 @@ impl GitHubSource for HttpGitHubSource {
     ) -> Pin<Box<dyn Future<Output = Result<GhUser, String>> + Send + 'a>> {
         Box::pin(async move {
             let body = gh_get(&format!("/users/{}", urlencoding::encode(username))).await?;
-            serde_json::from_str(&body).map_err(|e| e.to_string())
+            let dto: GhUserDto = serde_json::from_str(&body).map_err(|e| e.to_string())?;
+            Ok(dto.into())
         })
     }
 
@@ -123,7 +192,8 @@ impl GitHubSource for HttpGitHubSource {
                 urlencoding::encode(repo)
             ))
             .await?;
-            serde_json::from_str(&body).map_err(|e| e.to_string())
+            let dto: GhRepoDto = serde_json::from_str(&body).map_err(|e| e.to_string())?;
+            Ok(dto.into())
         })
     }
 
@@ -137,7 +207,8 @@ impl GitHubSource for HttpGitHubSource {
                 urlencoding::encode(username)
             ))
             .await?;
-            serde_json::from_str(&body).map_err(|e| e.to_string())
+            let dtos: Vec<GhRepoDto> = serde_json::from_str(&body).map_err(|e| e.to_string())?;
+            Ok(dtos.into_iter().map(Into::into).collect())
         })
     }
 
@@ -151,7 +222,8 @@ impl GitHubSource for HttpGitHubSource {
                 urlencoding::encode(org)
             ))
             .await?;
-            serde_json::from_str(&body).map_err(|e| e.to_string())
+            let dtos: Vec<GhRepoDto> = serde_json::from_str(&body).map_err(|e| e.to_string())?;
+            Ok(dtos.into_iter().map(Into::into).collect())
         })
     }
 }

@@ -1,8 +1,6 @@
 //! GitHub card domain models (product views of upstream snapshots).
 
-use serde::Deserialize;
-
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone)]
 pub struct GhUser {
     pub login: String,
     pub name: Option<String>,
@@ -13,7 +11,7 @@ pub struct GhUser {
     pub bio: Option<String>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone)]
 pub struct GhRepo {
     pub name: String,
     pub full_name: String,
@@ -26,7 +24,7 @@ pub struct GhRepo {
     pub license: Option<GhLicense>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone)]
 pub struct GhLicense {
     pub spdx_id: Option<String>,
 }

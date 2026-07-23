@@ -140,7 +140,13 @@ pub fn render(input: &BannerInput) -> String {
         .seed
         .clone()
         .unwrap_or_else(|| format!("{ty}-{}", input.text.as_deref().unwrap_or("")));
-    let fill = resolve_fill(input.color.as_deref(), input.theme.as_deref(), &seed, "mg");
+    let fill = resolve_fill(
+        input.color.as_deref(),
+        input.theme.as_deref(),
+        &seed,
+        "mg",
+        input.clock_seed.as_deref(),
+    );
 
     let font_color = input
         .font_color

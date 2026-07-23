@@ -175,3 +175,61 @@ fn composition_root_binds_github_adapter() {
         "HTTP interface must not name the concrete adapter type"
     );
 }
+
+#[test]
+fn shared_kernel_has_no_process_clock() {
+    let theme = std::fs::read_to_string("src/shared/theme.rs").unwrap();
+    let color = std::fs::read_to_string("src/shared/color.rs").unwrap();
+    for (label, text) in [("theme", &theme), ("color", &color)] {
+        assert!(
+            !text.contains("Utc::now") && !text.contains("std::env::"),
+            "{label} kernel must not sample process clock/env"
+        );
+        assert!(
+            !text.contains("use chrono") && !text.contains("chrono::"),
+            "{label} kernel must stay free of chrono; shell formats time seeds"
+        );
+    }
+    let shell = std::fs::read_to_string("src/interfaces/http/response.rs").unwrap();
+    assert!(
+        shell.contains("current_time_seed") && shell.contains("Utc::now"),
+        "HTTP shell must own clock sampling"
+    );
+}
+
+#[test]
+fn unused_effect_crates_are_not_reintroduced_in_domain() {
+    // Guard: domain remains free of error/framework crates even if deps return.
+    let domain_roots = [
+        "src/capabilities/banner/domain",
+        "src/capabilities/badge/domain",
+        "src/capabilities/github_card/domain",
+        "src/capabilities/icon_row/domain",
+    ];
+    for root in domain_roots {
+        for path in rust_files_under(Path::new(root)) {
+            let text = std::fs::read_to_string(&path).unwrap();
+            for needle in ["anyhow", "thiserror", "axum", "reqwest"] {
+                assert!(
+                    !text.contains(needle),
+                    "{} must not reference {needle}",
+                    path.display()
+                );
+            }
+        }
+    }
+}
+
+#[test]
+fn github_domain_is_serde_free() {
+    let models = std::fs::read_to_string("src/capabilities/github_card/domain/models.rs").unwrap();
+    assert!(
+        !models.contains("serde") && !models.contains("Deserialize"),
+        "github domain models must not depend on serde; adapter owns wire DTOs"
+    );
+    let adapter = std::fs::read_to_string("src/capabilities/github_card/adapters/github_http.rs").unwrap();
+    assert!(
+        adapter.contains("GhUserDto") && adapter.contains("Deserialize"),
+        "adapter must own wire DTOs"
+    );
+}

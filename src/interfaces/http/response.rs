@@ -4,6 +4,7 @@ use axum::http::{header, HeaderMap, HeaderValue};
 use axum::response::{IntoResponse, Response};
 
 use crate::shared::svg::esc;
+use crate::shared::theme;
 
 pub fn parse_bool(v: Option<&str>, default: bool) -> bool {
     match v {
@@ -55,4 +56,16 @@ pub fn err_svg(msg: &str) -> Response {
          </svg>"
     );
     svg_response(&body, "public, max-age=30")
+}
+
+/// Sample the process clock and format a pure hour-bucket seed for time-based fills.
+pub fn current_time_seed() -> String {
+    use chrono::{Datelike, Timelike};
+    let n = chrono::Utc::now();
+    theme::time_seed_from_parts(
+        n.year(),
+        n.month(),
+        n.day(),
+        n.hour(),
+    )
 }
