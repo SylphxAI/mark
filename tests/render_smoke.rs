@@ -101,7 +101,7 @@ fn icons_row() {
 
 #[test]
 fn deploy_badge() {
-    let svg = mark::stats::deploy_badge("mark", None, "flat");
+    let svg = mark::deploy_mark::render("mark", None, "flat");
     assert!(svg.contains("Sylphx") || svg.contains("deployed"));
 }
 

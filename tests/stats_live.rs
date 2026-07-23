@@ -2,11 +2,11 @@
 #[tokio::test]
 #[ignore = "live network; run with --ignored when validating GitHub"]
 async fn stats_shtse8_renders() {
-    let opts = mark::stats::CardOpts {
+    let opts = mark::github_card::CardOpts {
         theme: Some("tokyonight".into()),
         ..Default::default()
     };
-    let res = mark::stats::user_stats("shtse8", &opts).await;
+    let res = mark::github_card::user_stats(&mark::github_card::HttpGitHubSource, "shtse8", &opts).await;
     match res {
         Ok(svg) => {
             assert!(svg.contains("<svg"), "got: {}", &svg[..svg.len().min(200)]);

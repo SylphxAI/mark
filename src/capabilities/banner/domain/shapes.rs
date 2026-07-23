@@ -2,7 +2,7 @@
 //!
 //! `gain` (0..1) scales motion intensity; 0 freezes decorative layers.
 
-use crate::color::FillPlan;
+use crate::shared::color::FillPlan;
 
 pub const BANNER_TYPES: &[&str] = &[
     // SOTA showcase first
