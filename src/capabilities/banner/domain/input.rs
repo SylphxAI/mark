@@ -30,6 +30,8 @@ pub struct BannerInput {
     pub seed: Option<String>,
     /// Composition: `default` | `plate` | `signal` | `terminal`
     pub layout: Option<String>,
+    /// Shell-injected hour-bucket seed for `timeAuto` / `timeGradient` (pure core).
+    pub clock_seed: Option<String>,
 }
 
 pub fn normalize_layout(raw: Option<&str>) -> &'static str {

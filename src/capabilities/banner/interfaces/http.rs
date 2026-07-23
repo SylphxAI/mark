@@ -6,7 +6,7 @@ use serde::Deserialize;
 
 use crate::bootstrap::AppState;
 use crate::capabilities::banner::{self, BannerInput};
-use crate::interfaces::http::response::{decode_text, parse_bool, svg_response};
+use crate::interfaces::http::response::{current_time_seed, decode_text, parse_bool, svg_response};
 use crate::shared::svg::SVG_CACHE;
 
 #[derive(Debug, Deserialize)]
@@ -76,6 +76,7 @@ pub async fn banner_handler(
         credit,
         seed: None,
         layout: q.layout,
+        clock_seed: Some(current_time_seed()),
     };
     // Animated banners must not sit behind long CDN TTL — otherwise deploys look "dead".
     let anim = q.animation.as_deref().unwrap_or("ambient");

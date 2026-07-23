@@ -268,13 +268,20 @@ pub fn pick_gradient(seed: &str) -> (&'static str, &'static str) {
     GRADIENTS[(hash_seed(seed) as usize) % GRADIENTS.len()]
 }
 
-pub fn time_seed() -> String {
-    let n = chrono::Utc::now();
-    format!(
-        "{}-{}-{}-{}",
-        n.format("%Y"),
-        n.format("%m"),
-        n.format("%d"),
-        n.format("%H")
-    )
+/// Format an hour-bucket seed from explicit civil time parts (pure).
+///
+/// Clock sampling belongs in the imperative shell; pass the result into
+/// `resolve_fill(..., clock_seed)`.
+pub fn time_seed_from_parts(year: i32, month: u32, day: u32, hour: u32) -> String {
+    format!("{year:04}-{month:02}-{day:02}-{hour:02}")
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn time_seed_from_parts_is_pure_format() {
+        assert_eq!(time_seed_from_parts(2026, 7, 23, 12), "2026-07-23-12");
+    }
 }

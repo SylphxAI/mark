@@ -57,6 +57,20 @@ first durable product commit. Project size is not an exemption.
 
 7. **Supersedes:** informal flat-module layout. No prior numbered ADR existed.
 
+## Amendment (2026-07-23 residual)
+
+Clock sampling for `timeAuto` / `timeGradient` is an imperative-shell effect.
+The shared kernel accepts an injected `clock_seed`; HTTP interfaces sample
+`chrono::Utc::now()` via `current_time_seed()`. Pure render remains deterministic
+when tests omit or fix the seed.
+
+GitHub JSON wire types (`GhUserDto` / `GhRepoDto`) live only in the HTTP adapter.
+Domain models are serde-free product views mapped at the boundary.
+
+Unused direct dependencies (`anyhow`, `thiserror`, bare `tower`,
+`serde_urlencoded`) were removed; `tower` remains a dev-dependency for HTTP
+contract tests.
+
 ## Consequences
 
 - New product outcomes land as capabilities (or explicit sub-capabilities), not

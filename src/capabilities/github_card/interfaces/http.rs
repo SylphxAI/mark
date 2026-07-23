@@ -6,7 +6,7 @@ use serde::Deserialize;
 
 use crate::bootstrap::AppState;
 use crate::capabilities::github_card::{self, CardOpts};
-use crate::interfaces::http::response::{err_svg, parse_bool, svg_response};
+use crate::interfaces::http::response::{current_time_seed, err_svg, parse_bool, svg_response};
 use crate::shared::svg::SVG_CACHE_SHORT;
 
 #[derive(Debug, Deserialize)]
@@ -23,6 +23,7 @@ fn card_opts(st: &AppState, q: &CardQuery) -> CardOpts {
         color: q.color.clone(),
         credit: parse_bool(q.credit.as_deref(), st.default_credit),
         width: q.width.unwrap_or(420),
+        clock_seed: Some(current_time_seed()),
     }
 }
 

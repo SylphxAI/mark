@@ -16,7 +16,7 @@ fn palette(opts: &CardOpts, seed: &str) -> (String, String, String, String) {
             );
         }
     }
-    let fill = resolve_fill(opts.color.as_deref(), None, seed, "cg");
+    let fill = resolve_fill(opts.color.as_deref(), None, seed, "cg", opts.clock_seed.as_deref());
     let bg = if fill.fill.starts_with("url") {
         ensure_hash("0D1117")
     } else {

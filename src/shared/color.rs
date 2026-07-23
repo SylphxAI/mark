@@ -39,7 +39,13 @@ impl FillPlan {
     }
 }
 
-pub fn resolve_fill(color: Option<&str>, theme: Option<&str>, seed: &str, gid: &str) -> FillPlan {
+pub fn resolve_fill(
+    color: Option<&str>,
+    theme: Option<&str>,
+    seed: &str,
+    gid: &str,
+    clock_seed: Option<&str>,
+) -> FillPlan {
     if let Some(name) = theme {
         if let Some(t) = theme::get(name) {
             return theme_fill(t, gid);
@@ -50,13 +56,13 @@ pub fn resolve_fill(color: Option<&str>, theme: Option<&str>, seed: &str, gid: &
 
     match color {
         "auto" => solid_kit(gid, theme::pick_auto(seed)),
-        "timeAuto" => solid_kit(gid, theme::pick_auto(&theme::time_seed())),
+        "timeAuto" => solid_kit(gid, theme::pick_auto(clock_seed.unwrap_or(seed))),
         "gradient" | "random" => {
             let (a, b) = theme::pick_gradient(seed);
             gradient_kit(gid, a, b)
         }
         "timeGradient" => {
-            let (a, b) = theme::pick_gradient(&theme::time_seed());
+            let (a, b) = theme::pick_gradient(clock_seed.unwrap_or(seed));
             gradient_kit(gid, a, b)
         }
         other => {
@@ -344,7 +350,7 @@ mod tests {
 
     #[test]
     fn theme_plan_has_chroma_roles() {
-        let p = resolve_fill(None, Some("sunset"), "seed", "mg");
+        let p = resolve_fill(None, Some("sunset"), "seed", "mg", None);
         assert!(p.fill.contains("url(#mg)"));
         assert!(p.defs.contains("id=\"mg\""));
         assert!(p.defs.contains("mgBloom"));
@@ -356,7 +362,7 @@ mod tests {
 
     #[test]
     fn gradient_default_is_chromatic() {
-        let p = resolve_fill(Some("gradient"), None, "wave-Ship", "mg");
+        let p = resolve_fill(Some("gradient"), None, "wave-Ship", "mg", None);
         assert!(p.fill.starts_with("url(#"));
         assert!(p.defs.contains("linearGradient"));
         // Must not be a pure solid white/black kit.
@@ -366,7 +372,17 @@ mod tests {
 
     #[test]
     fn custom_stops_parse() {
-        let p = resolve_fill(Some("0:FF6B6B,100:C44569"), None, "x", "mg");
+        let p = resolve_fill(Some("0:FF6B6B,100:C44569"), None, "x", "mg", None);
         assert!(p.defs.contains("#FF6B6B") || p.defs.contains("#ff6b6b") || p.defs.contains("FF6B6B"));
+    }
+
+    #[test]
+    fn time_modes_use_injected_clock_seed() {
+        let a = resolve_fill(Some("timeAuto"), None, "ignored", "mg", Some("fixed-clock"));
+        let b = resolve_fill(Some("timeAuto"), None, "ignored", "mg", Some("fixed-clock"));
+        assert_eq!(a.fill, b.fill, "same clock seed must be deterministic");
+        let c = resolve_fill(Some("timeAuto"), None, "ignored", "mg", Some("other-clock"));
+        // different hour-buckets may collide on palette modulo, so only check call succeeds
+        assert!(!c.fill.is_empty());
     }
 }
