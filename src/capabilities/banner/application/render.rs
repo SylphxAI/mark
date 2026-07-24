@@ -34,7 +34,30 @@ fn monogram(text: &str) -> String {
 }
 
 /// True typewriter: per-character opacity + optional cursor.
-#[allow(clippy::too_many_arguments)]
+///
+/// Uses a proportional advance table (not a flat monospace factor) so common
+/// UI sans glyphs do not look "letter-spaced apart" at README sizes.
+fn char_advance(ch: char, font_size: f32) -> f32 {
+    // Relative widths tuned for system UI sans at banner sizes.
+    let unit = match ch {
+        ' ' => 0.30,
+        '\u{00A0}' => 0.30,
+        'i' | 'l' | 'I' | 'j' | 't' | 'f' | 'r' | '|' | '\'' | '`' | '!' | '.' | ',' | ':' | ';' => {
+            0.34
+        }
+        'm' | 'w' | 'M' | 'W' | '@' | '%' => 0.78,
+        '1' | '(' | ')' | '[' | ']' | '{' | '}' | '/' | '\\' => 0.40,
+        c if c.is_ascii_uppercase() => 0.58,
+        c if c.is_ascii_digit() => 0.54,
+        _ => 0.52,
+    };
+    font_size * unit
+}
+
+fn line_advance(line: &str, font_size: f32) -> f32 {
+    line.chars().map(|c| char_advance(c, font_size)).sum()
+}
+
 fn typewriter_line(
     line: &str,
     x: f32,
@@ -43,50 +66,57 @@ fn typewriter_line(
     font_color: &str,
     anchor: &str,
     stroke_attr: &str,
-    base_delay: f32,
+    begin: f32,
     char_dur: f32,
 ) -> String {
-    let mut nodes = String::new();
-    // Accessible / crawlable full string (characters render as separate nodes)
-    nodes.push_str(&format!("<title>{}</title>", esc(line)));
-    let mut t = base_delay;
-    // Approximate advance for cursor: monospaced-ish width factor
-    let advance = font_size as f32 * 0.56;
+    let fs = font_size as f32;
+    let total = line_advance(line, fs);
+    // Anchor the run as a whole, then place glyphs left→right.
     let start_x = match anchor {
-        "start" => x,
-        "end" => x - line.chars().count() as f32 * advance,
-        _ => x - (line.chars().count() as f32 * advance) / 2.0,
+        "start" | "left" => x,
+        "end" | "right" => x - total,
+        _ => x - total / 2.0,
     };
+
+    let mut out = String::new();
     let mut cx = start_x;
+    let mut t = begin;
     for ch in line.chars() {
-        let content = esc(&ch.to_string());
-        nodes.push_str(&format!(
-            "<text x=\"{cx}\" y=\"{y}\" text-anchor=\"start\" dominant-baseline=\"middle\" \
+        let adv = char_advance(ch, fs);
+        let glyph_x = cx;
+        out.push_str(&format!(
+            "<text x=\"{glyph_x}\" y=\"{y}\" text-anchor=\"start\" dominant-baseline=\"middle\" \
              font-family=\"ui-sans-serif,system-ui,-apple-system,Segoe UI,Helvetica,sans-serif\" \
-             font-weight=\"650\" letter-spacing=\"-0.02em\" font-size=\"{font_size}\" \
+             font-weight=\"650\" letter-spacing=\"0\" font-size=\"{font_size}\" \
              fill=\"{font_color}\" opacity=\"0\"{stroke_attr}>\
-             {content}\
-             <animate attributeName=\"opacity\" from=\"0\" to=\"1\" dur=\"0.04s\" begin=\"{t}s\" fill=\"freeze\"/>\
-             </text>"
+               <animate attributeName=\"opacity\" from=\"0\" to=\"1\" dur=\"0.01s\" begin=\"{t}s\" fill=\"freeze\"/>\
+               {}</text>",
+            esc(&ch.to_string()),
         ));
-        cx += if ch == ' ' { advance * 0.45 } else { advance };
+        cx += adv;
         t += char_dur;
     }
     // Blinking cursor after typed line
-    let cursor_x = cx + 2.0;
-    let ch = font_size as f32 * 0.85;
-    nodes.push_str(&format!(
-        "<rect x=\"{cursor_x}\" y=\"{cy}\" width=\"{cw}\" height=\"{ch}\" rx=\"1.5\" fill=\"{font_color}\" opacity=\"0\">\
-           <animate attributeName=\"opacity\" values=\"0;1;1;0;0\" keyTimes=\"0;0.05;0.5;0.55;1\" \
-             dur=\"1.0s\" begin=\"{t}s\" repeatCount=\"indefinite\"/>\
-         </rect>",
-        cy = y - ch * 0.55,
-        cw = (font_size as f32 * 0.12).max(2.5),
+    let cursor_x = cx + fs * 0.06;
+    let cy = y - fs * 0.42;
+    let cw = (fs * 0.08).clamp(2.0, 5.0);
+    let chh = fs * 0.78;
+    let cursor_begin = begin + line.chars().count() as f32 * char_dur;
+    out.push_str(&format!(
+        "<rect x=\"{cursor_x}\" y=\"{cy}\" width=\"{cw}\" height=\"{chh}\" rx=\"1.5\" fill=\"{font_color}\" opacity=\"0\">\
+           <animate attributeName=\"opacity\" values=\"0;0;1;1;0;0\" keyTimes=\"0;0.01;0.02;0.48;0.52;1\" \
+             dur=\"1.05s\" begin=\"{cursor_begin}s\" repeatCount=\"indefinite\"/>\
+         </rect>"
     ));
-    nodes
+    // Full string kept for accessibility / crawl / tests (invisible).
+    out.push_str(&format!(
+        "<text x=\"{x}\" y=\"{y}\" text-anchor=\"{anchor}\" dominant-baseline=\"middle\" font-size=\"1\" fill=\"{font_color}\" opacity=\"0\">{}</text>",
+        esc(line),
+    ));
+    out
 }
 
-#[allow(clippy::too_many_arguments)]
+
 fn plate_chrome(
     width: u32,
     height: u32,
@@ -227,7 +257,7 @@ pub fn render(input: &BannerInput) -> String {
         let x = width as f32 * font_align / 100.0;
         let y = height as f32 * font_align_y / 100.0 + dy + title_y_bias;
         if input.text_bg {
-            let bw = (line.chars().count() as f32 * font_size as f32 * 0.56).max(40.0);
+            let bw = line_advance(line, font_size as f32).max(40.0);
             let bx = if anchor == "start" {
                 x - 8.0
             } else {

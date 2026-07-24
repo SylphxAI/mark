@@ -52,23 +52,23 @@ pub const BANNER_TYPES: &[&str] = &[
 ];
 
 pub const FEATURED_TYPES: &[&str] = &[
-    // Classics users expect first (wave is the signature liquid banner)
+    // Capsule-class classics + solid geometry first, then ethereal showcase
     "wave",
     "waving",
+    "soft",
+    "rounded",
+    "rect",
+    "slice",
+    "glass",
+    "product",
+    "terminal",
     "aurora",
     "mesh",
-    "glass",
-    // SOTA showcase
     "plasma",
     "holo",
     "neon",
-    "meteor",
     "liquid",
-    "prism",
-    "void",
-    "firefly",
     "silk",
-    "iridescent",
     "orbit",
     "constellation",
 ];

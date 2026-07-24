@@ -490,8 +490,9 @@
     const BASE = location.origin;
 
     const FEATURED = [
-      "wave","waving","aurora","mesh","glass","plasma","holo","neon","liquid","soft",
-      "product","silk","constellation","orbit","void"
+      // Classic / readable first (capsule-class wave + solids), then ethereal
+      "wave","waving","soft","rounded","rect","slice","glass","product","terminal",
+      "aurora","mesh","plasma","holo","neon","liquid","silk","constellation","orbit","void"
     ];
     const ALL_STYLES = FEATURED.concat([
       "horizon","dusk","beam","terminal","grid","blur","ring","circuit","hud",
@@ -501,7 +502,7 @@
     const MOTIONS = [
       ["ambient","Living"],
       ["none","Still"],
-      ["type","Typewriter"],
+      ["type","Typewriter"],  // optional; not in Surprise pool
       ["rise","Rise"],
       ["fade","Fade"],
       ["float","Float"],
@@ -552,8 +553,8 @@
 
     const ICONS = ["rust","ts","js","go","python","react","node","docker","kubernetes","linux","git","github","postgres","redis","aws","bun","nextjs","vue","tailwind","graphql","nginx","cloudflare","vercel"];
     const BADGE_STYLES = ["flat","plastic","for-the-badge","social","pill"];
-    const STYLES_POOL = ["wave","waving","aurora","plasma","holo","mesh","liquid","neon","glass","soft"];
-    const MOTION_POOL = ["ambient","rise","float","shimmer","type"];
+    const STYLES_POOL = ["wave","waving","soft","rounded","glass","product","aurora","mesh","plasma","liquid"];
+    const MOTION_POOL = ["ambient","ambient","rise","float","none","shimmer"];
 
     function paletteGradient(p) {
       const stops = p.colors.map((c, i) => {
@@ -822,7 +823,7 @@
           </section>
 
           <section class="sec">
-            <div class="sec-h"><h3>Style</h3><span>Shape language · colors follow palette above</span></div>
+            <div class="sec-h"><h3>Style</h3><span>Wave &amp; solids first · then ethereal</span></div>
             ${styleFilm(styles, b.type)}
             <button type="button" class="more-styles" id="moreStyles">${state.showAllStyles ? "Show featured only" : "Browse all styles"}</button>
           </section>
@@ -833,7 +834,7 @@
           </section>
 
           <section class="sec">
-            <div class="sec-h"><h3>Motion</h3><span>Living color by default</span></div>
+            <div class="sec-h"><h3>Motion</h3><span>Living default · Typewriter optional</span></div>
             <div class="field">${motionChips(b.animation || "ambient")}</div>
           </section>
 

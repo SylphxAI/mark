@@ -186,3 +186,57 @@ fn plasma_and_holo_are_theme_bound() {
     assert!(a.contains("mgHolo"));
     assert!(b.contains("mgBloom"));
 }
+
+#[test]
+fn typewriter_uses_proportional_advances() {
+    let svg = banner::render(&BannerInput {
+        type_name: Some("soft".into()),
+        text: Some("Ship".into()),
+        animation: Some("type".into()),
+        color: Some("7C3AED,00F5D4".into()),
+        height: Some(220),
+        ..Default::default()
+    });
+    // Parse glyph x positions for visible typewriter nodes (skip a11y font-size=1).
+    let mut xs = Vec::new();
+    for chunk in svg.split("<text ").skip(1) {
+        if chunk.contains("font-size=\"1\"") {
+            continue;
+        }
+        let Some(x_str) = chunk.split("x=\"").nth(1).and_then(|s| s.split('"').next()) else {
+            continue;
+        };
+        let Ok(x) = x_str.parse::<f32>() else { continue };
+        let Some(body) = chunk.split("</text>").next() else { continue };
+        let mut cleaned = body.to_string();
+        while let Some(a) = cleaned.find("<animate") {
+            let Some(rel) = cleaned[a..].find("/>") else { break };
+            let end = a + rel + 2;
+            cleaned.replace_range(a..end, "");
+        }
+        let ch = cleaned
+            .rsplit('>')
+            .next()
+            .and_then(|s| s.chars().next())
+            .filter(|c| c.is_ascii_alphabetic());
+        if let Some(ch) = ch {
+            xs.push((ch, x));
+        }
+    }
+    assert_eq!(xs.len(), 4, "expected S,h,i,p got {xs:?}");
+    let advances: Vec<f32> = xs.windows(2).map(|w| w[1].1 - w[0].1).collect();
+    for a in &advances {
+        assert!(*a < 36.0, "advance too wide {a:?} xs={xs:?}");
+        assert!(*a > 10.0, "advance too small {a:?} xs={xs:?}");
+    }
+    let max_a = advances.iter().cloned().fold(f32::MIN, f32::max);
+    let min_a = advances.iter().cloned().fold(f32::MAX, f32::min);
+    assert!(
+        max_a - min_a > 2.0,
+        "expected variable advances for Ship, got {advances:?}"
+    );
+    assert!(
+        advances[1] < advances[0] || advances[1] < advances[2],
+        "i-related advance should be relatively narrow: {advances:?}"
+    );
+}
