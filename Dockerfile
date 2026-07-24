@@ -1,17 +1,22 @@
 # Official multi-stage image for Sylphx Platform (dockerfile strategy).
 FROM rust:1.97-bookworm AS builder
 ARG GIT_SHA=unknown
+ARG SOURCE_COMMIT
+# Platform build systems often inject SOURCE_COMMIT; normalize to GIT_SHA for build.rs.
+ENV GIT_SHA=${GIT_SHA}
+ENV SOURCE_COMMIT=${SOURCE_COMMIT}
 WORKDIR /app
-COPY Cargo.toml Cargo.lock ./
+COPY Cargo.toml Cargo.lock build.rs ./
 COPY src ./src
 COPY static ./static
 COPY tests ./tests
-# Embed revision at compile time when provided by the build system.
-ENV GIT_SHA=${GIT_SHA}
-RUN cargo build --release --locked
+RUN if [ -z "$SOURCE_COMMIT" ] || [ "$SOURCE_COMMIT" = "" ]; then export SOURCE_COMMIT="$GIT_SHA"; fi; \
+    if [ -z "$GIT_SHA" ] || [ "$GIT_SHA" = "unknown" ]; then export GIT_SHA="${SOURCE_COMMIT:-unknown}"; fi; \
+    GIT_SHA="$GIT_SHA" SOURCE_COMMIT="$SOURCE_COMMIT" cargo build --release --locked
 
 FROM debian:bookworm-slim
 ARG GIT_SHA=unknown
+ARG SOURCE_COMMIT
 RUN apt-get update \
   && apt-get install -y --no-install-recommends ca-certificates curl \
   && update-ca-certificates \
@@ -24,6 +29,7 @@ ENV PORT=8787 \
     RUST_LOG=mark=info \
     DEFAULT_CREDIT=0 \
     GIT_SHA=${GIT_SHA} \
+    SOURCE_COMMIT=${SOURCE_COMMIT} \
     SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt \
     SSL_CERT_DIR=/etc/ssl/certs
 COPY --from=builder /app/target/release/mark /usr/local/bin/mark

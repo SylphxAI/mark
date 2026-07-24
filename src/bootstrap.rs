@@ -99,15 +99,17 @@ pub async fn serve(config: Config) {
 pub fn build_revision() -> &'static str {
     static REV: OnceLock<String> = OnceLock::new();
     REV.get_or_init(|| {
+        // Runtime env wins (platform may inject after image build).
         for key in ["GIT_SHA", "SOURCE_COMMIT", "SYLPHX_GIT_SHA", "COMMIT_SHA"] {
             if let Ok(v) = std::env::var(key) {
                 let v = v.trim().to_string();
-                if !v.is_empty() {
+                if !v.is_empty() && v != "unknown" {
                     return v;
                 }
             }
         }
-        option_env!("GIT_SHA").unwrap_or("dev").to_string()
+        // Compile-time embed from build.rs (git HEAD or build-arg).
+        option_env!("MARK_GIT_SHA").unwrap_or("unknown").to_string()
     })
     .as_str()
 }
