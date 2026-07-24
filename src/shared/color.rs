@@ -135,6 +135,7 @@ fn gradient_kit(gid: &str, a: &str, b: &str) -> FillPlan {
     )
 }
 
+#[allow(clippy::too_many_arguments)]
 fn kit(
     gid: &str,
     base: &str,

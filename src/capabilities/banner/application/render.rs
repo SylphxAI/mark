@@ -34,6 +34,7 @@ fn monogram(text: &str) -> String {
 }
 
 /// True typewriter: per-character opacity + optional cursor.
+#[allow(clippy::too_many_arguments)]
 fn typewriter_line(
     line: &str,
     x: f32,
@@ -85,6 +86,7 @@ fn typewriter_line(
     nodes
 }
 
+#[allow(clippy::too_many_arguments)]
 fn plate_chrome(
     width: u32,
     height: u32,

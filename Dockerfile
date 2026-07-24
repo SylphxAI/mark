@@ -1,13 +1,17 @@
 # Official multi-stage image for Sylphx Platform (dockerfile strategy).
 FROM rust:1.97-bookworm AS builder
+ARG GIT_SHA=unknown
 WORKDIR /app
 COPY Cargo.toml Cargo.lock ./
 COPY src ./src
 COPY static ./static
 COPY tests ./tests
+# Embed revision at compile time when provided by the build system.
+ENV GIT_SHA=${GIT_SHA}
 RUN cargo build --release --locked
 
 FROM debian:bookworm-slim
+ARG GIT_SHA=unknown
 RUN apt-get update \
   && apt-get install -y --no-install-recommends ca-certificates curl \
   && update-ca-certificates \
@@ -19,6 +23,7 @@ ENV PORT=8787 \
     HOST=0.0.0.0 \
     RUST_LOG=mark=info \
     DEFAULT_CREDIT=0 \
+    GIT_SHA=${GIT_SHA} \
     SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt \
     SSL_CERT_DIR=/etc/ssl/certs
 COPY --from=builder /app/target/release/mark /usr/local/bin/mark
