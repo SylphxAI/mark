@@ -58,6 +58,7 @@ fn line_advance(line: &str, font_size: f32) -> f32 {
     line.chars().map(|c| char_advance(c, font_size)).sum()
 }
 
+#[allow(clippy::too_many_arguments)]
 fn typewriter_line(
     line: &str,
     x: f32,
@@ -117,6 +118,7 @@ fn typewriter_line(
 }
 
 
+#[allow(clippy::too_many_arguments)]
 fn plate_chrome(
     width: u32,
     height: u32,
