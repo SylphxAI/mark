@@ -67,6 +67,11 @@ when tests omit or fix the seed.
 GitHub JSON wire types (`GhUserDto` / `GhRepoDto`) live only in the HTTP adapter.
 Domain models are serde-free product views mapped at the boundary.
 
+`/health` exposes `revision` from shell env (`GIT_SHA` / `SOURCE_COMMIT` / …) for
+deploy readback. This is liveness metadata only — never product capability proof.
+
+Clippy `-D warnings` is a required CI gate after residual SVG helper cleanups.
+
 Unused direct dependencies (`anyhow`, `thiserror`, bare `tower`,
 `serde_urlencoded`) were removed; `tower` remains a dev-dependency for HTTP
 contract tests.

@@ -39,6 +39,7 @@ async fn health_is_json_liveness_not_capability_proof() {
     assert!(ctype.contains("json"), "ctype={ctype}");
     assert!(body.contains("\"ok\":true") || body.contains("\"ok\": true"));
     assert!(body.contains("mark"));
+    assert!(body.contains("revision"), "health must expose revision: {body}");
 }
 
 #[tokio::test]

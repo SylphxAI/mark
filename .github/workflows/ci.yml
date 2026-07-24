@@ -17,6 +17,7 @@ jobs:
           components: clippy
       - name: Test
         run: cargo test --locked
-      - name: Clippy (residual informational)
-        continue-on-error: true
+      - name: Clippy
         run: cargo clippy --all-targets -- -D warnings
+      - name: Release build
+        run: cargo build --release --locked

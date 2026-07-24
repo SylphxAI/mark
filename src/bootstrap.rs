@@ -4,6 +4,7 @@
 //! never locate dependencies through this module.
 
 use crate::capabilities::github_card::HttpGitHubSource;
+use std::sync::OnceLock;
 use crate::interfaces::http::app;
 use std::net::SocketAddr;
 use tracing_subscriber::EnvFilter;
@@ -92,4 +93,21 @@ pub async fn serve(config: Config) {
     );
     let listener = tokio::net::TcpListener::bind(addr).await.expect("bind");
     axum::serve(listener, app(state)).await.expect("serve");
+}
+
+/// Process/build revision for liveness metadata (not product capability proof).
+pub fn build_revision() -> &'static str {
+    static REV: OnceLock<String> = OnceLock::new();
+    REV.get_or_init(|| {
+        for key in ["GIT_SHA", "SOURCE_COMMIT", "SYLPHX_GIT_SHA", "COMMIT_SHA"] {
+            if let Ok(v) = std::env::var(key) {
+                let v = v.trim().to_string();
+                if !v.is_empty() {
+                    return v;
+                }
+            }
+        }
+        option_env!("GIT_SHA").unwrap_or("dev").to_string()
+    })
+    .as_str()
 }

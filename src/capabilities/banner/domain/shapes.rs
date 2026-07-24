@@ -199,6 +199,7 @@ fn vignette(w: u32, h: u32, _plan: &FillPlan) -> String {
 ///
 /// Motion is applied on a parent `<g>` via `animateTransform` (more reliable than
 /// animating `cx`/`cy` on filtered ellipses inside SVG-as-`<img>`).
+#[allow(clippy::too_many_arguments)]
 fn blob(
     cx: f32,
     cy: f32,
@@ -244,6 +245,7 @@ fn blob(
     )
 }
 
+#[allow(clippy::format_in_format_args)]
 pub fn shape_background(
     ty: &str,
     w: u32,
@@ -1559,8 +1561,8 @@ M0,{y} C{a},{y1} {b},{y2} {c},{y3} S{d},{y4} {w},{y5} L{w},{h} L0,{h} Z\"/>\
             while y < h {
                 let mut x = 0u32;
                 while x < w {
-                    if ((x / s) + (y / s)) % 2 == 0 {
-                        if g > 0.01 && i % 4 == 0 {
+                    if ((x / s) + (y / s)).is_multiple_of(2) {
+                        if g > 0.01 && i.is_multiple_of(4) {
                             cells.push_str(&format!(
                                 "<rect x=\"{x}\" y=\"{y}\" width=\"{s}\" height=\"{s}\" fill=\"{glow}\" fill-opacity=\"0.1\">\
                                    <animate attributeName=\"fill-opacity\" values=\"0.03;0.1;0.03\" dur=\"3s\" begin=\"{b}s\" repeatCount=\"indefinite\"/>\
