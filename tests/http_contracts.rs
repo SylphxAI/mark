@@ -83,3 +83,12 @@ async fn deploy_mark_route() {
     assert_eq!(status, StatusCode::OK);
     assert!(body.contains("Sylphx") || body.contains("deployed"));
 }
+
+#[tokio::test]
+async fn health_revision_is_non_empty_string() {
+    let (status, _, body) = get("/health").await;
+    assert_eq!(status, StatusCode::OK);
+    let v: serde_json::Value = serde_json::from_str(&body).expect("json");
+    let rev = v.get("revision").and_then(|x| x.as_str()).unwrap_or("");
+    assert!(!rev.is_empty(), "revision must be present: {body}");
+}
