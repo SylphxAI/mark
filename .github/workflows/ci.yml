@@ -30,8 +30,9 @@ jobs:
         with:
           components: clippy
       - name: Test
+        # test-profile only — Platform owns production packaging (build once).
         run: cargo test --locked
       - name: Clippy
         run: cargo clippy --all-targets -- -D warnings
-      - name: Release build
-        run: cargo build --release --locked
+      # Forbidden residual: cargo build --release for ship binary.
+      # Platform packages once from sylphx.toml dockerfile (build once, deploy many).
