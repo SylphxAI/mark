@@ -3,19 +3,20 @@
 //! Binds stable ports to adapters and owns process lifecycle. Domain modules
 //! never locate dependencies through this module.
 
-use crate::capabilities::github_card::HttpGitHubSource;
 use std::sync::OnceLock;
 use crate::interfaces::http::app;
 use std::net::SocketAddr;
 use tracing_subscriber::EnvFilter;
 
 /// Process-level shell state shared with HTTP handlers.
+///
+/// Mark is stateless by design (ADR-0003): the only process state is product
+/// defaults and the canonical base URL. There is no upstream, no cache, no
+/// secret — every mark is a pure function of its URL.
 #[derive(Clone)]
 pub struct AppState {
     pub default_credit: bool,
     pub public_base: String,
-    /// Bound GitHub outbound adapter (composition root wiring).
-    pub github: HttpGitHubSource,
 }
 
 /// Runtime configuration loaded from the environment (imperative shell).
@@ -51,7 +52,6 @@ impl Config {
         AppState {
             default_credit: self.default_credit,
             public_base: self.public_base.clone(),
-            github: HttpGitHubSource,
         }
     }
 

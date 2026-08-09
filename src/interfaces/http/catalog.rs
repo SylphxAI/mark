@@ -6,9 +6,7 @@ use axum::Json;
 use serde_json::json;
 
 use crate::bootstrap::AppState;
-use crate::capabilities::banner::{ANIMATIONS, BANNER_TYPES, FEATURED_TYPES, LAYOUTS};
-use crate::capabilities::icon_row;
-use crate::shared::theme;
+use crate::capabilities::mark::domain::catalog::vocabulary;
 
 pub async fn api_index(State(st): State<AppState>) -> impl IntoResponse {
     Json(json!({
@@ -16,15 +14,9 @@ pub async fn api_index(State(st): State<AppState>) -> impl IntoResponse {
         "tagline": "Any URL. One image. Your brand.",
         "base": st.public_base,
         "endpoints": [
-            "/api/v1/banner",
-            "/api/v1/badge",
+            "/api/v1/mark",
+            "/api/v1/mark/{form}",
             "/badge/{label}-{message}-{color}",
-            "/api/v1/stats/{user}",
-            "/api/v1/org/{org}",
-            "/api/v1/repo/{owner}/{repo}",
-            "/api/v1/icons?i=rust,ts,k8s",
-            "/api/v1/brand/{name}",
-            "/api/v1/deploy",
             "/api/v1/catalog",
             "/health"
         ]
@@ -32,25 +24,31 @@ pub async fn api_index(State(st): State<AppState>) -> impl IntoResponse {
 }
 
 pub async fn catalog() -> impl IntoResponse {
-    Json(json!({
-        "banner_types": BANNER_TYPES,
-        "featured_banner_types": FEATURED_TYPES,
-        "layouts": LAYOUTS,
-        "themes": theme::list_names(),
-        "icons": icon_row::available(),
-        "badge_styles": ["flat", "plastic", "for-the-badge", "social", "pill"],
-        "animations": ANIMATIONS,
-        "limits": {
-            "banner_text": 500,
-            "banner_desc": 240,
-            "badge_label": 80,
-            "badge_message": 120,
-            "icons": 60
-        },
-        "notes": {
-            "layout": "plate = left monogram product cover; signal = centered hero; terminal = left mono systems look",
-            "animation_type": "true per-character typewriter with cursor (SMIL)",
-            "star_history": "not offered — use star-history.com; time-series store is out of art-kernel scope"
-        }
-    }))
+    let mut v = vocabulary();
+    if let Some(obj) = v.as_object_mut() {
+        obj.insert(
+            "limits".into(),
+            json!({
+                "hero_text": 500,
+                "hero_desc": 240,
+                "hero_lines": 8,
+                "pill_label": 80,
+                "pill_message": 120,
+                "strip_icons": 60,
+                "identity_brand": 40,
+                "identity_tagline": 120,
+                "deploy_service": 40
+            }),
+        );
+        obj.insert(
+            "notes".into(),
+            json!({
+                "grammar": "mark = form x art x paint(theme/color) x geometry(width/height) x text x motion",
+                "determinism": "same URL, same mark, forever — no clock, no upstream, no state",
+                "live_data": "not offered — use specialist hosts; Mark renders only what the URL says",
+                "animation_type": "true per-character typewriter with cursor (SMIL)"
+            }),
+        );
+    }
+    Json(v)
 }
