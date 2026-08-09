@@ -3,3 +3,4 @@
 | ID | Title | Status |
 | --- | --- | --- |
 | [ADR-0001](./ADR-0001-capability-first-architecture.md) | Capability-first architecture for Mark | accepted |
+| [ADR-0002](./ADR-0002-clean-break-end-state.md) | Clean-break end state (surface, security, limits, deploy identity) | accepted |

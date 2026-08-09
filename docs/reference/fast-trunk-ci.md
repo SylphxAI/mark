@@ -14,7 +14,7 @@
 
 - **Internal agents:** small-batch non-force direct-trunk to default branch.
 - **External contributors:** Pull Request presubmit feedback.
-- **Merge Queue:** default off (no `merge_group` trigger).
+- **Merge Queue:** on (`merge_group` trigger wired; concurrency cancels superseded runs).
 
 ## CI scope
 

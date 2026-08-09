@@ -3,7 +3,7 @@ name: CI
 # Fast Trunk (Agent-native):
 # - Aggregate source verdict: source-ci/pass
 # - CI = source correctness only; Platform builds production once
-# - Merge Queue off by default (no merge_group trigger)
+# - Merge Queue on: merge_group trigger wired (PR #11)
 # - Concurrency cancels superseded PR/branch tip runs
 
 on:

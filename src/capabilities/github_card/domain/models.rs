@@ -7,7 +7,6 @@ pub struct GhUser {
     pub public_repos: u32,
     pub followers: u32,
     pub following: u32,
-    pub avatar_url: String,
     pub bio: Option<String>,
 }
 
@@ -19,8 +18,6 @@ pub struct GhRepo {
     pub stargazers_count: u32,
     pub forks_count: u32,
     pub language: Option<String>,
-    pub html_url: String,
-    pub open_issues_count: u32,
     pub license: Option<GhLicense>,
 }
 
@@ -80,8 +77,6 @@ mod tests {
                 stargazers_count: 10,
                 forks_count: 2,
                 language: Some("Rust".into()),
-                html_url: String::new(),
-                open_issues_count: 0,
                 license: None,
             },
             GhRepo {
@@ -91,8 +86,6 @@ mod tests {
                 stargazers_count: 5,
                 forks_count: 1,
                 language: Some("Rust".into()),
-                html_url: String::new(),
-                open_issues_count: 0,
                 license: None,
             },
             GhRepo {
@@ -102,8 +95,6 @@ mod tests {
                 stargazers_count: 1,
                 forks_count: 0,
                 language: Some("Go".into()),
-                html_url: String::new(),
-                open_issues_count: 0,
                 license: None,
             },
         ];
