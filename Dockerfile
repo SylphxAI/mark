@@ -7,6 +7,10 @@ ENV GIT_SHA=${GIT_SHA}
 ENV SOURCE_COMMIT=${SOURCE_COMMIT}
 WORKDIR /app
 COPY Cargo.toml Cargo.lock build.rs ./
+# Embed the exact checkout revision: build.rs falls back to `git rev-parse HEAD`
+# when the platform does not pass GIT_SHA/SOURCE_COMMIT build args. The final
+# image gate fails the build if no revision is embedded.
+COPY .git ./.git
 COPY src ./src
 COPY static ./static
 COPY tests ./tests
@@ -37,7 +41,8 @@ COPY static ./static
 # Prove CA bundle + binary are real. `mark --help` must exit (not start the server).
 RUN test -s /etc/ssl/certs/ca-certificates.crt \
   && test -x /usr/local/bin/mark \
-  && mark --help | grep -q "Sylphx Mark"
+  && mark --help | grep -q "Sylphx Mark" \
+  && mark --version | grep -Eq "rev [0-9a-f]{7,}"
 EXPOSE 8787
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
   CMD curl -fsS http://127.0.0.1:8787/health >/dev/null || exit 1

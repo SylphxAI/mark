@@ -68,7 +68,11 @@ pub fn maybe_print_cli_and_exit() -> bool {
         .skip(1)
         .any(|a| a == "--help" || a == "-h" || a == "-V" || a == "--version")
     {
-        println!("Sylphx Mark {}", env!("CARGO_PKG_VERSION"));
+        println!(
+            "Sylphx Mark {} (rev {})",
+            env!("CARGO_PKG_VERSION"),
+            build_revision()
+        );
         println!("Usage: mark");
         println!("  Serves embeddable SVG marks (banners, badges, stats, …).");
         println!("  Env: PORT HOST PUBLIC_BASE_URL DEFAULT_CREDIT RUST_LOG");
@@ -92,7 +96,29 @@ pub async fn serve(config: Config) {
         config.public_base
     );
     let listener = tokio::net::TcpListener::bind(addr).await.expect("bind");
-    axum::serve(listener, app(state)).await.expect("serve");
+    axum::serve(listener, app(state))
+        .with_graceful_shutdown(shutdown_signal())
+        .await
+        .expect("serve");
+}
+
+/// Drain in-flight requests on SIGTERM/SIGINT before exiting (rolling deploy).
+async fn shutdown_signal() {
+    #[cfg(unix)]
+    {
+        use tokio::signal::unix::{signal, SignalKind};
+        let mut sigterm = signal(SignalKind::terminate()).expect("install SIGTERM handler");
+        let mut sigint = signal(SignalKind::interrupt()).expect("install SIGINT handler");
+        tokio::select! {
+            _ = sigterm.recv() => {}
+            _ = sigint.recv() => {}
+        }
+    }
+    #[cfg(not(unix))]
+    {
+        let _ = tokio::signal::ctrl_c().await;
+    }
+    tracing::info!("shutdown signal received; draining in-flight requests");
 }
 
 /// Process/build revision for liveness metadata (not product capability proof).

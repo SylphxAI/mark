@@ -4,12 +4,16 @@ use crate::capabilities::icon_row::domain::{glyph, normalize_id};
 use crate::shared::svg::{esc, svg_doc};
 use crate::shared::theme;
 
+/// Bounded input contract for the icon-row surface (ADR-0002).
+pub const MAX_ICONS: usize = 60;
+
 pub fn render_row(icons: &str, theme: Option<&str>, per_line: u32) -> String {
     let ids: Vec<String> = icons
         .split([',', '|', ' '])
         .map(str::trim)
         .filter(|s| !s.is_empty())
         .map(normalize_id)
+        .take(MAX_ICONS)
         .collect();
 
     if ids.is_empty() {

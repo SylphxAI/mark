@@ -24,14 +24,25 @@ Env: see `.env.example` (`PORT`, `GITHUB_TOKEN`, `DEFAULT_CREDIT`, `PUBLIC_BASE_
 - Soft watermark via `credit`; never force heavy branding that kills adoption.
 - GitHub upstream for stats needs cache + optional `GITHUB_TOKEN`.
 
-## Backend false-authority fence
+## Clean-break contract (ADR-0002)
 
-Work: wi_01KYFN6993PMG8WD00Q51AE231
+This repository is Rust sole authority — there is no TypeScript backend tree.
+The following are hard contract floors; do not regress them:
 
-If this repository has completed a **Rust backend** cutover:
-
-1. Production backend behavior authority is the Rust crate/binary/service path declared in deploy manifests / package native bin / Docker ENTRYPOINT / `sylphx.toml`.
-2. Residual TypeScript service trees are **not** product authority unless explicitly proven still on the live path.
-3. Do not "fix production" by editing residual TypeScript and assuming runtime will pick it up.
-4. Prefer deleting residual TS backend trees after Rust sole proof; keep history in Git.
-5. Intentional TypeScript frontends, npm packaging wrappers, and native-binding surfaces may remain.
+1. **Single canonical HTTP surface:** `/api/v1/*` plus the shields-style
+   `/badge/{label}-{message}-{color}` path form. Bare legacy aliases
+   (`/banner`, `/stats`, `/org`, `/repo`, `/icons`, `/brand`, `/deploy`) are
+   deleted and must not be reintroduced.
+2. **Single canonical product host:** `mark.sylphx.com`. `img.sylphx.com` is
+   retired; do not re-add it to docs, config, or examples.
+3. **Bounded inputs:** banner text ≤ 500 / desc ≤ 240, badge label ≤ 80 /
+   message ≤ 120, icon rows ≤ 60. Truncation is marked with `…`.
+4. **SVG attribute grammar:** attribute values come only from validated hex
+   color tokens, named colors, or static strings; all user text is escaped.
+   Never inject unvalidated strings into SVG.
+5. **Deploy identity:** the Docker image must embed a git revision
+   (`COPY .git` + `build.rs`, or platform build args). `mark --version` fails
+   the image build when the revision is unknown. `/health.revision` is deploy
+   proof, never capability proof.
+6. **GitHub cards fail closed:** an upstream snapshot failure renders the
+   error card, never a zero-data card.

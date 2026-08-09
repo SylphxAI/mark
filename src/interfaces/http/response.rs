@@ -40,6 +40,19 @@ pub fn svg_response(svg: &str, cache: &str) -> Response {
         header::HeaderName::from_static("cross-origin-resource-policy"),
         HeaderValue::from_static("cross-origin"),
     );
+    // Defense-in-depth: SVG is served as a navigable document on a public
+    // first-party origin. Inputs are validated/escaped; CSP blocks script
+    // execution even if a future render bug slips an attribute through.
+    headers.insert(
+        header::HeaderName::from_static("content-security-policy"),
+        HeaderValue::from_static(
+            "default-src 'none'; style-src 'unsafe-inline'; script-src 'none'; object-src 'none'; base-uri 'none'",
+        ),
+    );
+    headers.insert(
+        header::HeaderName::from_static("x-content-type-options"),
+        HeaderValue::from_static("nosniff"),
+    );
     (headers, svg.to_string()).into_response()
 }
 

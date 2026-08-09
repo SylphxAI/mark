@@ -6,13 +6,13 @@
 use crate::capabilities::github_card::application::GitHubSource;
 use crate::capabilities::github_card::domain::{GhLicense, GhRepo, GhUser};
 use moka::future::Cache;
-use once_cell::sync::Lazy;
 use serde::Deserialize;
 use std::future::Future;
 use std::pin::Pin;
+use std::sync::LazyLock;
 use std::time::Duration;
 
-static CACHE: Lazy<Cache<String, String>> = Lazy::new(|| {
+static CACHE: LazyLock<Cache<String, String>> = LazyLock::new(|| {
     Cache::builder()
         .max_capacity(512)
         .time_to_live(Duration::from_secs(300))
@@ -20,14 +20,14 @@ static CACHE: Lazy<Cache<String, String>> = Lazy::new(|| {
 });
 
 /// Negative cache for rate-limit / auth failures (brief).
-static NEG_CACHE: Lazy<Cache<String, String>> = Lazy::new(|| {
+static NEG_CACHE: LazyLock<Cache<String, String>> = LazyLock::new(|| {
     Cache::builder()
         .max_capacity(128)
         .time_to_live(Duration::from_secs(45))
         .build()
 });
 
-static CLIENT: Lazy<reqwest::Client> = Lazy::new(|| {
+static CLIENT: LazyLock<reqwest::Client> = LazyLock::new(|| {
     reqwest::Client::builder()
         .user_agent("Sylphx-Mark/0.1 (+https://github.com/SylphxAI/mark)")
         .timeout(Duration::from_secs(12))
@@ -47,7 +47,6 @@ struct GhUserDto {
     public_repos: u32,
     followers: u32,
     following: u32,
-    avatar_url: String,
     bio: Option<String>,
 }
 
@@ -59,8 +58,6 @@ struct GhRepoDto {
     stargazers_count: u32,
     forks_count: u32,
     language: Option<String>,
-    html_url: String,
-    open_issues_count: u32,
     license: Option<GhLicenseDto>,
 }
 
@@ -77,7 +74,6 @@ impl From<GhUserDto> for GhUser {
             public_repos: d.public_repos,
             followers: d.followers,
             following: d.following,
-            avatar_url: d.avatar_url,
             bio: d.bio,
         }
     }
@@ -100,8 +96,6 @@ impl From<GhRepoDto> for GhRepo {
             stargazers_count: d.stargazers_count,
             forks_count: d.forks_count,
             language: d.language,
-            html_url: d.html_url,
-            open_issues_count: d.open_issues_count,
             license: d.license.map(Into::into),
         }
     }

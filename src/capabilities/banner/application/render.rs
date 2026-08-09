@@ -5,7 +5,13 @@ use crate::capabilities::banner::domain::{
     shape_defs, text_children, text_open_attrs, BannerInput,
 };
 use crate::shared::color::resolve_fill;
-use crate::shared::svg::{credit_mark, ensure_hash, esc, svg_doc};
+use crate::shared::svg::{cap_text, credit_mark, ensure_hash, esc, normalize_hex_token, svg_doc};
+
+/// Bounded input contract for the public render surface (ADR-0002).
+/// Truncation is marked with `…` and total length never exceeds the cap.
+pub const MAX_TEXT_CHARS: usize = 500;
+pub const MAX_DESC_CHARS: usize = 240;
+pub const MAX_LINES: usize = 8;
 
 fn monogram(text: &str) -> String {
     let parts: Vec<&str> = text
@@ -182,14 +188,16 @@ pub fn render(input: &BannerInput) -> String {
         input.clock_seed.as_deref(),
     );
 
+    // Strict color grammar: only canonical hex tokens reach SVG attributes.
+    // Anything else falls back to theme-derived ink (never raw input).
     let font_color = input
         .font_color
         .as_deref()
-        .map(|c| ensure_hash(c.trim_start_matches('#')))
+        .and_then(normalize_hex_token)
         .unwrap_or_else(|| ensure_hash(&fill.fg));
 
-    let text = input.text.as_deref().unwrap_or("");
-    let desc = input.desc.as_deref().unwrap_or("");
+    let text = cap_text(input.text.as_deref().unwrap_or(""), MAX_TEXT_CHARS);
+    let desc = cap_text(input.desc.as_deref().unwrap_or(""), MAX_DESC_CHARS);
 
     // Layout-driven defaults (explicit query params still win)
     let (def_align, def_align_y, def_desc_align, def_desc_y, def_fs, def_ds, anchor) = match layout {
@@ -234,10 +242,7 @@ pub fn render(input: &BannerInput) -> String {
     let desc_align = input.desc_align.unwrap_or(def_desc_align).clamp(0.0, 100.0);
     let desc_align_y = input.desc_align_y.unwrap_or(def_desc_y).clamp(0.0, 100.0);
     let rotate = input.rotate.unwrap_or(0.0);
-    let stroke = input
-        .stroke
-        .as_deref()
-        .map(|s| ensure_hash(s.trim_start_matches('#')));
+    let stroke = input.stroke.as_deref().and_then(normalize_hex_token);
     let stroke_width = input
         .stroke_width
         .unwrap_or(if stroke.is_some() { 1.0 } else { 0.0 });
@@ -249,7 +254,11 @@ pub fn render(input: &BannerInput) -> String {
         0.0
     };
 
-    let lines: Vec<&str> = text.split('\n').filter(|l| !l.is_empty()).collect();
+    let lines: Vec<&str> = text
+        .split('\n')
+        .filter(|l| !l.is_empty())
+        .take(MAX_LINES)
+        .collect();
     let mut text_nodes = String::new();
     let n = lines.len().max(1) as f32;
     let use_typewriter = anim == "type";
@@ -321,7 +330,7 @@ pub fn render(input: &BannerInput) -> String {
         if use_typewriter {
             let base = lines.len() as f32 * 0.55 + 0.2;
             typewriter_line(
-                desc,
+                &desc,
                 dx,
                 dy,
                 desc_size,
@@ -338,7 +347,7 @@ pub fn render(input: &BannerInput) -> String {
                 "<text x=\"{dx}\" y=\"{dy}\" text-anchor=\"{anchor}\" dominant-baseline=\"middle\" \
                  font-family=\"ui-sans-serif,system-ui,sans-serif\" font-size=\"{desc_size}\" \
                  font-weight=\"450\" letter-spacing=\"0.01em\" fill=\"{font_color}\" fill-opacity=\"0.82\"{open_extra}>{}{children}</text>",
-                esc(desc),
+                esc(&desc),
             )
         }
     } else {
@@ -349,7 +358,7 @@ pub fn render(input: &BannerInput) -> String {
         plate_chrome(
             width,
             height,
-            &monogram(text),
+            &monogram(&text),
             &fill.accent,
             &fill.base,
             &fill.warm,

@@ -40,6 +40,13 @@ pub async fn catalog() -> impl IntoResponse {
         "icons": icon_row::available(),
         "badge_styles": ["flat", "plastic", "for-the-badge", "social", "pill"],
         "animations": ANIMATIONS,
+        "limits": {
+            "banner_text": 500,
+            "banner_desc": 240,
+            "badge_label": 80,
+            "badge_message": 120,
+            "icons": 60
+        },
         "notes": {
             "layout": "plate = left monogram product cover; signal = centered hero; terminal = left mono systems look",
             "animation_type": "true per-character typewriter with cursor (SMIL)",
