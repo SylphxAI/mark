@@ -2,7 +2,7 @@
 //!
 //! `gain` (0..1) scales motion intensity; 0 freezes decorative layers.
 
-use crate::capabilities::mark::domain::color::FillPlan;
+use crate::capabilities::mark::domain::color::{ink_canvas, FillPlan};
 
 pub const ART_TYPES: &[&str] = &[
     // SOTA showcase first
@@ -82,7 +82,7 @@ pub fn normalize_art_type(v: &str) -> &'static str {
         .iter()
         .find(|t| t.eq_ignore_ascii_case(v))
         .copied()
-        .unwrap_or("aurora")
+        .unwrap_or("waving")
 }
 
 pub fn shape_defs(ty: &str, gain: f32, plan: &FillPlan) -> String {
@@ -260,7 +260,6 @@ pub fn shape_background(
     let accent2 = plan.accent2.as_str();
     let warm = plan.warm.as_str();
     let glow = plan.glow.as_str();
-    let base = plan.base.as_str();
     let mid = plan.mid.as_str();
     let _ = mid; // available for type arms that want mid-field paint
     let mut transforms = Vec::new();
@@ -846,111 +845,87 @@ M0,{hy} Q{w1},{hy2} {w2},{hy} T{w},{hy} L{w},{h} L0,{h} Z\"/>\
 
         // Signature liquid-banner waves (multi-layer SMIL morph — readable at README size).
         "wave" | "waving" => {
-            // Liquid multi-band crest — colors come from the theme kit, not fixed pastels.
+            // Capsule-class restrained waves (ADR-0004): the canvas is the
+            // theme's deep base — never a full-color wash; color lives only in
+            // the layered gradient waves along the bottom (header) / top
+            // (footer, via the flip wrapper). Three quiet layers + one foam
+            // crest, nothing else.
             let wild = ty == "waving";
-            // Keep a lively floor only when motion is enabled — never override animation=none.
             let gain = if g < 0.01 { 0.0 } else { g.max(0.25) };
+            let mut body = format!(
+                "<rect width=\"{w}\" height=\"{h}\" fill=\"{canvas}\"/>",
+                canvas = ink_canvas(&plan.base)
+            );
             // mid_y_ratio, amp_ratio, opacity, dur, paint
-            let layers: [(f32, f32, f32, f32, &str); 5] = if wild {
+            let layers: [(f32, f32, f32, f32, &str); 3] = if wild {
                 [
-                    (0.46, 0.15, 0.34, 3.4, accent2),
-                    (0.56, 0.13, 0.38, 4.1, accent),
-                    (0.66, 0.11, 0.32, 4.8, warm),
-                    (0.76, 0.09, 0.28, 5.6, glow),
-                    (0.86, 0.07, 0.22, 6.4, base),
+                    (0.74, 0.22, 0.5, 6.5, "url(#mgWaveA)"),
+                    (0.83, 0.17, 0.4, 8.0, "url(#mgWaveB)"),
+                    (0.92, 0.12, 0.28, 9.5, "url(#mgWaveC)"),
                 ]
             } else {
                 [
-                    (0.50, 0.12, 0.32, 4.6, accent2),
-                    (0.60, 0.11, 0.36, 5.5, accent),
-                    (0.70, 0.09, 0.30, 6.4, warm),
-                    (0.80, 0.075, 0.26, 7.4, glow),
-                    (0.88, 0.055, 0.18, 8.6, base),
+                    (0.78, 0.18, 0.48, 7.0, "url(#mgWaveA)"),
+                    (0.86, 0.14, 0.38, 8.5, "url(#mgWaveB)"),
+                    (0.94, 0.10, 0.26, 10.0, "url(#mgWaveC)"),
                 ]
             };
-            let mut body = field_stack(w, h, plan);
-            body.push_str(&blob(
-                wf * 0.2,
-                hf * 0.26,
-                wf * 0.34,
-                hf * 0.42,
-                accent,
-                0.18,
-                gain,
-                wf * 0.06,
-                hf * 0.05,
-                9.5,
-                0.0,
-            ));
-            body.push_str(&blob(
-                wf * 0.8,
-                hf * 0.2,
-                wf * 0.3,
-                hf * 0.38,
-                warm,
-                0.2,
-                gain,
-                -wf * 0.05,
-                hf * 0.06,
-                10.5,
-                0.45,
-            ));
-            for (i, (mid_y, amp_r, opac, dur, color)) in layers.iter().enumerate() {
+            for (k, (mid_y, amp_r, opac, dur, paint)) in layers.iter().enumerate() {
                 let y = hf * mid_y;
-                let amp = (hf * amp_r * gain).max(hf * 0.055);
-                let a = wf * 0.16;
-                let b = wf * 0.34;
-                let c = wf * 0.5;
-                let d = wf * 0.72;
-                let e = wf * 0.88;
+                let amp = (hf * amp_r * gain).max(hf * 0.05);
+                let a = wf * 0.25;
+                let b = wf * 0.5;
+                let c = wf * 0.75;
                 let y_up = y - amp;
                 let y_dn = y + amp;
-                let y_up2 = y - amp * 0.55;
-                let y_dn2 = y + amp * 0.7;
+                let y2 = y - amp * 0.35;
+                let y3 = y + amp * 0.45;
                 let anim = if g > 0.01 {
                     format!(
-                        "<animate attributeName=\"d\" dur=\"{dur}s\" begin=\"{beg}s\" repeatCount=\"indefinite\" values=\"M0,{y} C{a},{y_up} {b},{y_dn} {c},{y} S{d},{y_up2} {w},{y} L{w},{h} L0,{h} Z;M0,{y} C{a},{y_dn} {b},{y_up} {c},{y} S{d},{y_dn2} {w},{y} L{w},{h} L0,{h} Z;M0,{y} C{a},{y_up2} {b},{y_dn2} {c},{y} S{e},{y_up} {w},{y} L{w},{h} L0,{h} Z;M0,{y} C{a},{y_up} {b},{y_dn} {c},{y} S{d},{y_up2} {w},{y} L{w},{h} L0,{h} Z\"/>",
-                        beg = i as f32 * 0.28,
+                        "<animate attributeName=\"d\" dur=\"{dur}s\" begin=\"{beg}s\" repeatCount=\"indefinite\" values=\"M0,{y} C{a},{y_up} {b},{y_dn} {c},{y} S{w},{y_up} {w},{y2} L{w},{h} L0,{h} Z;M0,{y} C{a},{y_dn} {b},{y_up} {c},{y} S{w},{y_dn} {w},{y3} L{w},{h} L0,{h} Z;M0,{y} C{a},{y_up} {b},{y_dn} {c},{y} S{w},{y_up} {w},{y2} L{w},{h} L0,{h} Z\"/>",
+                        beg = k as f32 * 0.35,
+                        y2 = y2,
+                        y3 = y3,
                     )
                 } else {
                     String::new()
                 };
-                // Prefer chroma wave gradients on the brighter crests.
-                let paint = if i == 0 {
-                    "url(#mgWaveA)"
-                } else if i == 1 {
-                    "url(#mgWaveB)"
-                } else if i == 2 {
-                    "url(#mgWaveC)"
-                } else {
-                    *color
-                };
                 body.push_str(&format!(
-                    "<path d=\"M0,{y} C{a},{y_up} {b},{y_dn} {c},{y} S{d},{y_up2} {w},{y} L{w},{h} L0,{h} Z\"                        fill=\"{paint}\" fill-opacity=\"{opac}\">{anim}</path>"
+                    "<path d=\"M0,{y} C{a},{y_up} {b},{y_dn} {c},{y} S{w},{y_up} {w},{y2} L{w},{h} L0,{h} Z\" fill=\"{paint}\" fill-opacity=\"{opac}\">{anim}</path>",
+                    y2 = y2,
                 ));
             }
-            // Foam crest rides the primary wave in warm/glow.
-            if g > 0.01 {
-                let cy = hf * if wild { 0.56 } else { 0.61 };
-                let camp = hf * if wild { 0.11 } else { 0.085 } * gain;
-                let y1 = cy - camp;
-                let y2 = cy + camp;
-                let y3 = cy - camp * 0.55;
-                let y4 = cy + camp * 0.65;
-                let dur = if wild { 4.2 } else { 5.6 };
-                body.push_str(&format!(
-                    "<path d=\"M0,{cy} C{a},{y1} {b},{y2} {c},{cy} S{d},{y3} {w},{cy}\" fill=\"none\"                        stroke=\"{stroke}\" stroke-opacity=\"0.55\" stroke-width=\"2\" stroke-linecap=\"round\">                       <animate attributeName=\"d\" dur=\"{dur}s\" repeatCount=\"indefinite\" values=\"M0,{cy} C{a},{y1} {b},{y2} {c},{cy} S{d},{y3} {w},{cy};M0,{cy} C{a},{y2} {b},{y1} {c},{cy} S{d},{y4} {w},{cy};M0,{cy} C{a},{y1} {b},{y2} {c},{cy} S{d},{y3} {w},{cy}\"/>                       <animate attributeName=\"stroke-opacity\" values=\"0.28;0.78;0.34;0.7;0.28\" dur=\"{dur}s\" repeatCount=\"indefinite\"/>                     </path>",
-                    a = wf * 0.18,
-                    b = wf * 0.4,
-                    c = wf * 0.55,
-                    d = wf * 0.78,
-                    stroke = glow,
-                ));
-            }
-            body.push_str(&sheen(w, h, g, plan));
-            body.push_str(&vignette(w, h, plan));
+            // Foam crest rides the top wave.
+            let cy = hf * if wild { 0.72 } else { 0.76 };
+            let camp = hf * if wild { 0.17 } else { 0.13 } * gain;
+            let y1 = cy - camp;
+            let y2 = cy + camp;
+            let dur = if wild { 6.5 } else { 7.0 };
+            let foam = if g > 0.01 {
+                format!(
+                    "<path d=\"M0,{cy} C{a},{y1} {b},{y2} {c},{cy} S{w},{y1} {w},{cy}\" fill=\"none\" stroke=\"{stroke}\" stroke-opacity=\"0.5\" stroke-width=\"1.5\" stroke-linecap=\"round\">\
+                       <animate attributeName=\"d\" dur=\"{dur}s\" begin=\"0.18s\" repeatCount=\"indefinite\" values=\"M0,{cy} C{a},{y1} {b},{y2} {c},{cy} S{w},{y1} {w},{cy};M0,{cy} C{a},{y2} {b},{y1} {c},{cy} S{w},{y2} {w},{cy};M0,{cy} C{a},{y1} {b},{y2} {c},{cy} S{w},{y1} {w},{cy}\"/>\
+                       <animate attributeName=\"stroke-opacity\" values=\"0.25;0.7;0.25\" dur=\"{dur}s\" begin=\"0.18s\" repeatCount=\"indefinite\"/>\
+                     </path>",
+                    a = wf * 0.22,
+                    b = wf * 0.45,
+                    c = wf * 0.6,
+                    stroke = plan.glow,
+                )
+            } else {
+                format!(
+                    "<path d=\"M0,{cy} C{a},{y1} {b},{y2} {c},{cy} S{w},{y1} {w},{cy}\" fill=\"none\" stroke=\"{stroke}\" stroke-opacity=\"0.35\" stroke-width=\"1.5\" stroke-linecap=\"round\"/>",
+                    a = wf * 0.22,
+                    b = wf * 0.45,
+                    c = wf * 0.6,
+                    stroke = plan.glow,
+                )
+            };
+            body.push_str(&foam);
             body
         }
+
+
 
                 "orbit" => {
             let cx = wf * 0.78;

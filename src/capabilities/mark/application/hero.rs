@@ -152,7 +152,7 @@ fn plate_chrome(
 }
 
 pub fn render(spec: &MarkSpec) -> String {
-    let ty = normalize_art_type(spec.art.as_deref().unwrap_or("aurora"));
+    let ty = normalize_art_type(spec.art.as_deref().unwrap_or("waving"));
     // Cards need taller canvases (e.g. 768); strips stay ~200–320.
     let height = spec.height.unwrap_or(220).clamp(40, 900);
     let width = spec.width.unwrap_or(880).clamp(200, 1600);

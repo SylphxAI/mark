@@ -60,6 +60,11 @@ Themes are **neutral design themes** — no personal or company names anywhere i
 
 ### Hero
 
+The default hero is the **restrained capsule-class look**: a deep ink canvas
+(theme base, never a full-color wash) with the color living only in the layered
+gradient waves and text — negative space first. `type=transparent` gives a
+fully transparent canvas for typing-line compositions.
+
 ```markdown
 ![header](https://mark.sylphx.com/api/v1/mark/hero?type=wave&color=0:1A1A2E,50:4A90E2,100:D87000&text=Ship%20your%20next%20release&desc=Multi-color%20art%20for%20your%20README&height=220&animation=ambient)
 ```
