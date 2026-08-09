@@ -48,7 +48,7 @@ async fn mark_surface_serves_every_form() {
         ("/api/v1/mark/hero?type=soft&text=Hi&animation=none", "Hi"),
         ("/api/v1/mark/pill?label=build&message=passing", "passing"),
         ("/api/v1/mark/strip?icons=rust,ts", "rust"),
-        ("/api/v1/mark/identity?brand=sylphx", "Sylphx"),
+        ("/api/v1/mark/profile?text=Kyle%20Tse", "Kyle Tse"),
         ("/api/v1/mark/deploy?service=mark", "Sylphx"),
         ("/badge/build-passing-brightgreen", "passing"),
     ] {
@@ -123,7 +123,7 @@ async fn catalog_exposes_the_one_vocabulary() {
         "icons",
         "badge_styles",
         "animations",
-        "brands",
+        "fonts",
         "limits",
         "notes",
     ] {

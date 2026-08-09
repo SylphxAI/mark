@@ -18,12 +18,16 @@ pub struct MarkQuery {
     pub animation: Option<String>,
     pub width: Option<u32>,
     pub height: Option<u32>,
+    /// Content typography: sans (default) or mono.
+    pub font: Option<String>,
+    /// Content: title (hero) / name (profile).
+    pub text: Option<String>,
+    /// Content: description (hero) / tagline (profile).
+    pub desc: Option<String>,
     // hero
     pub layout: Option<String>,
     pub section: Option<String>,
     pub reversal: Option<String>,
-    pub text: Option<String>,
-    pub desc: Option<String>,
     #[serde(rename = "fontSize")]
     pub font_size: Option<u32>,
     #[serde(rename = "descSize")]
@@ -53,9 +57,6 @@ pub struct MarkQuery {
     // strip
     pub icons: Option<String>,
     pub perline: Option<u32>,
-    // identity
-    pub brand: Option<String>,
-    pub tagline: Option<String>,
     // deploy
     pub service: Option<String>,
 }
@@ -127,12 +128,13 @@ impl MarkQuery {
             animation: self.animation.clone(),
             width: self.width,
             height: self.height,
+            text: self.text.clone().map(decode_text),
+            desc: self.desc.clone().map(decode_text),
+            font: self.font.clone(),
             hero: crate::capabilities::mark::domain::HeroSpec {
                 layout: self.layout.clone(),
                 section: self.section.clone(),
                 reversal: parse_bool(self.reversal.as_deref(), false),
-                text: self.text.clone().map(decode_text),
-                desc: self.desc.clone().map(decode_text),
                 font_size: self.font_size,
                 desc_size: self.desc_size,
                 font_color: self.font_color.clone(),
@@ -154,10 +156,6 @@ impl MarkQuery {
             strip: crate::capabilities::mark::domain::StripSpec {
                 icons: self.icons.clone(),
                 per_line: self.perline,
-            },
-            identity: crate::capabilities::mark::domain::IdentitySpec {
-                brand: self.brand.clone(),
-                tagline: self.tagline.clone(),
             },
             deploy: crate::capabilities::mark::domain::DeploySpec {
                 service: self.service.clone().map(|s| {

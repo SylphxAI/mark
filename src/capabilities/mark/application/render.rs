@@ -9,7 +9,7 @@ pub fn render(spec: &MarkSpec) -> String {
         MarkForm::Hero => super::hero::render(spec),
         MarkForm::Pill => super::pill::render(spec),
         MarkForm::Strip => super::strip::render(spec),
-        MarkForm::Identity => super::identity::render(spec),
+        MarkForm::Profile => super::profile::render(spec),
         MarkForm::Deploy => super::deploy::render(spec),
     }
 }

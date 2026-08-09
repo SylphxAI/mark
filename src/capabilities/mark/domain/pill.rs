@@ -38,10 +38,6 @@ pub fn named_color(c: &str) -> Option<&'static str> {
         "critical" => "E05D44",
         "informational" => "007EC6",
         "inactive" => "9F9F9F",
-        "sylphx" => "D87000",
-        "cubeage" => "E03840",
-        "epiow" => "7C3AED",
-        "ozyrix" => "C9A227",
         _ => return None,
     })
 }

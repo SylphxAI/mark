@@ -70,6 +70,7 @@ fn typewriter_line(
     y: f32,
     font_size: u32,
     font_color: &str,
+    font_family: &str,
     anchor: &str,
     stroke_attr: &str,
     begin: f32,
@@ -92,8 +93,7 @@ fn typewriter_line(
         let glyph_x = cx;
         out.push_str(&format!(
             "<text x=\"{glyph_x}\" y=\"{y}\" text-anchor=\"start\" dominant-baseline=\"middle\" \
-             font-family=\"ui-sans-serif,system-ui,-apple-system,Segoe UI,Helvetica,sans-serif\" \
-             font-weight=\"650\" letter-spacing=\"0\" font-size=\"{font_size}\" \
+             font-family=\"{font_family}\" font-weight=\"650\" letter-spacing=\"0\" font-size=\"{font_size}\" \
              fill=\"{font_color}\" opacity=\"0\"{stroke_attr}>\
                <animate attributeName=\"opacity\" from=\"0\" to=\"1\" dur=\"0.01s\" begin=\"{t}s\" fill=\"freeze\"/>\
                {}</text>",
@@ -175,7 +175,7 @@ pub fn render(spec: &MarkSpec) -> String {
     let anim = normalize_animation(spec.animation.as_deref());
     let gain = ambient_gain(anim);
 
-    let seed = format!("{ty}-{}", spec.hero.text.as_deref().unwrap_or(""));
+    let seed = format!("{ty}-{}", spec.text.as_deref().unwrap_or(""));
     let fill = resolve_fill(spec.color.as_deref(), spec.theme.as_deref(), &seed, "mg");
 
     // Strict color grammar: only canonical hex tokens reach SVG attributes.
@@ -186,9 +186,13 @@ pub fn render(spec: &MarkSpec) -> String {
         .as_deref()
         .and_then(normalize_hex_token)
         .unwrap_or_else(|| ensure_hash(&fill.fg));
+    let font_family = match spec.font.as_deref().map(|f| f.to_ascii_lowercase()).as_deref() {
+        Some("mono") => "ui-monospace,SFMono-Regular,Menlo,Consolas,monospace",
+        _ => "ui-sans-serif,system-ui,-apple-system,Segoe UI,Helvetica,sans-serif",
+    };
 
-    let text = cap_text(spec.hero.text.as_deref().unwrap_or(""), MAX_TEXT_CHARS);
-    let desc = cap_text(spec.hero.desc.as_deref().unwrap_or(""), MAX_DESC_CHARS);
+    let text = cap_text(spec.text.as_deref().unwrap_or(""), MAX_TEXT_CHARS);
+    let desc = cap_text(spec.desc.as_deref().unwrap_or(""), MAX_DESC_CHARS);
 
     // Layout-driven defaults (explicit query params still win)
     let (def_align, def_align_y, def_desc_align, def_desc_y, def_fs, def_ds, anchor) = match layout {
@@ -287,6 +291,7 @@ pub fn render(spec: &MarkSpec) -> String {
                 y,
                 font_size,
                 &font_color,
+                font_family,
                 anchor,
                 &stroke_attr,
                 base,
@@ -309,8 +314,7 @@ pub fn render(spec: &MarkSpec) -> String {
         let children = text_children(anim, i, width, height);
         text_nodes.push_str(&format!(
             "<text x=\"{x}\" y=\"{y}\" text-anchor=\"{anchor}\" dominant-baseline=\"middle\" \
-             font-family=\"ui-sans-serif,system-ui,-apple-system,Segoe UI,Helvetica,sans-serif\" \
-             font-weight=\"650\" letter-spacing=\"-0.02em\" font-size=\"{font_size}\" \
+             font-family=\"{font_family}\" font-weight=\"650\" letter-spacing=\"-0.02em\" font-size=\"{font_size}\" \
              fill=\"{font_color}\"{stroke_attr}{rot_attr}{open_extra}>{content}{children}</text>",
             content = esc(line),
         ));
@@ -328,6 +332,7 @@ pub fn render(spec: &MarkSpec) -> String {
                 dy,
                 desc_size,
                 &font_color,
+                font_family,
                 anchor,
                 "",
                 base,
@@ -338,7 +343,7 @@ pub fn render(spec: &MarkSpec) -> String {
             let children = text_children(anim, lines.len().max(1), width, height);
             format!(
                 "<text x=\"{dx}\" y=\"{dy}\" text-anchor=\"{anchor}\" dominant-baseline=\"middle\" \
-                 font-family=\"ui-sans-serif,system-ui,sans-serif\" font-size=\"{desc_size}\" \
+                 font-family=\"{font_family}\" font-size=\"{desc_size}\" \
                  font-weight=\"450\" letter-spacing=\"0.01em\" fill=\"{font_color}\" fill-opacity=\"0.82\"{open_extra}>{}{children}</text>",
                 esc(&desc),
             )

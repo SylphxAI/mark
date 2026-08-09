@@ -7,10 +7,7 @@ fn hero(art: &str, text: &str) -> MarkSpec {
     MarkSpec {
         form: MarkForm::Hero,
         art: Some(art.into()),
-        hero: mark::capabilities::mark::domain::HeroSpec {
-            text: Some(text.into()),
-            ..Default::default()
-        },
+        text: Some(text.into()),
         ..Default::default()
     }
 }
@@ -33,9 +30,9 @@ fn hero_plate_has_monogram_and_left_anchor() {
         animation: Some("none".into()),
         height: Some(768),
         width: Some(1376),
+        text: Some("PDF Reader MCP".into()),
+        desc: Some("The PDF intelligence layer".into()),
         hero: mark::capabilities::mark::domain::HeroSpec {
-            text: Some("PDF Reader MCP".into()),
-            desc: Some("The PDF intelligence layer".into()),
             layout: Some("plate".into()),
             ..Default::default()
         },
@@ -49,19 +46,11 @@ fn hero_plate_has_monogram_and_left_anchor() {
 
 #[test]
 fn hero_typewriter_is_per_character() {
-    let svg = render(&hero("soft", "Hi").with_anim("type"));
+    let mut spec = hero("soft", "Hi");
+    spec.animation = Some("type".into());
+    let svg = render(&spec);
     let anims = svg.matches("attributeName=\"opacity\"").count();
     assert!(anims >= 2, "typewriter animates each character; anims={anims}");
-}
-
-trait WithAnim {
-    fn with_anim(self, a: &str) -> Self;
-}
-impl WithAnim for MarkSpec {
-    fn with_anim(mut self, a: &str) -> Self {
-        self.animation = Some(a.into());
-        self
-    }
 }
 
 #[test]
@@ -103,42 +92,44 @@ fn strip_renders_and_caps() {
 }
 
 #[test]
-fn identity_renders_brand_and_art() {
+fn profile_renders_text_and_art() {
     let plain = render(&MarkSpec {
-        form: MarkForm::Identity,
-        identity: mark::capabilities::mark::domain::IdentitySpec {
-            brand: Some("sylphx".into()),
-            ..Default::default()
-        },
+        form: MarkForm::Profile,
+        text: Some("Kyle Tse".into()),
         ..Default::default()
     });
-    assert!(plain.contains("Sylphx"));
+    assert!(plain.contains("Kyle Tse"));
     let art = render(&MarkSpec {
-        form: MarkForm::Identity,
+        form: MarkForm::Profile,
         art: Some("aurora".into()),
         theme: Some("neon".into()),
-        identity: mark::capabilities::mark::domain::IdentitySpec {
-            brand: Some("cubeage".into()),
-            tagline: Some("Games".into()),
-            },
+        text: Some("Sylphx".into()),
+        desc: Some("AI-native platform".into()),
         ..Default::default()
     });
-    assert!(art.contains("Cubeage"));
-    assert!(art.contains("aurora") || art.contains("mg"));
+    assert!(art.contains("Sylphx"));
+    assert!(art.contains("AI-native platform"));
 }
 
 #[test]
-fn identity_scales_to_any_width() {
+fn profile_scales_to_any_width() {
     let wide = render(&MarkSpec {
-        form: MarkForm::Identity,
+        form: MarkForm::Profile,
         width: Some(320),
-        identity: mark::capabilities::mark::domain::IdentitySpec {
-            brand: Some("sylphx".into()),
-            ..Default::default()
-        },
+        text: Some("Kyle Tse".into()),
         ..Default::default()
     });
-    assert!(wide.contains("scale(0.5)"), "identity must scale to width");
+    assert!(wide.contains("scale(0.5)"), "profile must scale to width");
+}
+
+#[test]
+fn profile_omits_empty_tagline() {
+    let svg = render(&MarkSpec {
+        form: MarkForm::Profile,
+        text: Some("Kyle Tse".into()),
+        ..Default::default()
+    });
+    assert!(svg.contains("Kyle Tse"));
 }
 
 #[test]
@@ -155,10 +146,10 @@ fn deploy_renders_conversion_pill() {
 }
 
 #[test]
-fn composition_pill_with_motion_and_identity_with_art() {
+fn composition_pill_motion_and_profile_art() {
     let pill = render(&MarkSpec {
         form: MarkForm::Pill,
-        theme: Some("sylphx".into()),
+        theme: Some("neon".into()),
         animation: Some("glow".into()),
         pill: mark::capabilities::mark::domain::PillSpec {
             label: Some("build".into()),
@@ -169,17 +160,29 @@ fn composition_pill_with_motion_and_identity_with_art() {
     });
     assert!(pill.contains("<animate"), "pill with motion composes");
 
-    let identity = render(&MarkSpec {
-        form: MarkForm::Identity,
+    let profile = render(&MarkSpec {
+        form: MarkForm::Profile,
         art: Some("wave".into()),
         theme: Some("ocean".into()),
-        identity: mark::capabilities::mark::domain::IdentitySpec {
-            brand: Some("ozyrix".into()),
-            ..Default::default()
-        },
+        text: Some("Kyle Tse".into()),
         ..Default::default()
     });
-    assert!(identity.contains("<svg"));
+    assert!(profile.contains("<svg"));
+}
+
+#[test]
+fn mono_font_composes_into_hero_and_profile() {
+    let mut spec = hero("transparent", "MCP & AI-agent tooling");
+    spec.font = Some("mono".into());
+    let hero_svg = render(&spec);
+    assert!(hero_svg.contains("ui-monospace"), "hero mono font");
+    let profile_svg = render(&MarkSpec {
+        form: MarkForm::Profile,
+        text: Some("Kyle Tse".into()),
+        font: Some("mono".into()),
+        ..Default::default()
+    });
+    assert!(profile_svg.contains("ui-monospace"), "profile mono font");
 }
 
 #[test]

@@ -29,21 +29,20 @@ pub async fn catalog() -> impl IntoResponse {
         obj.insert(
             "limits".into(),
             json!({
-                "hero_text": 500,
-                "hero_desc": 240,
-                "hero_lines": 8,
+                "text": 500,
+                "desc": 240,
+                "lines": 8,
                 "pill_label": 80,
                 "pill_message": 120,
                 "strip_icons": 60,
-                "identity_brand": 40,
-                "identity_tagline": 120,
                 "deploy_service": 40
             }),
         );
         obj.insert(
             "notes".into(),
             json!({
-                "grammar": "mark = form x art x paint(theme/color) x geometry(width/height) x text x motion",
+                "grammar": "mark = form x art x paint(theme/color) x content(text/desc) x geometry x motion",
+                "themes": "neutral design themes — no personal or company names (ADR-0004)",
                 "determinism": "same URL, same mark, forever — no clock, no upstream, no state",
                 "live_data": "not offered — use specialist hosts; Mark renders only what the URL says",
                 "animation_type": "true per-character typewriter with cursor (SMIL)"

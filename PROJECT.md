@@ -13,10 +13,11 @@ Sylphx **Mark** is the identity layer of the README: an embeddable image API —
 ## Goals
 
 - One host (`mark.sylphx.com`) for all embeddable marks
-- One grammar: form (`hero` `pill` `strip` `identity` `deploy`) × art × paint ×
-  geometry × text × motion
+- One grammar: form (`hero` `pill` `strip` `profile` `deploy`) × art × paint ×
+  content × geometry × motion
+- Neutral design themes only — no personal names, no company names in the
+  public catalog (ADR-0004); content is always supplied by the URL
 - High cacheability, stateless, deterministic render kernel
-- Fleet brand themes (Sylphx, Cubeage, Epiow, Ozyrix, Kyle)
 - Dogfood Sylphx Platform when deploying the public endpoint
 - Soft brand exposure via optional credit watermark + deploy marks
 

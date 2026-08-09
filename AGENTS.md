@@ -35,17 +35,23 @@ This repository is the north-star end state: **one capability, one grammar**.
    (banner, badge, icons, brand, deploy, stats, org, repo) is deleted; do not
    reintroduce them.
 2. **One grammar:** mark = form × art (`type`) × paint (`theme`/`color`) ×
-   geometry (`width`/`height`) × text × motion (`animation`). Composition is
-   the product: any form can carry any palette, art (hero/identity), and
-   text-level motion (pill/identity/strip).
+   content (`text`/`desc`/`font`) × geometry (`width`/`height`) × motion
+   (`animation`). Composition is the product: any form can carry any palette,
+   art (hero/profile), text-level motion (pill/profile/strip), and mono
+   typography.
+2b. **Neutral surface (ADR-0004):** themes, icon glyphs, and named colors are
+   strictly neutral — no personal names (kyle), no company names (sylphx /
+   cubeage / epiow / ozyrix) in the public catalog. The only Sylphx-branded
+   surfaces are the deploy mark and the credit watermark. Content is always
+   supplied by the URL.
 3. **Determinism:** a mark is a pure function of its URL. No clock
    (`timeAuto`/`timeGradient`/clock seeds are retired), no upstream, no state,
    no secrets. Same URL renders the same SVG forever.
 4. **No live data:** GitHub cards (stats/org/repo) and the network adapter are
    retired. Specialist hosts own data; Mark renders only what the URL says.
-5. **Bounded inputs:** hero text ≤ 500 / desc ≤ 240 / 8 lines, pill label ≤ 80
-   / message ≤ 120, strip ≤ 60 icons, identity brand ≤ 40 / tagline ≤ 120,
-   deploy service ≤ 40. Truncation is marked with `…`.
+5. **Bounded inputs:** text ≤ 500 / desc ≤ 240 / 8 lines, pill label ≤ 80 /
+   message ≤ 120, strip ≤ 60 icons, deploy service ≤ 40. Truncation is marked
+   with `…`.
 6. **SVG attribute grammar:** attribute values come only from validated hex
    tokens, named colors, or static strings; all user text is escaped. Never
    inject unvalidated strings into SVG.

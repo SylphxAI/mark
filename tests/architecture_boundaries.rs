@@ -153,11 +153,11 @@ fn every_advertised_art_type_has_a_shape_arm() {
 #[test]
 fn grammar_is_single_and_total() {
     let spec = fs::read_to_string("src/capabilities/mark/domain/spec.rs").unwrap();
-    for concept in ["MarkSpec", "MarkForm", "HeroSpec", "PillSpec", "StripSpec", "IdentitySpec", "DeploySpec"] {
+    for concept in ["MarkSpec", "MarkForm", "HeroSpec", "PillSpec", "StripSpec", "DeploySpec"] {
         assert!(spec.contains(concept), "missing grammar concept {concept}");
     }
     let render = fs::read_to_string("src/capabilities/mark/application/render.rs").unwrap();
-    for form in ["Hero", "Pill", "Strip", "Identity", "Deploy"] {
+    for form in ["Hero", "Pill", "Strip", "Profile", "Deploy"] {
         assert!(
             render.contains(&format!("MarkForm::{form}")),
             "render must dispatch form {form}"
@@ -190,4 +190,17 @@ fn determinism_contract_is_enforced_in_catalog() {
     assert!(catalog.contains("MAX_TEXT_CHARS"), "limits contract present");
     let interfaces = fs::read_to_string("src/capabilities/mark/interfaces/http.rs").unwrap();
     assert!(interfaces.contains("normalize_hex_token") || interfaces.contains("parse_bool"));
+}
+
+#[test]
+fn themes_are_neutral_no_personal_or_company_names() {
+    let themes = fs::read_to_string("src/capabilities/mark/domain/theme.rs").unwrap();
+    for banned in ["kyle", "sylphx", "cubeage", "epiow", "ozyrix"] {
+        assert!(
+            !themes.contains(&format!("\"{banned}\"")),
+            "personal/company theme name must not exist: {banned}"
+        );
+    }
+    let icons = fs::read_to_string("src/capabilities/mark/domain/icons.rs").unwrap();
+    assert!(!icons.contains("\"sylphx\""), "no company glyph in the tech icon set");
 }

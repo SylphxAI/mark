@@ -1,7 +1,7 @@
 //! Clean-break contract tests (ADR-0003): strict SVG attribute grammar,
 //! escaping, bounded inputs, determinism — no legacy, no clock, no upstream.
 
-use mark::capabilities::mark::domain::{HeroSpec, IdentitySpec, MarkSpec, PillSpec, StripSpec};
+use mark::capabilities::mark::domain::{MarkSpec, PillSpec, StripSpec};
 use mark::mark::{render, MarkForm};
 use mark::svg::cap_text;
 
@@ -9,10 +9,7 @@ fn hero(ty: &str, text: &str) -> MarkSpec {
     MarkSpec {
         form: MarkForm::Hero,
         art: Some(ty.into()),
-        hero: HeroSpec {
-            text: Some(text.into()),
-            ..Default::default()
-        },
+        text: Some(text.into()),
         ..Default::default()
     }
 }
@@ -71,7 +68,7 @@ fn hero_accepts_valid_hex_tokens() {
 #[test]
 fn hero_text_and_desc_are_escaped() {
     let mut spec = hero("soft", "<script>alert(1)</script>");
-    spec.hero.desc = Some("\" onload=\"x".into());
+    spec.desc = Some("\" onload=\"x".into());
     spec.animation = Some("none".into());
     let svg = render(&spec);
     assert!(!svg.contains("<script>"));
@@ -96,13 +93,11 @@ fn pill_label_and_message_are_escaped() {
 }
 
 #[test]
-fn identity_brand_and_tagline_are_escaped() {
+fn profile_name_and_tagline_are_escaped() {
     let spec = MarkSpec {
-        form: MarkForm::Identity,
-        identity: IdentitySpec {
-            brand: Some("<script>x</script>".into()),
-            tagline: Some("\" onload=\"x".into()),
-            },
+        form: MarkForm::Profile,
+        text: Some("<script>x</script>".into()),
+        desc: Some("\" onload=\"x".into()),
         ..Default::default()
     };
     let svg = render(&spec);
@@ -178,21 +173,17 @@ fn strip_is_capped() {
 }
 
 #[test]
-fn identity_brand_and_tagline_are_capped() {
+fn profile_text_and_tagline_are_capped() {
     let spec = MarkSpec {
-        form: MarkForm::Identity,
-        identity: IdentitySpec {
-            brand: Some("x".repeat(300)),
-            tagline: Some("y".repeat(1000)),
-            },
+        form: MarkForm::Profile,
+        text: Some("x".repeat(2000)),
+        desc: Some("y".repeat(2000)),
         ..Default::default()
     };
     let svg = render(&spec);
-    assert!(svg.len() < 20_000, "identity must stay bounded");
+    assert!(svg.len() < 20_000, "profile must stay bounded");
     assert!(svg.contains('…'));
 }
-
-// ---------- documented precedence ----------
 
 #[test]
 fn pill_theme_defines_palette_over_color() {

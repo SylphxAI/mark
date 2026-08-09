@@ -2,7 +2,7 @@
 
 mod deploy;
 mod hero;
-mod identity;
+mod profile;
 mod pill;
 mod render;
 mod strip;

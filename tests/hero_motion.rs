@@ -1,6 +1,5 @@
 //! Gating tests: background SMIL + credit defaults for the hero mark.
 
-use mark::capabilities::mark::domain::HeroSpec;
 use mark::mark::{render, MarkForm, MarkSpec};
 use mark::svg::credit_mark;
 
@@ -8,10 +7,7 @@ fn hero(ty: &str, text: &str) -> MarkSpec {
     MarkSpec {
         form: MarkForm::Hero,
         art: Some(ty.into()),
-        hero: HeroSpec {
-            text: Some(text.into()),
-            ..Default::default()
-        },
+        text: Some(text.into()),
         ..Default::default()
     }
 }

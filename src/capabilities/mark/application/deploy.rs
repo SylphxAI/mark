@@ -18,7 +18,7 @@ pub fn render(spec: &MarkSpec) -> String {
     render_pill(
         "deployed on",
         &message,
-        spec.color.as_deref().or(Some("sylphx")),
+        spec.color.as_deref().or(Some("D87000")),
         Some("1A1A2E"),
         PillStyle::parse(spec.pill.style.as_deref().unwrap_or("flat")),
         spec.theme.as_deref(),
