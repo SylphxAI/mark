@@ -63,11 +63,15 @@ Clean-break, no backward compatibility, no legacy aliases:
 4. **Single canonical host.** `mark.sylphx.com`. `img.sylphx.com` references
    removed from README, `.env.example`, and `PROJECT.md`.
 
-5. **Deploy identity gate.** Builder copies `.git` so `build.rs` embeds the
-   exact checkout revision even when the platform passes no build args
-   (runtime env `GIT_SHA`/`SOURCE_COMMIT` still wins when injected). The final
-   image runs `mark --version | grep -Eq "rev [0-9a-f]{7,}"` and fails the
-   build when no revision is embedded. `mark --version` prints the revision.
+5. **Deploy identity gate.** The Dockerfile consumes the platform build-arg
+   contract (`SYLPHX_GIT_COMMIT_SHA` / `SYLPHX_GIT_SHA`, then `SOURCE_COMMIT` /
+   `GIT_SHA`) and `build.rs` bakes the first non-empty value; runtime env
+   still wins when injected. The final image runs
+   `mark --version | grep -Eq "rev [0-9a-f]{7,}"` and fails the build when no
+   revision is embedded. `mark --version` prints the revision. (The first
+   deploy of this ADR failed at build — the gate correctly rejected an image
+   with no injected revision; the fix aligned the Dockerfile with the fleet
+   build-arg contract.)
 
 6. **Observability + lifecycle.** `TraceLayer` (INFO spans/responses) mounted
    in the composition root; `axum::serve(...).with_graceful_shutdown(...)` on

@@ -126,7 +126,13 @@ pub fn build_revision() -> &'static str {
     static REV: OnceLock<String> = OnceLock::new();
     REV.get_or_init(|| {
         // Runtime env wins (platform may inject after image build).
-        for key in ["GIT_SHA", "SOURCE_COMMIT", "SYLPHX_GIT_SHA", "COMMIT_SHA"] {
+        for key in [
+            "GIT_SHA",
+            "SOURCE_COMMIT",
+            "SYLPHX_GIT_COMMIT_SHA",
+            "SYLPHX_GIT_SHA",
+            "COMMIT_SHA",
+        ] {
             if let Ok(v) = std::env::var(key) {
                 let v = v.trim().to_string();
                 if !v.is_empty() && v != "unknown" {
