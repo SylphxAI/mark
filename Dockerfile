@@ -1,26 +1,44 @@
 # Official multi-stage image for Sylphx Platform (dockerfile strategy).
+#
+# Deploy identity contract: the platform injects SYLPHX_GIT_COMMIT_SHA /
+# SYLPHX_GIT_SHA build args (fleet contract). SOURCE_COMMIT / GIT_SHA are
+# CI/local overrides. build.rs bakes the first non-empty value; the final
+# image gate fails the build when no revision is embedded — an image without
+# deploy identity is not shippable.
 FROM rust:1.97-bookworm AS builder
 ARG GIT_SHA=unknown
 ARG SOURCE_COMMIT
-# Platform build systems often inject SOURCE_COMMIT; normalize to GIT_SHA for build.rs.
+ARG SYLPHX_GIT_COMMIT_SHA=
+ARG SYLPHX_GIT_SHA=
 ENV GIT_SHA=${GIT_SHA}
 ENV SOURCE_COMMIT=${SOURCE_COMMIT}
+ENV SYLPHX_GIT_COMMIT_SHA=${SYLPHX_GIT_COMMIT_SHA}
+ENV SYLPHX_GIT_SHA=${SYLPHX_GIT_SHA}
 WORKDIR /app
 COPY Cargo.toml Cargo.lock build.rs ./
-# Embed the exact checkout revision: build.rs falls back to `git rev-parse HEAD`
-# when the platform does not pass GIT_SHA/SOURCE_COMMIT build args. The final
-# image gate fails the build if no revision is embedded.
-COPY .git ./.git
 COPY src ./src
 COPY static ./static
 COPY tests ./tests
-RUN if [ -z "$SOURCE_COMMIT" ] || [ "$SOURCE_COMMIT" = "" ]; then export SOURCE_COMMIT="$GIT_SHA"; fi; \
-    if [ -z "$GIT_SHA" ] || [ "$GIT_SHA" = "unknown" ]; then export GIT_SHA="${SOURCE_COMMIT:-unknown}"; fi; \
-    GIT_SHA="$GIT_SHA" SOURCE_COMMIT="$SOURCE_COMMIT" cargo build --release --locked
+RUN set -eu; \
+    TIP="${SYLPHX_GIT_COMMIT_SHA:-}"; \
+    [ -z "$TIP" ] && TIP="${SYLPHX_GIT_SHA:-}"; \
+    [ -z "$TIP" ] && TIP="${SOURCE_COMMIT:-}"; \
+    [ -z "$TIP" ] && TIP="${GIT_SHA:-}"; \
+    [ "$TIP" = "unknown" ] && TIP=""; \
+    TIP="$(printf '%s' "$TIP" | tr -d '[:space:]')"; \
+    if [ -n "$TIP" ]; then \
+      echo "Baking tip identity: $TIP"; \
+      export GIT_SHA="$TIP" SOURCE_COMMIT="$TIP"; \
+    else \
+      echo "WARN: no tip build-arg provided" >&2; \
+    fi; \
+    cargo build --release --locked
 
 FROM debian:bookworm-slim
 ARG GIT_SHA=unknown
 ARG SOURCE_COMMIT
+ARG SYLPHX_GIT_COMMIT_SHA=
+ARG SYLPHX_GIT_SHA=
 RUN apt-get update \
   && apt-get install -y --no-install-recommends ca-certificates curl \
   && update-ca-certificates \
@@ -34,6 +52,8 @@ ENV PORT=8787 \
     DEFAULT_CREDIT=0 \
     GIT_SHA=${GIT_SHA} \
     SOURCE_COMMIT=${SOURCE_COMMIT} \
+    SYLPHX_GIT_COMMIT_SHA=${SYLPHX_GIT_COMMIT_SHA} \
+    SYLPHX_GIT_SHA=${SYLPHX_GIT_SHA} \
     SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt \
     SSL_CERT_DIR=/etc/ssl/certs
 COPY --from=builder /app/target/release/mark /usr/local/bin/mark

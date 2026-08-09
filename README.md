@@ -24,7 +24,7 @@ cargo build --release
 ```
 
 ```bash
-docker build -t mark .
+docker build --build-arg GIT_SHA="$(git rev-parse HEAD)" -t mark .
 docker run --rm -p 8787:8787 mark
 ```
 

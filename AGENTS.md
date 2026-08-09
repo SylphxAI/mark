@@ -40,9 +40,10 @@ The following are hard contract floors; do not regress them:
 4. **SVG attribute grammar:** attribute values come only from validated hex
    color tokens, named colors, or static strings; all user text is escaped.
    Never inject unvalidated strings into SVG.
-5. **Deploy identity:** the Docker image must embed a git revision
-   (`COPY .git` + `build.rs`, or platform build args). `mark --version` fails
-   the image build when the revision is unknown. `/health.revision` is deploy
+5. **Deploy identity:** the Docker image must embed a git revision via the
+   platform build-arg contract (`SYLPHX_GIT_COMMIT_SHA` / `SYLPHX_GIT_SHA`,
+   then `SOURCE_COMMIT` / `GIT_SHA` for CI/local). `mark --version` fails the
+   image build when the revision is unknown. `/health.revision` is deploy
    proof, never capability proof.
 6. **GitHub cards fail closed:** an upstream snapshot failure renders the
    error card, never a zero-data card.
