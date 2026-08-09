@@ -4,7 +4,7 @@
 
 | Concern | Owner |
 | --- | --- |
-| Work / claim / review | Enact |
+| Work / claim / review | none — Git history + this repository CI are the durable record (Enact is retired) |
 | Source history | Git |
 | Source correctness | This repository CI (`source-ci/pass`) |
 | Production artifact build | Sylphx Platform (once) |
