@@ -1,9 +1,8 @@
-//! HTTP composition contracts — surfaces translate to capabilities without owning domain.
+//! HTTP composition contracts — the single mark surface.
 
 use axum::body::Body;
 use axum::http::{Request, StatusCode};
 use http_body_util::BodyExt;
-use mark::capabilities::github_card::HttpGitHubSource;
 use mark::{app, AppState};
 use tower::ServiceExt;
 
@@ -11,7 +10,6 @@ fn state() -> AppState {
     AppState {
         default_credit: false,
         public_base: "http://test.local".into(),
-        github: HttpGitHubSource,
     }
 }
 
@@ -33,69 +31,45 @@ async fn get(path: &str) -> (StatusCode, String, String) {
 }
 
 #[tokio::test]
-async fn health_is_json_liveness_not_capability_proof() {
+async fn health_is_json_liveness_with_revision() {
     let (status, ctype, body) = get("/health").await;
     assert_eq!(status, StatusCode::OK);
     assert!(ctype.contains("json"), "ctype={ctype}");
     assert!(body.contains("\"ok\":true") || body.contains("\"ok\": true"));
-    assert!(body.contains("mark"));
-    assert!(body.contains("revision"), "health must expose revision: {body}");
-}
-
-#[tokio::test]
-async fn catalog_exposes_capability_catalog_keys() {
-    let (status, _, body) = get("/api/v1/catalog").await;
-    assert_eq!(status, StatusCode::OK);
-    for key in [
-        "banner_types",
-        "featured_banner_types",
-        "layouts",
-        "themes",
-        "icons",
-        "badge_styles",
-        "animations",
-    ] {
-        assert!(body.contains(key), "missing catalog key {key} in {body}");
-    }
-}
-
-#[tokio::test]
-async fn banner_returns_svg_with_content() {
-    let (status, ctype, body) =
-        get("/api/v1/banner?type=aurora&text=Hello&animation=ambient&credit=0").await;
-    assert_eq!(status, StatusCode::OK);
-    assert!(ctype.contains("svg"), "ctype={ctype}");
-    assert!(body.contains("<svg"));
-    assert!(body.contains("Hello"));
-}
-
-#[tokio::test]
-async fn badge_path_shields_shape() {
-    let (status, ctype, body) = get("/badge/build-passing-brightgreen").await;
-    assert_eq!(status, StatusCode::OK);
-    assert!(ctype.contains("svg"));
-    assert!(body.contains("passing") || body.contains("build"));
-}
-
-#[tokio::test]
-async fn deploy_mark_route() {
-    let (status, _, body) = get("/api/v1/deploy?service=mark&style=flat").await;
-    assert_eq!(status, StatusCode::OK);
-    assert!(body.contains("Sylphx") || body.contains("deployed"));
-}
-
-#[tokio::test]
-async fn health_revision_is_non_empty_string() {
-    let (status, _, body) = get("/health").await;
-    assert_eq!(status, StatusCode::OK);
     let v: serde_json::Value = serde_json::from_str(&body).expect("json");
     let rev = v.get("revision").and_then(|x| x.as_str()).unwrap_or("");
     assert!(!rev.is_empty(), "revision must be present: {body}");
 }
 
 #[tokio::test]
-async fn legacy_bare_aliases_are_removed() {
+async fn mark_surface_serves_every_form() {
+    for (path, needle) in [
+        ("/api/v1/mark?type=aurora&text=Hi&animation=none", "Hi"),
+        ("/api/v1/mark/hero?type=soft&text=Hi&animation=none", "Hi"),
+        ("/api/v1/mark/pill?label=build&message=passing", "passing"),
+        ("/api/v1/mark/strip?icons=rust,ts", "rust"),
+        ("/api/v1/mark/identity?brand=sylphx", "Sylphx"),
+        ("/api/v1/mark/deploy?service=mark", "Sylphx"),
+        ("/badge/build-passing-brightgreen", "passing"),
+    ] {
+        let (status, ctype, body) = get(path).await;
+        assert_eq!(status, StatusCode::OK, "mark path must serve: {path}");
+        assert!(ctype.contains("svg"), "ctype={ctype} for {path}");
+        assert!(body.contains(needle), "needle {needle} missing in {path}");
+    }
+}
+
+#[tokio::test]
+async fn legacy_surfaces_are_removed() {
     for path in [
+        "/api/v1/banner",
+        "/api/v1/badge",
+        "/api/v1/icons",
+        "/api/v1/brand/sylphx",
+        "/api/v1/deploy",
+        "/api/v1/stats/shtse8",
+        "/api/v1/org/SylphxAI",
+        "/api/v1/repo/SylphxAI/mark",
         "/banner",
         "/stats/shtse8",
         "/org/SylphxAI",
@@ -106,24 +80,7 @@ async fn legacy_bare_aliases_are_removed() {
         "/api/v1/nope",
     ] {
         let (status, _, _) = get(path).await;
-        assert_eq!(status, StatusCode::NOT_FOUND, "legacy alias must 404: {path}");
-    }
-}
-
-#[tokio::test]
-async fn canonical_surface_still_serves() {
-    for (path, needle) in [
-        ("/api/v1/banner?type=soft&text=Hi&animation=none", "Hi"),
-        ("/api/v1/badge?label=build&message=passing", "passing"),
-        ("/badge/build-passing-brightgreen", "passing"),
-        ("/api/v1/icons?i=rust,ts", "rust"),
-        ("/api/v1/brand/sylphx", "Sylphx"),
-        ("/api/v1/deploy?service=mark", "Sylphx"),
-    ] {
-        let (status, ctype, body) = get(path).await;
-        assert_eq!(status, StatusCode::OK, "canonical path must serve: {path}");
-        assert!(ctype.contains("svg"), "ctype={ctype} for {path}");
-        assert!(body.contains(needle), "needle {needle} missing in {path}");
+        assert_eq!(status, StatusCode::NOT_FOUND, "legacy surface must 404: {path}");
     }
 }
 
@@ -133,7 +90,7 @@ async fn svg_responses_have_csp_and_nosniff() {
     let res = app
         .oneshot(
             Request::builder()
-                .uri("/api/v1/badge?label=x&message=y")
+                .uri("/api/v1/mark/pill?label=x&message=y")
                 .body(Body::empty())
                 .unwrap(),
         )
@@ -144,10 +101,7 @@ async fn svg_responses_have_csp_and_nosniff() {
         .get("content-security-policy")
         .and_then(|v| v.to_str().ok())
         .unwrap_or("");
-    assert!(
-        csp.contains("script-src 'none'"),
-        "CSP must block scripts: {csp}"
-    );
+    assert!(csp.contains("script-src 'none'"), "CSP must block scripts: {csp}");
     assert_eq!(
         res.headers()
             .get("x-content-type-options")
@@ -157,10 +111,40 @@ async fn svg_responses_have_csp_and_nosniff() {
 }
 
 #[tokio::test]
-async fn catalog_exposes_limits() {
+async fn catalog_exposes_the_one_vocabulary() {
     let (status, _, body) = get("/api/v1/catalog").await;
     assert_eq!(status, StatusCode::OK);
-    for key in ["limits", "banner_text", "badge_message", "icons"] {
+    for key in [
+        "forms",
+        "art_types",
+        "featured_art_types",
+        "layouts",
+        "themes",
+        "icons",
+        "badge_styles",
+        "animations",
+        "brands",
+        "limits",
+        "notes",
+    ] {
         assert!(body.contains(key), "missing catalog key {key}");
     }
+}
+
+#[tokio::test]
+async fn injection_is_inert_over_http() {
+    let (status, _, body) = get(
+        "/api/v1/mark/hero?type=soft&text=probe&animation=none&fontColor=%22%20onload=%22alert(7)",
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK);
+    assert!(!body.contains("onload="), "injection must be inert");
+}
+
+#[tokio::test]
+async fn determinism_over_http() {
+    let path = "/api/v1/mark/hero?type=aurora&text=Same&animation=none";
+    let (_, _, a) = get(path).await;
+    let (_, _, b) = get(path).await;
+    assert_eq!(a, b, "same URL, same mark, forever");
 }

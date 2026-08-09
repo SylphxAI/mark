@@ -1,10 +1,7 @@
 //! Product capabilities (bounded outcomes with independent proof).
 //!
-//! Macro ownership is by capability. Shared pure primitives live in `crate::shared`.
+//! The end state is one capability: **mark** — the single grammar
+//! (form × art × paint × geometry × text × motion). Retired capabilities
+//! (banner, badge, github_card, icon_row, brand_kit, deploy_mark) are deleted.
 
-pub mod badge;
-pub mod banner;
-pub mod brand_kit;
-pub mod deploy_mark;
-pub mod github_card;
-pub mod icon_row;
+pub mod mark;
