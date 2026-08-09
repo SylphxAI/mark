@@ -302,6 +302,18 @@ fn parse_custom_gradient(spec: &str, gid: &str) -> Option<FillPlan> {
     Some(plan)
 }
 
+/// Deep neutral canvas for restrained art (ADR-0004): dark bases deepen to a
+/// near-black ink with a hue tint (capsule-class negative space); light bases
+/// stay as-is so light themes keep a light canvas.
+pub(crate) fn ink_canvas(base: &str) -> String {
+    let h = strip_hash(base);
+    if contrasting_fg(h) == "FFFFFF" {
+        ensure_hash(&mix_hex(h, "0B0E14", 0.7))
+    } else {
+        ensure_hash(h)
+    }
+}
+
 pub fn contrasting_fg(hex: &str) -> String {
     let h = strip_hash(hex);
     if h.len() != 6 {

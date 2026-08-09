@@ -106,7 +106,6 @@
     <div class="brand"><div class="logo"></div> Mark <small>— the README identity layer</small></div>
     <div class="host">mark.sylphx.com</div>
   </div>
-  <div class="presets" id="presets"></div>
   <div class="forms" id="forms"></div>
   <div class="studio">
     <div class="panel">
@@ -140,20 +139,20 @@ const SIG_GRAD = "0:1A1A2E,50:4A90E2,100:D87000";
 const SIG_REV = "0:D87000,50:4A90E2,100:1A1A2E";
 
 const state = {
-  form:"hero", color:SIG_GRAD, theme:"", type:"wave", layout:"default", animation:"ambient",
-  font:"sans", text:"Ship something people love", desc:"A short line about what you build",
-  height:220, width:880, credit:false,
+  form:"hero", color:SIG_GRAD, theme:"", type:"waving", layout:"default", animation:"ambient",
+  font:"sans", text:"Your name", desc:"A short line about what you build",
+  height:200, width:880, credit:false,
   pill:{label:"build", message:"passing", style:"flat"},
   strip:{icons:["rust","ts","docker","kubernetes"], perline:12},
   deploy:{service:"app", style:"flat"}
 };
 
 const PRESETS = [
-  { name:"README header", apply(){ Object.assign(state,{form:"hero",color:SIG_GRAD,theme:"",type:"wave",layout:"default",animation:"ambient",font:"sans",text:"Your name",desc:"A short line about what you build",height:200,width:880}); } },
-  { name:"README footer", apply(){ Object.assign(state,{form:"hero",color:SIG_REV,theme:"",type:"wave",layout:"default",animation:"glow",font:"sans",text:"thanks for reading.",desc:"",height:120,width:880}); state.hero=state.hero||{}; } },
-  { name:"Typing lines", apply(){ Object.assign(state,{form:"hero",color:"",theme:"",type:"transparent",layout:"signal",animation:"type",font:"mono",text:"First line\nSecond line\nThird line",desc:"",height:150,width:880}); } },
+  { name:"README header", apply(){ Object.assign(state,{form:"hero",color:SIG_GRAD,theme:"",type:"waving",layout:"default",animation:"ambient",font:"sans",text:"Your name",desc:"A short line about what you build",height:200,width:880}); } },
+  { name:"README footer", apply(){ Object.assign(state,{form:"hero",color:SIG_REV,theme:"",type:"waving",layout:"default",animation:"glow",font:"sans",text:"thanks for reading.",desc:"",height:120,width:880}); } },
+  { name:"Typing lines", apply(){ Object.assign(state,{form:"hero",color:"4A90E2",theme:"",type:"transparent",layout:"signal",animation:"type",font:"mono",text:"First line\nSecond line\nThird line",desc:"",height:150,width:880}); } },
   { name:"Profile card", apply(){ Object.assign(state,{form:"profile",color:"",theme:"tokyonight",type:"",animation:"none",font:"sans",text:"Your name",desc:"What you build",width:640}); } },
-  { name:"Status pill", apply(){ Object.assign(state,{form:"pill",color:"brightgreen",theme:"",label:"",type:"",animation:"none",pill:{label:"build",message:"passing",style:"flat"}}); } },
+  { name:"Status pill", apply(){ Object.assign(state,{form:"pill",color:"brightgreen",theme:"",type:"",animation:"none",pill:{label:"build",message:"passing",style:"flat"}}); } },
   { name:"Tech strip", apply(){ Object.assign(state,{form:"strip",color:"",theme:"dark",type:"",animation:"none",strip:{icons:["rust","ts","docker","kubernetes"],perline:12}}); } }
 ];
 
@@ -198,7 +197,6 @@ function refresh(){
   document.getElementById("urlBox").value = url;
   document.getElementById("previewImg").src = url;
   document.querySelectorAll("#forms button").forEach(b => b.classList.toggle("active", b.dataset.f === state.form));
-  document.querySelectorAll("#presets .preset").forEach((b,i) => b.classList.toggle("on", state._preset === i));
   renderControls();
 }
 
@@ -233,7 +231,11 @@ function surprise(){
 function renderControls(){
   const c = document.getElementById("controls");
   const s = state;
-  let html = `<div class="group"><h3>Content</h3>`;
+  let html = `<div class="group"><h3>Templates</h3>
+    <div class="chips">${PRESETS.map((p,i) =>
+      `<button type="button" class="chip${state._preset === i ? " on" : ""}" data-tpl="${i}">${esc(p.name)}</button>`).join("")}</div>
+  </div>
+  <div class="group"><h3>Content</h3>`;
   if (s.form === "hero") {
     html += `<div class="field"><label>Title</label><textarea id="textInput">${esc(s.text)}</textarea></div>
       <div class="field"><label>Description</label><textarea id="descInput">${esc(s.desc)}</textarea></div>`;
@@ -328,6 +330,11 @@ function renderControls(){
       refresh();
     }));
   }
+  c.querySelectorAll("[data-tpl]").forEach(el => el.addEventListener("click", () => {
+    PRESETS[Number(el.dataset.tpl)].apply();
+    state._preset = Number(el.dataset.tpl);
+    refresh();
+  }));
   // wire theme chips (they carry data-v but need special handling)
   c.querySelectorAll(".theme").forEach(el => el.addEventListener("click", () => {
     state.theme = el.dataset.v;
@@ -341,13 +348,6 @@ function init(){
     `<button type="button" data-f="${f}">${f}</button>`).join("");
   document.querySelectorAll("#forms button").forEach(b => b.addEventListener("click", () => {
     state.form = b.dataset.f; state._preset = undefined; refresh();
-  }));
-  document.getElementById("presets").innerHTML = PRESETS.map((p,i) =>
-    `<button type="button" class="preset" data-i="${i}">${p.name}</button>`).join("");
-  document.querySelectorAll("#presets .preset").forEach(b => b.addEventListener("click", () => {
-    PRESETS[Number(b.dataset.i)].apply();
-    state._preset = Number(b.dataset.i);
-    refresh();
   }));
   document.getElementById("copyBtn").addEventListener("click", async () => {
     const box = document.getElementById("urlBox");
