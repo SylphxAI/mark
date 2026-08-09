@@ -2,30 +2,21 @@
 
 use crate::capabilities::badge::domain::{named_color, BadgeInput, BadgeStyle};
 use crate::shared::color::contrasting_fg;
-use crate::shared::svg::{ensure_hash, esc, is_hex_color, strip_hash, svg_doc};
+use crate::shared::svg::{cap_text, ensure_hash, esc, normalize_hex_token, svg_doc};
 use crate::shared::theme;
+
+/// Bounded input contract for the public badge surface (ADR-0002).
+pub const MAX_LABEL_CHARS: usize = 80;
+pub const MAX_MESSAGE_CHARS: usize = 120;
 
 fn resolve_color(c: Option<&str>, fallback: &str) -> String {
     let Some(c) = c else {
         return fallback.to_string();
     };
     if let Some(n) = named_color(c) {
-        return expand3(n);
+        return normalize_hex_token(n).unwrap_or_else(|| n.to_string());
     }
-    let h = strip_hash(c);
-    if is_hex_color(h) {
-        return expand3(h);
-    }
-    fallback.to_string()
-}
-
-fn expand3(h: &str) -> String {
-    let h = strip_hash(h);
-    if h.len() == 3 {
-        h.chars().flat_map(|c| [c, c]).collect()
-    } else {
-        h.chars().take(6).collect()
-    }
+    normalize_hex_token(c).unwrap_or_else(|| fallback.to_string())
 }
 
 fn measure(text: &str, style: BadgeStyle) -> u32 {
@@ -64,11 +55,11 @@ pub fn render(input: &BadgeInput) -> String {
         )
     };
 
-    let label = input.label.clone().unwrap_or_default();
+    let label = cap_text(&input.label.clone().unwrap_or_default(), MAX_LABEL_CHARS);
     let message = if input.message.is_empty() {
         "ok".into()
     } else {
-        input.message.clone()
+        cap_text(&input.message, MAX_MESSAGE_CHARS)
     };
 
     let h: u32 = match style {

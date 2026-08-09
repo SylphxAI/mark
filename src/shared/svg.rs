@@ -33,6 +33,34 @@ pub fn is_hex_color(v: &str) -> bool {
     matches!(h.len(), 3 | 6 | 8) && h.chars().all(|c| c.is_ascii_hexdigit())
 }
 
+/// Canonical color token for SVG attribute values.
+///
+/// Accepts `#rgb`, `#rrggbb`, `#rrggbbaa` (with or without `#`); expands
+/// 3-digit shorthand to 6. Anything else returns `None` so callers fall back
+/// to a trusted paint instead of emitting attacker-controlled attribute text.
+pub fn normalize_hex_token(v: &str) -> Option<String> {
+    let h = strip_hash(v.trim());
+    if !is_hex_color(h) {
+        return None;
+    }
+    if h.len() == 3 {
+        Some(format!("#{}", h.chars().flat_map(|c| [c, c]).collect::<String>()))
+    } else {
+        Some(format!("#{h}"))
+    }
+}
+
+/// Cap a display string at `max` chars, marking truncation with `…`.
+/// Total length never exceeds `max`.
+pub fn cap_text(s: &str, max: usize) -> String {
+    if s.chars().count() <= max {
+        return s.to_string();
+    }
+    let mut out: String = s.chars().take(max.saturating_sub(1)).collect();
+    out.push('\u{2026}');
+    out
+}
+
 pub fn svg_doc(width: u32, height: u32, body: &str) -> String {
     format!(
         "<?xml version=\"1.0\" encoding=\"UTF-8\"?><svg xmlns=\"http://www.w3.org/2000/svg\" width=\"{width}\" height=\"{height}\" viewBox=\"0 0 {width} {height}\" role=\"img\">{body}</svg>"

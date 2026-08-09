@@ -10,7 +10,9 @@ pub async fn user_stats<G: GitHubSource + ?Sized>(
     opts: &CardOpts,
 ) -> Result<String, String> {
     let user = github.get_user(username).await?;
-    let repos = github.get_user_repos(username).await.unwrap_or_default();
+    // Fail closed: an upstream snapshot failure must not render a card that
+    // claims zero repos/stars as if it were true data.
+    let repos = github.get_user_repos(username).await?;
     let agg = aggregate(&repos);
     Ok(render_user_card(&user, &agg, opts))
 }
