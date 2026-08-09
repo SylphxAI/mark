@@ -16,34 +16,44 @@ cargo run
 cargo build --release
 ```
 
-Env: see `.env.example` (`PORT`, `GITHUB_TOKEN`, `DEFAULT_CREDIT`, `PUBLIC_BASE_URL`).
+Env: see `.env.example` (`PORT`, `HOST`, `PUBLIC_BASE_URL`, `DEFAULT_CREDIT`, `RUST_LOG`).
 
 ## Hazards
 
 - Stateless SVG only on hot path — do not add headless browser / AI generation without cache design.
 - Soft watermark via `credit`; never force heavy branding that kills adoption.
-- GitHub upstream for stats needs cache + optional `GITHUB_TOKEN`.
+- Do not reintroduce upstream data, clocks, secrets, or state of any kind —
+  determinism is the product.
 
-## Clean-break contract (ADR-0002)
+## The one grammar (ADR-0003)
 
-This repository is Rust sole authority — there is no TypeScript backend tree.
-The following are hard contract floors; do not regress them:
+This repository is the north-star end state: **one capability, one grammar**.
 
-1. **Single canonical HTTP surface:** `/api/v1/*` plus the shields-style
-   `/badge/{label}-{message}-{color}` path form. Bare legacy aliases
-   (`/banner`, `/stats`, `/org`, `/repo`, `/icons`, `/brand`, `/deploy`) are
-   deleted and must not be reintroduced.
-2. **Single canonical product host:** `mark.sylphx.com`. `img.sylphx.com` is
-   retired; do not re-add it to docs, config, or examples.
-3. **Bounded inputs:** banner text ≤ 500 / desc ≤ 240, badge label ≤ 80 /
-   message ≤ 120, icon rows ≤ 60. Truncation is marked with `…`.
-4. **SVG attribute grammar:** attribute values come only from validated hex
-   color tokens, named colors, or static strings; all user text is escaped.
-   Never inject unvalidated strings into SVG.
-5. **Deploy identity:** the Docker image must embed a git revision via the
+1. **One surface:** `GET /api/v1/mark/{form}` is the whole product — forms
+   `hero` `pill` `strip` `identity` `deploy` — plus the shields-style pill
+   shorthand `/badge/{label}-{message}-{color}`. Every legacy capability route
+   (banner, badge, icons, brand, deploy, stats, org, repo) is deleted; do not
+   reintroduce them.
+2. **One grammar:** mark = form × art (`type`) × paint (`theme`/`color`) ×
+   geometry (`width`/`height`) × text × motion (`animation`). Composition is
+   the product: any form can carry any palette, art (hero/identity), and
+   text-level motion (pill/identity/strip).
+3. **Determinism:** a mark is a pure function of its URL. No clock
+   (`timeAuto`/`timeGradient`/clock seeds are retired), no upstream, no state,
+   no secrets. Same URL renders the same SVG forever.
+4. **No live data:** GitHub cards (stats/org/repo) and the network adapter are
+   retired. Specialist hosts own data; Mark renders only what the URL says.
+5. **Bounded inputs:** hero text ≤ 500 / desc ≤ 240 / 8 lines, pill label ≤ 80
+   / message ≤ 120, strip ≤ 60 icons, identity brand ≤ 40 / tagline ≤ 120,
+   deploy service ≤ 40. Truncation is marked with `…`.
+6. **SVG attribute grammar:** attribute values come only from validated hex
+   tokens, named colors, or static strings; all user text is escaped. Never
+   inject unvalidated strings into SVG.
+7. **Deploy identity:** the Docker image must embed a git revision via the
    platform build-arg contract (`SYLPHX_GIT_COMMIT_SHA` / `SYLPHX_GIT_SHA`,
-   then `SOURCE_COMMIT` / `GIT_SHA` for CI/local). `mark --version` fails the
-   image build when the revision is unknown. `/health.revision` is deploy
-   proof, never capability proof.
-6. **GitHub cards fail closed:** an upstream snapshot failure renders the
-   error card, never a zero-data card.
+   then `SOURCE_COMMIT` / `GIT_SHA`). `mark --version` fails the image build
+   when the revision is unknown. `/health.revision` is deploy proof, never
+   capability proof.
+8. **Rendering never fails:** unknown inputs normalize (unknown form → hero,
+   unknown art → aurora, invalid colors → fallback paint). There is no
+   error-SVG path by construction.
