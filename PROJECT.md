@@ -12,7 +12,7 @@ badges, GitHub stats cards, icon rows, brand kits, and deploy badges.
 
 ## Goals
 
-- One host (`img.sylphx.com` target) for all embeddable marks
+- One host (`mark.sylphx.com`) for all embeddable marks
 - High cacheability, stateless render kernel
 - Fleet brand themes (Sylphx, Cubeage, Epiow, Ozyrix, Kyle)
 - Dogfood Sylphx Platform when deploying the public endpoint

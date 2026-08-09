@@ -233,3 +233,42 @@ fn github_domain_is_serde_free() {
         "adapter must own wire DTOs"
     );
 }
+
+#[test]
+fn every_advertised_banner_type_has_a_shape_arm() {
+    let shapes = fs::read_to_string("src/capabilities/banner/domain/shapes.rs").unwrap();
+    let body = &shapes[shapes.find("pub fn shape_background").expect("shape_background")..];
+    let block = &shapes[shapes.find("BANNER_TYPES").expect("BANNER_TYPES")..];
+    let block = &block[..block.find("];").expect("end of BANNER_TYPES")];
+    let mut advertised = Vec::new();
+    for part in block.split('"') {
+        if !part.is_empty()
+            && part.chars().all(|c| c.is_ascii_lowercase() || c.is_ascii_digit())
+        {
+            advertised.push(part);
+        }
+    }
+    assert!(!advertised.is_empty(), "parsed banner type catalog");
+    for ty in advertised {
+        assert!(
+            body.contains(&format!("\"{ty}\"")),
+            "banner type {ty} advertised but missing a shape arm"
+        );
+    }
+}
+
+#[test]
+fn github_dead_wire_fields_are_removed() {
+    for path in [
+        "src/capabilities/github_card/domain/models.rs",
+        "src/capabilities/github_card/adapters/github_http.rs",
+    ] {
+        let text = fs::read_to_string(path).unwrap();
+        for dead in ["avatar_url", "html_url", "open_issues_count"] {
+            assert!(
+                !text.contains(dead),
+                "{dead} must not exist in {path}"
+            );
+        }
+    }
+}
