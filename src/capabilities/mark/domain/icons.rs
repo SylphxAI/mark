@@ -33,7 +33,6 @@ pub fn glyph(id: &str) -> Option<&'static str> {
         "nginx" => "<path d=\"M8 24 L16 6 L24 24 Z\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"/>",
         "cloudflare" => "<path d=\"M6 18 H22 C26 18 26 12 20 12 C19 8 14 8 12 11 C8 11 6 14 6 18 Z\" fill=\"currentColor\"/>",
         "vercel" => "<path d=\"M16 6 L26 24 H6 Z\" fill=\"currentColor\"/>",
-        "sylphx" => "<circle cx=\"16\" cy=\"16\" r=\"10\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"/><circle cx=\"16\" cy=\"16\" r=\"3\" fill=\"currentColor\"/>",
         _ => return None,
     })
 }
@@ -43,7 +42,7 @@ pub fn available() -> Vec<&'static str> {
         "rust", "go", "ts", "js", "python", "react", "node", "docker", "kubernetes", "linux",
         "git", "github", "postgres", "redis", "aws", "gcp", "azure", "nextjs", "vue", "svelte",
         "bun", "deno", "css", "html", "graphql", "tailwind", "prisma", "sqlite", "nginx",
-        "cloudflare", "vercel", "sylphx",
+        "cloudflare", "vercel",
     ]
     .to_vec()
 }

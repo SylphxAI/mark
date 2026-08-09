@@ -42,7 +42,7 @@ Env (see `.env.example`):
 
 ## The grammar
 
-**mark = form × art (`type`) × paint (`theme` / `color`) × geometry (`width` / `height`) × text × motion (`animation`)**
+**mark = form × art (`type`) × paint (`theme` / `color`) × content (`text` / `desc` / `font`) × geometry (`width` / `height`) × motion (`animation`)**
 
 One endpoint: `GET /api/v1/mark/{form}` — plus the shields-style pill shorthand `GET /badge/{label}-{message}-{color}`.
 
@@ -51,16 +51,17 @@ One endpoint: `GET /api/v1/mark/{form}` — plus the shields-style pill shorthan
 | `hero` | The flagship banner (42 art types, 4 layouts) | `type` `text` `desc` `layout` `height` `width` |
 | `pill` | Atomic status mark (shields-style) | `label` `message` `style` |
 | `strip` | Tech identity row (32 icons) | `icons` `perline` |
-| `identity` | Fleet brand card | `brand` `tagline` `type` (art background) `width` |
+| `profile` | Name + tagline card (text-driven) | `text` `desc` `type` (art background) `width` |
 | `deploy` | “deployed on Sylphx” conversion pill | `service` `style` |
 
-Shared params on every form: `theme` · `color` · `animation` · `credit`.
+Shared params on every form: `theme` · `color` · `animation` · `credit` · `font` (`sans` | `mono`).
 A `theme` defines the full palette; an explicit `color` is used when no theme is given.
+Themes are **neutral design themes** — no personal or company names anywhere in the product.
 
 ### Hero
 
 ```markdown
-![header](https://mark.sylphx.com/api/v1/mark/hero?type=wave&theme=sylphx&text=Ship%20your%20next%20release&desc=Multi-color%20art%20for%20your%20README&height=220&animation=ambient)
+![header](https://mark.sylphx.com/api/v1/mark/hero?type=wave&color=0:1A1A2E,50:4A90E2,100:D87000&text=Ship%20your%20next%20release&desc=Multi-color%20art%20for%20your%20README&height=220&animation=ambient)
 ```
 
 **Art types:** `plasma` `holo` `neon` `meteor` `liquid` `prism` `void` `firefly` `silk` `iridescent` `aurora` `mesh` `glass` `soft` `horizon` `dusk` `orbit` `beam` `wave` `waving` `terminal` `constellation` `grid` `blur` `ring` `circuit` `hud` `pulse` `noise` `rounded` `rect` `slice` `cylinder` `checkered` `egg` `shark` `venom` `speech` `product` `oss` `org` `transparent`
@@ -87,11 +88,19 @@ Colors: shields named colors, semantic names (`success` `important` `critical` `
 ![stack](https://mark.sylphx.com/api/v1/mark/strip?icons=rust,ts,docker,kubernetes,postgres&theme=dark)
 ```
 
-### Identity
+### Profile
 
 ```markdown
-![brand](https://mark.sylphx.com/api/v1/mark/identity?brand=sylphx)
-![brand-art](https://mark.sylphx.com/api/v1/mark/identity?brand=cubeage&type=aurora&theme=neon&width=480)
+![profile](https://mark.sylphx.com/api/v1/mark/profile?text=Kyle%20Tse&desc=Infrastructure%20for%20AI%20agents&theme=tokyonight)
+![profile-art](https://mark.sylphx.com/api/v1/mark/profile?text=Kyle%20Tse&desc=AI-native%20platforms&type=wave&width=480)
+```
+
+The profile card is text-driven: the URL supplies the name (`text`) and tagline (`desc`) — nothing is baked into the product.
+
+### Typing lines (mono)
+
+```markdown
+![typing](https://mark.sylphx.com/api/v1/mark/hero?type=transparent&font=mono&animation=type&layout=signal&color=4A90E2&text=MCP%20%26%20AI-agent%20tooling%20-nl-20%20years%20shipping%20at%20scale)
 ```
 
 ### Deploy
@@ -113,11 +122,10 @@ Colors: shields named colors, semantic names (`success` `important` `critical` `
 
 | Surface | Cap | Behavior |
 |---------|-----|----------|
-| Hero `text` | 500 chars | truncated with `…` |
-| Hero `desc` | 240 chars / 8 lines | truncated with `…` |
+| `text` (hero title / profile name) | 500 chars | truncated with `…` |
+| `desc` (hero / profile tagline) | 240 chars / 8 lines | truncated with `…` |
 | Pill `label` / `message` | 80 / 120 chars | truncated with `…` |
 | Strip icons | 60 | extra icons dropped |
-| Identity `brand` / `tagline` | 40 / 120 chars | truncated with `…` |
 | Deploy `service` | 40 chars | truncated with `…` |
 | Hero width / height | 1600 / 900 | clamped |
 
@@ -125,7 +133,7 @@ Colors: shields named colors, semantic names (`success` `important` `critical` `
 
 ## Why this exists
 
-GitHub already runs on third-party image hosts (capsule-render, readme-stats, skillicons, shields). **Mark** is one Sylphx-owned host with more art, fleet themes, and platform-native deploy marks — every README hit is optional brand surface, and the service itself dogfoods Sylphx. Live data is deliberately not offered: a mark that can never break, go stale, or rate-limit is the moat.
+GitHub already runs on third-party image hosts (capsule-render, readme-stats, skillicons, shields). **Mark** is one Sylphx-owned host with more art, neutral themes, and platform-native deploy marks — every README hit is optional brand surface, and the service itself dogfoods Sylphx. Live data is deliberately not offered: a mark that can never break, go stale, or rate-limit is the moat.
 
 ---
 

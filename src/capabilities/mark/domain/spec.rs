@@ -1,7 +1,11 @@
-//! The Mark — one grammar: form × art × paint × geometry × text × motion.
+//! The Mark — one grammar: form × art × paint × content × geometry × motion.
 //!
 //! A Mark is a pure function of its URL (ADR-0003): the same spec renders the
 //! same SVG forever. No clock, no upstream, no state.
+//!
+//! UI/UX redesign (ADR-0004): themes are neutral design themes — no personal
+//! names, no company names. Content (text/desc) is supplied by the URL, never
+//! baked into the product.
 
 /// Geometry family of a mark.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
@@ -13,21 +17,21 @@ pub enum MarkForm {
     Pill,
     /// Strip — the tech identity row.
     Strip,
-    /// Identity — the fleet brand card.
-    Identity,
+    /// Profile — the name + tagline card (text-driven, no baked identities).
+    Profile,
     /// Deploy — the conversion pill ("deployed on Sylphx").
     Deploy,
 }
 
 impl MarkForm {
-    pub const ALL: [&'static str; 5] = ["hero", "pill", "strip", "identity", "deploy"];
+    pub const ALL: [&'static str; 5] = ["hero", "pill", "strip", "profile", "deploy"];
 
     pub fn name(&self) -> &'static str {
         match self {
             Self::Hero => "hero",
             Self::Pill => "pill",
             Self::Strip => "strip",
-            Self::Identity => "identity",
+            Self::Profile => "profile",
             Self::Deploy => "deploy",
         }
     }
@@ -37,7 +41,7 @@ impl MarkForm {
         match raw.map(|s| s.trim().to_ascii_lowercase()).as_deref() {
             Some("pill") | Some("badge") => Self::Pill,
             Some("strip") | Some("icons") | Some("iconsrow") => Self::Strip,
-            Some("identity") | Some("brand") | Some("brandkit") => Self::Identity,
+            Some("profile") | Some("card") => Self::Profile,
             Some("deploy") | Some("deploymark") => Self::Deploy,
             _ => Self::Hero,
         }
@@ -50,8 +54,6 @@ pub struct HeroSpec {
     pub layout: Option<String>,
     pub section: Option<String>,
     pub reversal: bool,
-    pub text: Option<String>,
-    pub desc: Option<String>,
     pub font_size: Option<u32>,
     pub desc_size: Option<u32>,
     pub font_color: Option<String>,
@@ -81,13 +83,6 @@ pub struct StripSpec {
     pub per_line: Option<u32>,
 }
 
-/// Identity geometry (brand card).
-#[derive(Debug, Clone, Default)]
-pub struct IdentitySpec {
-    pub brand: Option<String>,
-    pub tagline: Option<String>,
-}
-
 /// Deploy geometry (conversion pill).
 #[derive(Debug, Clone, Default)]
 pub struct DeploySpec {
@@ -101,8 +96,14 @@ pub struct MarkSpec {
     /// Paint: theme defines the full palette; explicit color is used otherwise.
     pub color: Option<String>,
     pub theme: Option<String>,
-    /// Art texture (hero and identity backgrounds).
+    /// Art texture (hero and profile backgrounds).
     pub art: Option<String>,
+    /// Content: title line (hero title / profile name).
+    pub text: Option<String>,
+    /// Content: secondary line (hero desc / profile tagline).
+    pub desc: Option<String>,
+    /// Content typography: `sans` (default) or `mono`.
+    pub font: Option<String>,
     pub credit: bool,
     pub animation: Option<String>,
     pub width: Option<u32>,
@@ -110,6 +111,5 @@ pub struct MarkSpec {
     pub hero: HeroSpec,
     pub pill: PillSpec,
     pub strip: StripSpec,
-    pub identity: IdentitySpec,
     pub deploy: DeploySpec,
 }

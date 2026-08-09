@@ -103,7 +103,7 @@ pub(crate) fn render_pill(
     let font = if style == PillStyle::ForTheBadge {
         "font-family=\"ui-sans-serif,system-ui,sans-serif\" font-size=\"11\" font-weight=\"700\" letter-spacing=\"0.5\""
     } else {
-        "font-family=\"Verdana,DejaVu Sans,sans-serif\" font-size=\"11\" font-weight=\"500\""
+        "font-family=\"-apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,Arial,sans-serif\" font-size=\"11\" font-weight=\"500\""
     };
     let ty = if style == PillStyle::ForTheBadge {
         18

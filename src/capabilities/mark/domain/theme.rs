@@ -23,61 +23,11 @@ pub fn list_names() -> Vec<&'static str> {
 }
 
 static THEMES: &[(&str, Theme)] = &[
-    (
-        "sylphx",
-        Theme {
-            name: "Sylphx",
-            bg: "1A1A2E",
-            bg2: "4A90E2",
-            fg: "FFFFFF",
-            muted: "A8B3C7",
-            accent: "D87000",
-        },
-    ),
-    (
-        "cubeage",
-        Theme {
-            name: "Cubeage",
-            bg: "1A1A1A",
-            bg2: "E03840",
-            fg: "FFFFFF",
-            muted: "D0D0D0",
-            accent: "E03840",
-        },
-    ),
-    (
-        "epiow",
-        Theme {
-            name: "Epiow",
-            bg: "0B1020",
-            bg2: "7C3AED",
-            fg: "FFFFFF",
-            muted: "C4B5FD",
-            accent: "4338CA",
-        },
-    ),
-    (
-        "ozyrix",
-        Theme {
-            name: "Ozyrix",
-            bg: "0A0A0A",
-            bg2: "C9A227",
-            fg: "F5F5F0",
-            muted: "A3A3A3",
-            accent: "C9A227",
-        },
-    ),
-    (
-        "kyle",
-        Theme {
-            name: "Kyle",
-            bg: "0F172A",
-            bg2: "38BDF8",
-            fg: "F8FAFC",
-            muted: "94A3B8",
-            accent: "22D3EE",
-        },
-    ),
+
+
+
+
+
     (
         "dark",
         Theme {

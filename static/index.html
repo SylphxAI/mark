@@ -4,18 +4,17 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Mark — the README identity layer</title>
-<meta name="description" content="One URL. One image. Your brand. Grammar-first SVG mark studio: hero, pill, strip, identity, deploy." />
+<meta name="description" content="One URL. One image. Your brand. Neutral themes, one grammar: hero, pill, strip, profile, deploy." />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
 <style>
   :root {
-    --bg:#07080c; --panel:#0c0f15; --elev:#131821; --fg:#f2f4f8; --muted:#8b93a7;
-    --faint:#5c6478; --line:rgba(255,255,255,0.07); --line2:rgba(255,255,255,0.13);
-    --accent:#e08712; --accent2:#5b9dff; --ok:#3dd68c; --radius:16px;
-    --font:"Instrument Sans",ui-sans-serif,system-ui,sans-serif;
-    --mono:"JetBrains Mono",ui-monospace,monospace;
-    --scroll:rgba(255,255,255,0.14);
+    --bg:#07080c; --panel:#0c0f15; --elev:#12161f; --fg:#f2f4f8; --muted:#8b93a7;
+    --faint:#5c6478; --line:rgba(255,255,255,0.08); --line2:rgba(255,255,255,0.16);
+    --accent:#e08712; --accent2:#5b9dff; --ok:#3dd68c; --danger:#ff7b86;
+    --radius:14px; --font:"Instrument Sans",ui-sans-serif,system-ui,sans-serif;
+    --mono:"JetBrains Mono",ui-monospace,monospace; --scroll:rgba(255,255,255,0.14);
   }
   * { box-sizing:border-box; }
   html,body { height:100%; }
@@ -23,8 +22,8 @@
   body {
     margin:0; color:var(--fg); font-family:var(--font); overflow:hidden;
     background:
-      radial-gradient(1000px 520px at 8% -15%, rgba(224,135,18,0.13), transparent 55%),
-      radial-gradient(900px 480px at 95% 0%, rgba(91,157,255,0.1), transparent 50%),
+      radial-gradient(1100px 560px at 6% -18%, rgba(224,135,18,0.12), transparent 55%),
+      radial-gradient(900px 480px at 96% 0%, rgba(91,157,255,0.09), transparent 50%),
       var(--bg);
   }
   button,input,select,textarea { font:inherit; color:inherit; }
@@ -33,118 +32,152 @@
   .scroll { scrollbar-width:thin; scrollbar-color:var(--scroll) transparent; }
   .scroll::-webkit-scrollbar { width:8px; height:8px; }
   .scroll::-webkit-scrollbar-thumb { background:var(--scroll); border-radius:99px; }
-  .app { height:100%; max-width:1360px; margin:0 auto; padding:.75rem 1rem;
-    display:grid; grid-template-rows:auto auto minmax(0,1fr) auto; gap:.55rem; min-width:0; }
+  .app { height:100%; max-width:1400px; margin:0 auto; padding:.8rem 1.1rem;
+    display:grid; grid-template-rows:auto auto auto minmax(0,1fr) auto; gap:.6rem; min-width:0; }
   .top { display:flex; align-items:center; justify-content:space-between; gap:.75rem; min-width:0; }
   .brand { display:flex; align-items:center; gap:.55rem; font-weight:600; letter-spacing:-0.02em; }
+  .brand small { color:var(--faint); font-weight:400; font-size:.78rem; letter-spacing:0; }
   .logo { width:26px; height:26px; border-radius:8px; flex-shrink:0;
-    background:linear-gradient(135deg,#e08712,#5b9dff); box-shadow:0 6px 18px rgba(224,135,18,0.28); }
-  .live { display:inline-flex; align-items:center; gap:.4rem; font-size:.75rem; color:var(--muted);
-    border:1px solid var(--line); border-radius:999px; padding:.28rem .65rem; background:rgba(255,255,255,0.02); }
-  .live i { width:6px; height:6px; border-radius:50%; background:var(--ok); box-shadow:0 0 8px var(--ok); font-style:normal; }
-  .forms { display:flex; flex-wrap:nowrap; gap:.25rem; padding:.22rem; border:1px solid var(--line);
-    border-radius:12px; background:rgba(255,255,255,0.02); width:fit-content; max-width:100%; overflow-x:auto; }
-  .forms button { border:0; background:transparent; color:var(--muted); padding:.45rem .8rem;
-    border-radius:9px; cursor:pointer; font-weight:500; font-size:.84rem; white-space:nowrap;
-    transition:background .12s,color .12s; }
+    background:linear-gradient(135deg,#e08712,#5b9dff); box-shadow:0 6px 18px rgba(224,135,18,0.26); }
+  .host { font-size:.74rem; color:var(--muted); border:1px solid var(--line); border-radius:999px;
+    padding:.26rem .65rem; background:rgba(255,255,255,0.02); font-family:var(--mono); }
+  .presets { display:flex; gap:.35rem; flex-wrap:wrap; }
+  .preset { border:1px solid var(--line2); background:var(--panel); color:var(--muted);
+    padding:.34rem .7rem; border-radius:9px; font-size:.78rem; cursor:pointer; transition:all .12s; }
+  .preset:hover { color:var(--fg); border-color:var(--line2); transform:translateY(-1px); }
+  .preset.on { border-color:var(--accent); color:var(--fg); box-shadow:inset 0 0 0 1px var(--accent); }
+  .forms { display:flex; gap:.25rem; padding:.22rem; border:1px solid var(--line); border-radius:11px;
+    background:rgba(255,255,255,0.02); width:fit-content; max-width:100%; overflow-x:auto; }
+  .forms button { border:0; background:transparent; color:var(--muted); padding:.42rem .85rem;
+    border-radius:8px; cursor:pointer; font-weight:500; font-size:.84rem; white-space:nowrap; transition:all .12s; }
   .forms button:hover { color:var(--fg); }
   .forms button.active { background:var(--elev); color:var(--fg); box-shadow:inset 0 0 0 1px var(--line2); }
-  .studio { display:grid; grid-template-columns:minmax(0,1.35fr) minmax(320px,420px);
+  .studio { display:grid; grid-template-columns:minmax(0,1.4fr) minmax(330px,400px);
     gap:.75rem; min-height:0; }
   .panel { background:var(--panel); border:1px solid var(--line); border-radius:var(--radius);
     overflow:hidden; display:flex; flex-direction:column; min-height:0; }
-  .controls { overflow-y:auto; padding:1rem; gap:1rem; display:flex; flex-direction:column; }
-  .group h3 { margin:0 0 .5rem; font-size:.72rem; text-transform:uppercase; letter-spacing:.09em; color:var(--faint); font-weight:600; }
+  .stage { flex:1; display:flex; align-items:center; justify-content:center; padding:1.2rem; min-height:0;
+    background:radial-gradient(600px 300px at 50% 30%, rgba(255,255,255,0.03), transparent 70%); }
+  .stage img { max-width:100%; max-height:100%; border-radius:12px;
+    background:repeating-conic-gradient(#10131a 0 25%, #0b0e14 0 50%) 0 0/18px 18px;
+    box-shadow:0 18px 50px rgba(0,0,0,0.5); }
+  .urlbar { display:flex; gap:.5rem; align-items:center; border-top:1px solid var(--line); padding:.65rem .9rem; }
+  .urlbar input { flex:1; background:var(--elev); border:1px solid var(--line2); border-radius:9px;
+    padding:.42rem .65rem; font-family:var(--mono); font-size:.72rem; color:var(--muted); min-width:0; }
+  .urlbar button { background:var(--accent); color:#fff; border:0; border-radius:9px; padding:.42rem .95rem;
+    font-weight:600; font-size:.8rem; cursor:pointer; white-space:nowrap; }
+  .urlbar button.ghost { background:transparent; color:var(--muted); border:1px solid var(--line2); }
+  .urlbar button:active { transform:translateY(1px); }
+  .controls { overflow-y:auto; padding:1rem; display:flex; flex-direction:column; gap:1.05rem; }
+  .group h3 { margin:0 0 .55rem; font-size:.7rem; text-transform:uppercase; letter-spacing:.1em; color:var(--faint); font-weight:600; }
   .field { margin-bottom:.6rem; }
   .field label { display:block; font-size:.8rem; color:var(--muted); margin-bottom:.28rem; }
-  .field input[type=text], .field input[type=number], .field textarea, .field select {
+  .field input[type=text], .field input[type=number], .field textarea {
     width:100%; background:var(--elev); border:1px solid var(--line2); border-radius:9px;
-    padding:.42rem .6rem; font-size:.85rem; color:var(--fg); }
-  .field textarea { min-height:56px; resize:vertical; }
+    padding:.45rem .6rem; font-size:.85rem; color:var(--fg); outline:none; transition:border .12s; }
+  .field input:focus, .field textarea:focus { border-color:var(--accent2); }
+  .field textarea { min-height:54px; resize:vertical; }
   .field input[type=checkbox] { accent-color:var(--accent); }
   .row { display:flex; gap:.5rem; }
   .row .field { flex:1; }
   .chips { display:flex; flex-wrap:wrap; gap:.3rem; }
   .chip { border:1px solid var(--line2); background:var(--elev); color:var(--muted);
-    padding:.3rem .6rem; border-radius:8px; font-size:.76rem; cursor:pointer; }
+    padding:.3rem .62rem; border-radius:8px; font-size:.76rem; cursor:pointer; transition:all .12s; }
+  .chip:hover { color:var(--fg); }
   .chip.on { border-color:var(--accent); color:var(--fg); box-shadow:inset 0 0 0 1px var(--accent); }
   .theme { display:inline-flex; align-items:center; gap:.4rem; border:1px solid var(--line2);
-    background:var(--elev); color:var(--muted); padding:.28rem .55rem; border-radius:8px; font-size:.76rem; cursor:pointer; }
-  .theme.on { border-color:var(--line2); color:var(--fg); background:rgba(255,255,255,0.04); }
-  .theme .orb { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
-  .preview { flex:1; display:flex; align-items:center; justify-content:center; padding:1rem; min-height:0; }
-  .preview img { max-width:100%; max-height:100%; border-radius:12px; background:repeating-conic-gradient(#10131a 0 25%, #0b0e14 0 50%) 0 0/18px 18px; }
-  .copy { display:flex; gap:.5rem; align-items:center; border-top:1px solid var(--line); padding:.7rem 1rem; }
-  .copy input { flex:1; background:var(--elev); border:1px solid var(--line2); border-radius:9px;
-    padding:.4rem .6rem; font-family:var(--mono); font-size:.72rem; color:var(--muted); }
-  .copy button { background:var(--accent); color:#fff; border:0; border-radius:9px; padding:.42rem .9rem;
-    font-weight:600; font-size:.8rem; cursor:pointer; }
-  .copy button:active { transform:translateY(1px); }
+    background:var(--elev); color:var(--muted); padding:.28rem .55rem; border-radius:8px; font-size:.76rem; cursor:pointer; transition:all .12s; }
+  .theme.on { border-color:var(--line2); color:var(--fg); background:rgba(255,255,255,0.05); }
+  .theme .orb { width:10px; height:10px; border-radius:50%; flex-shrink:0; box-shadow:0 0 0 1px rgba(255,255,255,0.12); }
   .foot { font-size:.72rem; color:var(--faint); display:flex; gap:1rem; justify-content:space-between; flex-wrap:wrap; }
-  .hidden { display:none !important; }
+  .hint { font-size:.74rem; color:var(--faint); line-height:1.45; }
+  @media (max-width: 900px) {
+    body { overflow:auto; }
+    .app { height:auto; grid-template-rows:auto auto auto auto auto; }
+    .studio { grid-template-columns:1fr; }
+    .stage { min-height:280px; }
+    .controls { max-height:60vh; }
+  }
 </style>
 </head>
 <body>
 <div class="app">
   <div class="top">
-    <div class="brand"><div class="logo"></div> Mark</div>
-    <div class="live"><i></i> mark.sylphx.com · grammar-first</div>
+    <div class="brand"><div class="logo"></div> Mark <small>— the README identity layer</small></div>
+    <div class="host">mark.sylphx.com</div>
   </div>
+  <div class="presets" id="presets"></div>
   <div class="forms" id="forms"></div>
   <div class="studio">
     <div class="panel">
-      <div class="controls scroll" id="controls"></div>
-    </div>
-    <div class="panel">
-      <div class="preview" id="preview"><img id="previewImg" alt="mark preview" /></div>
-      <div class="copy">
+      <div class="stage" id="stage"><img id="previewImg" alt="mark preview" /></div>
+      <div class="urlbar">
         <input id="urlBox" readonly spellcheck="false" />
+        <button class="ghost" id="openBtn" type="button">Open</button>
         <button id="copyBtn" type="button">Copy URL</button>
       </div>
     </div>
+    <div class="panel">
+      <div class="controls scroll" id="controls"></div>
+    </div>
   </div>
   <div class="foot">
-    <span>One URL · one image · deterministic forever — no live data, no clock, no account.</span>
-    <span id="baseLine"></span>
+    <span>Neutral themes · one grammar · same URL, same mark, forever.</span>
+    <span>No live data, no clock, no account — the URL is the only input.</span>
   </div>
 </div>
 <script>
-const BASE = document.body.dataset.base || "{{BASE}}";
-const FORMS = ["hero","pill","strip","identity","deploy"];
-const THEMES = ["","sylphx","cubeage","epiow","ozyrix","kyle","dark","light","tokyonight","dracula","nord","neon","ocean","sunset","forest","github","radical","gruvbox","monokai"];
-const ART = ["aurora","wave","waving","soft","rounded","rect","slice","glass","product","terminal","mesh","plasma","holo","neon","liquid","silk","orbit","constellation","grid","blur","ring","circuit","hud","pulse","noise","cylinder","checkered","egg","shark","venom","speech","org","transparent"];
+const BASE = "{{BASE}}";
+const FORMS = ["hero","pill","strip","profile","deploy"];
+const THEMES = ["","dark","light","tokyonight","dracula","nord","monokai","radical","gruvbox","ocean","sunset","forest","neon","github"];
+const ART = ["wave","waving","aurora","soft","rounded","slice","glass","product","terminal","mesh","plasma","holo","neon","liquid","silk","orbit","constellation","grid","blur","ring","circuit","hud","pulse","noise","cylinder","checkered","egg","shark","venom","speech","org","transparent"];
 const LAYOUTS = ["default","plate","signal","terminal"];
 const ANIMS = ["none","ambient","fade","rise","scale","float","glow","breathe","slide","cascade","shimmer","glitch","wave","orbit","neon","bounce","type"];
 const STYLES = ["flat","plastic","for-the-badge","social","pill"];
-const BRANDS = ["sylphx","cubeage","epiow","ozyrix","kyle"];
-const ICONS = ["rust","go","ts","js","python","react","node","docker","kubernetes","linux","git","github","postgres","redis","aws","gcp","azure","nextjs","vue","svelte","bun","deno","css","html","graphql","tailwind","prisma","sqlite","nginx","cloudflare","vercel","sylphx"];
-const RANDOM_PALETTES = ["667EEA,764BA2","4FACFE,00F2FE","43E97B,38F9D7","FA709A,FEE140","FF6B35,F15BB5","7C3AED,00F5D4","E03840,FF6B35","00F5D4,F15BB5","4338CA,F093FB","0EA5E9,A78BFA","F43F5E,FB923C","14B8A6,6366F1","D87000,4A90E2"];
+const ICONS = ["rust","go","ts","js","python","react","node","docker","kubernetes","linux","git","github","postgres","redis","aws","gcp","azure","nextjs","vue","svelte","bun","deno","css","html","graphql","tailwind","prisma","sqlite","nginx","cloudflare","vercel"];
+const RANDOM = ["667EEA,764BA2","4FACFE,00F2FE","43E97B,38F9D7","FA709A,FEE140","FF6B35,F15BB5","7C3AED,00F5D4","E03840,FF6B35","00F5D4,F15BB5","4338CA,F093FB","0EA5E9,A78BFA","F43F5E,FB923C","14B8A6,6366F1","D87000,4A90E2"];
+const SIG_GRAD = "0:1A1A2E,50:4A90E2,100:D87000";
+const SIG_REV = "0:D87000,50:4A90E2,100:1A1A2E";
 
 const state = {
-  form:"hero", color:"", theme:"sylphx", type:"wave", layout:"default", animation:"none",
-  text:"Ship your next release", desc:"Multi-color art for your README", height:220, width:880,
-  credit:false,
+  form:"hero", color:SIG_GRAD, theme:"", type:"wave", layout:"default", animation:"ambient",
+  font:"sans", text:"Ship something people love", desc:"A short line about what you build",
+  height:220, width:880, credit:false,
   pill:{label:"build", message:"passing", style:"flat"},
   strip:{icons:["rust","ts","docker","kubernetes"], perline:12},
-  identity:{brand:"sylphx", tagline:""},
-  deploy:{service:"mark"}
+  deploy:{service:"app", style:"flat"}
 };
+
+const PRESETS = [
+  { name:"README header", apply(){ Object.assign(state,{form:"hero",color:SIG_GRAD,theme:"",type:"wave",layout:"default",animation:"ambient",font:"sans",text:"Your name",desc:"A short line about what you build",height:200,width:880}); } },
+  { name:"README footer", apply(){ Object.assign(state,{form:"hero",color:SIG_REV,theme:"",type:"wave",layout:"default",animation:"glow",font:"sans",text:"thanks for reading.",desc:"",height:120,width:880}); state.hero=state.hero||{}; } },
+  { name:"Typing lines", apply(){ Object.assign(state,{form:"hero",color:"",theme:"",type:"transparent",layout:"signal",animation:"type",font:"mono",text:"First line\nSecond line\nThird line",desc:"",height:150,width:880}); } },
+  { name:"Profile card", apply(){ Object.assign(state,{form:"profile",color:"",theme:"tokyonight",type:"",animation:"none",font:"sans",text:"Your name",desc:"What you build",width:640}); } },
+  { name:"Status pill", apply(){ Object.assign(state,{form:"pill",color:"brightgreen",theme:"",label:"",type:"",animation:"none",pill:{label:"build",message:"passing",style:"flat"}}); } },
+  { name:"Tech strip", apply(){ Object.assign(state,{form:"strip",color:"",theme:"dark",type:"",animation:"none",strip:{icons:["rust","ts","docker","kubernetes"],perline:12}}); } }
+];
 
 function esc(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
 
 function buildURL(){
   const s = state, q = new URLSearchParams();
   if (s.theme) q.set("theme", s.theme);
-  if (s.color) q.set("color", s.color);
+  else if (s.color) q.set("color", s.color);
   if (s.animation && s.animation !== "none") q.set("animation", s.animation);
+  if (s.font === "mono") q.set("font", "mono");
   if (s.credit) q.set("credit", "1");
   if (s.form === "hero") {
     if (s.type) q.set("type", s.type);
     if (s.layout && s.layout !== "default") q.set("layout", s.layout);
-    if (s.text) q.set("text", s.text.replace(/\n/g, "-nl-"));
+    if (s.text) q.set("text", s.text.replace(/\n/g,"-nl-"));
     if (s.desc) q.set("desc", s.desc);
     if (s.height !== 220) q.set("height", String(s.height));
     if (s.width !== 880) q.set("width", String(s.width));
+  } else if (s.form === "profile") {
+    if (s.text) q.set("text", s.text);
+    if (s.desc) q.set("desc", s.desc);
+    if (s.type) q.set("type", s.type);
+    if (s.width !== 640) q.set("width", String(s.width));
   } else if (s.form === "pill") {
     if (s.pill.label) q.set("label", s.pill.label);
     q.set("message", s.pill.message || "ok");
@@ -152,13 +185,9 @@ function buildURL(){
   } else if (s.form === "strip") {
     q.set("icons", s.strip.icons.join(","));
     if (s.strip.perline !== 12) q.set("perline", String(s.strip.perline));
-  } else if (s.form === "identity") {
-    q.set("brand", s.identity.brand);
-    if (s.identity.tagline) q.set("tagline", s.identity.tagline);
-    if (s.type) q.set("type", s.type);
   } else if (s.form === "deploy") {
     if (s.deploy.service) q.set("service", s.deploy.service);
-    if (s.pill.style !== "flat") q.set("style", s.pill.style);
+    if (s.deploy.style !== "flat") q.set("style", s.deploy.style);
   }
   const qs = q.toString();
   return `${BASE}/api/v1/mark/${s.form}${qs ? "?" + qs : ""}`;
@@ -169,10 +198,11 @@ function refresh(){
   document.getElementById("urlBox").value = url;
   document.getElementById("previewImg").src = url;
   document.querySelectorAll("#forms button").forEach(b => b.classList.toggle("active", b.dataset.f === state.form));
+  document.querySelectorAll("#presets .preset").forEach((b,i) => b.classList.toggle("on", state._preset === i));
   renderControls();
 }
 
-function chips(values, selected, onClick, extraClass){
+function chips(values, selected, onClick){
   return `<div class="chips">${values.map(v => {
     const on = v === selected ? " on" : "";
     return `<button type="button" class="chip${on}" data-v="${esc(v)}">${esc(v)}</button>`;
@@ -183,81 +213,84 @@ function themePills(selected){
   return `<div class="chips">${THEMES.map(t => {
     const on = t === selected ? " on" : "";
     const orb = t ? `<span class="orb" style="background:${themeColor(t)}"></span>` : "";
-    return `<button type="button" class="theme${on}" data-v="${esc(t)}">${orb}${t || "none"}</button>`;
+    return `<button type="button" class="theme${on}" data-v="${esc(t)}">${orb}${t || "custom"}</button>`;
   }).join("")}</div>`;
 }
 
 function themeColor(name){
-  const m = { sylphx:"#D87000", cubeage:"#E03840", epiow:"#7C3AED", ozyrix:"#C9A227", kyle:"#38BDF8",
-    dark:"#0D1117", light:"#E6EDF3", tokyonight:"#BB9AF7", dracula:"#BD93F9", nord:"#81A1C1",
-    neon:"#00F5D4", ocean:"#00B4D8", sunset:"#FF6B35", forest:"#2D6A4F", github:"#1F6FEB",
-    radical:"#FE428E", gruvbox:"#FABD2F", monokai:"#F92672" };
+  const m = { dark:"#0D1117", light:"#E6EDF3", tokyonight:"#BB9AF7", dracula:"#BD93F9", nord:"#81A1C1",
+    monokai:"#F92672", radical:"#FE428E", gruvbox:"#FABD2F", ocean:"#00B4D8", sunset:"#FF6B35",
+    forest:"#2D6A4F", neon:"#00F5D4", github:"#1F6FEB" };
   return m[name] || "#58A6FF";
 }
 
 function surprise(){
-  const p = RANDOM_PALETTES[Math.floor(Math.random()*RANDOM_PALETTES.length)];
-  state.color = p; state.theme = "";
+  state.color = RANDOM[Math.floor(Math.random()*RANDOM.length)];
+  state.theme = "";
   refresh();
 }
 
 function renderControls(){
   const c = document.getElementById("controls");
   const s = state;
-  let html = "";
-  html += `<div class="group"><h3>Paint</h3>
-    <div class="field"><label>Theme (palette)</label>${themePills(s.theme)}</div>
-    <div class="field"><label>Color (overrides when no theme)</label>
-      <div class="row"><input type="text" id="colorInput" placeholder="gradient | auto | hex | 0:EEFF00,100:a82da8" value="${esc(s.color)}" />
-      <button type="button" class="chip" id="surpriseBtn">Surprise me</button></div></div>
-    <div class="field"><label>Motion</label>${chips(ANIMS, s.animation, v => { state.animation = v; refresh(); })}</div>
-    <div class="field"><label><input type="checkbox" id="creditCb" ${s.credit?"checked":""}/> soft “mark” watermark</label></div>
-  </div>`;
+  let html = `<div class="group"><h3>Content</h3>`;
   if (s.form === "hero") {
-    html += `<div class="group"><h3>Art</h3>
-      <div class="field"><label>Type</label>${chips(ART, s.type, v => { state.type = v; refresh(); })}</div>
-      <div class="field"><label>Layout</label>${chips(LAYOUTS, s.layout, v => { state.layout = v; refresh(); })}</div>
-    </div>
-    <div class="group"><h3>Text</h3>
-      <div class="field"><label>Title</label><textarea id="textInput">${esc(s.text)}</textarea></div>
-      <div class="field"><label>Description</label><textarea id="descInput">${esc(s.desc)}</textarea></div>
+    html += `<div class="field"><label>Title</label><textarea id="textInput">${esc(s.text)}</textarea></div>
+      <div class="field"><label>Description</label><textarea id="descInput">${esc(s.desc)}</textarea></div>`;
+  } else if (s.form === "profile") {
+    html += `<div class="field"><label>Name</label><input type="text" id="textInput" value="${esc(s.text)}" /></div>
+      <div class="field"><label>Tagline</label><input type="text" id="descInput" value="${esc(s.desc)}" /></div>`;
+  } else if (s.form === "pill") {
+    html += `<div class="row"><div class="field"><label>Label</label><input type="text" id="pillLabel" value="${esc(s.pill.label)}" /></div>
+      <div class="field"><label>Message</label><input type="text" id="pillMessage" value="${esc(s.pill.message)}" /></div></div>`;
+  } else if (s.form === "strip") {
+    html += `<div class="field"><label>Icons</label><div class="chips" id="iconChips"></div></div>
+      <div class="field"><label>Per line</label><input type="number" id="perlineInput" min="1" max="60" value="${s.strip.perline}" /></div>`;
+  } else if (s.form === "deploy") {
+    html += `<div class="field"><label>Service</label><input type="text" id="serviceInput" value="${esc(s.deploy.service)}" /></div>
+      <p class="hint">Renders “deployed on Sylphx” — the conversion mark.</p>`;
+  }
+  html += `</div>`;
+
+  html += `<div class="group"><h3>Palette</h3>
+    <div class="field"><label>Theme (neutral design themes)</label>${themePills(s.theme)}</div>
+    <div class="field"><label>Custom color (used when no theme)</label>
+      <div class="row"><input type="text" id="colorInput" placeholder="gradient | auto | hex | 0:EEFF00,100:a82da8" value="${esc(s.color)}" />
+      <button type="button" class="chip" id="surpriseBtn">Surprise</button></div></div>
+  </div>`;
+
+  if (s.form === "hero" || s.form === "profile") {
+    html += `<div class="group"><h3>Style</h3>`;
+    if (s.form === "hero") {
+      html += `<div class="field"><label>Art</label><div id="artChips">${chips(ART, s.type, null)}</div></div>
+        <div class="field"><label>Layout</label><div id="layoutChips">${chips(LAYOUTS, s.layout, null)}</div></div>`;
+    } else {
+      html += `<div class="field"><label>Art background (optional)</label><div id="artChips">${chips(["none", ...ART], s.type || "none", null)}</div></div>`;
+    }
+    html += `<div class="field"><label>Typography</label><div id="fontChips">${chips(["sans","mono"], s.font, null)}</div></div>
+      <div class="field"><label>Motion</label><div id="animChips">${chips(ANIMS, s.animation, null)}</div></div>
       <div class="row">
         <div class="field"><label>Width</label><input type="number" id="widthInput" min="200" max="1600" value="${s.width}" /></div>
         <div class="field"><label>Height</label><input type="number" id="heightInput" min="40" max="900" value="${s.height}" /></div>
       </div>
     </div>`;
-  } else if (s.form === "pill") {
-    html += `<div class="group"><h3>Pill</h3>
-      <div class="row"><div class="field"><label>Label</label><input type="text" id="pillLabel" value="${esc(s.pill.label)}" /></div>
-      <div class="field"><label>Message</label><input type="text" id="pillMessage" value="${esc(s.pill.message)}" /></div></div>
-      <div class="field"><label>Style</label>${chips(STYLES, s.pill.style, v => { state.pill.style = v; refresh(); })}</div>
+  } else if (s.form === "pill" || s.form === "deploy") {
+    html += `<div class="group"><h3>Style</h3>
+      <div class="field"><label>Style</label><div id="styleChips">${chips(STYLES, s.pill.style || s.deploy.style, null)}</div></div>
+      <div class="field"><label>Motion</label><div id="animChips">${chips(ANIMS, s.animation, null)}</div></div>
     </div>`;
   } else if (s.form === "strip") {
-    html += `<div class="group"><h3>Strip</h3>
-      <div class="field"><label>Icons</label>${chips(ICONS, "", null)}<div class="chips" id="iconChips"></div></div>
-      <div class="field"><label>Per line</label><input type="number" id="perlineInput" min="1" max="60" value="${s.strip.perline}" /></div>
-    </div>`;
-  } else if (s.form === "identity") {
-    html += `<div class="group"><h3>Identity</h3>
-      <div class="field"><label>Brand</label>${chips(BRANDS, s.identity.brand, v => { state.identity.brand = v; refresh(); })}</div>
-      <div class="field"><label>Tagline (optional)</label><input type="text" id="taglineInput" value="${esc(s.identity.tagline)}" /></div>
-      <div class="field"><label>Art background (optional)</label>${chips(["none", ...ART], s.type || "none", v => { state.type = v === "none" ? "" : v; refresh(); })}</div>
-      <div class="field"><label>Width</label><input type="number" id="widthInput" min="280" max="1200" value="${s.width}" /></div>
-    </div>`;
-  } else if (s.form === "deploy") {
-    html += `<div class="group"><h3>Deploy</h3>
-      <div class="field"><label>Service</label><input type="text" id="serviceInput" value="${esc(s.deploy.service)}" /></div>
-      <div class="field"><label>Style</label>${chips(STYLES, s.pill.style, v => { state.pill.style = v; refresh(); })}</div>
-      <p style="font-size:.78rem;color:var(--muted)">“deployed on Sylphx” — the conversion mark.</p>
+    html += `<div class="group"><h3>Style</h3>
+      <div class="field"><label>Motion</label><div id="animChips">${chips(ANIMS, s.animation, null)}</div></div>
     </div>`;
   }
+
+  html += `<div class="group"><h3>Mark</h3>
+    <div class="field"><label><input type="checkbox" id="creditCb" ${s.credit?"checked":""}/> soft “mark” watermark</label></div>
+  </div>`;
   c.innerHTML = html;
 
-  // wire listeners
   const bind = (id, fn) => { const el = document.getElementById(id); if (el) el.addEventListener("input", fn); };
-  bind("colorInput", e => { state.color = e.target.value.trim(); if (state.color) state.theme = ""; refresh(); });
-  bind("surpriseBtn", surprise);
-  const cb = document.getElementById("creditCb"); if (cb) cb.addEventListener("change", e => { state.credit = e.target.checked; refresh(); });
   bind("textInput", e => { state.text = e.target.value; refresh(); });
   bind("descInput", e => { state.desc = e.target.value; refresh(); });
   bind("widthInput", e => { state.width = Number(e.target.value) || state.width; refresh(); });
@@ -265,35 +298,65 @@ function renderControls(){
   bind("pillLabel", e => { state.pill.label = e.target.value; refresh(); });
   bind("pillMessage", e => { state.pill.message = e.target.value; refresh(); });
   bind("perlineInput", e => { state.strip.perline = Number(e.target.value) || 12; refresh(); });
-  bind("taglineInput", e => { state.identity.tagline = e.target.value; refresh(); });
   bind("serviceInput", e => { state.deploy.service = e.target.value; refresh(); });
-  const chipsSel = c.querySelectorAll(".chips .chip, .chips .theme");
-  chipsSel.forEach(el => { if (!el.id) el.addEventListener("click", () => { el.dataset.v && null; }); });
+  bind("colorInput", e => { state.color = e.target.value.trim(); if (state.color) state.theme = ""; refresh(); });
+  const cb = document.getElementById("creditCb"); if (cb) cb.addEventListener("change", e => { state.credit = e.target.checked; refresh(); });
+  const sb = document.getElementById("surpriseBtn"); if (sb) sb.addEventListener("click", surprise);
+  const wireChips = (id, fn) => {
+    const box = document.getElementById(id);
+    if (!box) return;
+    box.querySelectorAll(".chip").forEach(el => el.addEventListener("click", () => fn(el.dataset.v)));
+  };
+  if (s.form === "hero" || s.form === "profile") {
+    wireChips("artChips", v => { state.type = v === "none" ? "" : v; refresh(); });
+    wireChips("fontChips", v => { state.font = v; refresh(); });
+    wireChips("animChips", v => { state.animation = v; refresh(); });
+    if (s.form === "hero") wireChips("layoutChips", v => { state.layout = v; refresh(); });
+  } else if (s.form === "pill" || s.form === "deploy") {
+    wireChips("styleChips", v => { if (s.form === "pill") state.pill.style = v; else state.deploy.style = v; refresh(); });
+    wireChips("animChips", v => { state.animation = v; refresh(); });
+  } else if (s.form === "strip") {
+    wireChips("animChips", v => { state.animation = v; refresh(); });
+  }
   if (s.form === "strip") {
     const box = document.getElementById("iconChips");
     box.innerHTML = ICONS.map(i => `<button type="button" class="chip ${s.strip.icons.includes(i) ? "on" : ""}" data-i="${esc(i)}">${esc(i)}</button>`).join("");
     box.querySelectorAll("button").forEach(b => b.addEventListener("click", () => {
-      const i = b.dataset.i;
       const set = new Set(state.strip.icons);
-      if (set.has(i)) set.delete(i); else set.add(i);
+      if (set.has(b.dataset.i)) set.delete(b.dataset.i); else set.add(b.dataset.i);
       state.strip.icons = [...set].slice(0, 60);
       refresh();
     }));
   }
+  // wire theme chips (they carry data-v but need special handling)
+  c.querySelectorAll(".theme").forEach(el => el.addEventListener("click", () => {
+    state.theme = el.dataset.v;
+    if (state.theme) state.color = "";
+    refresh();
+  }));
 }
 
 function init(){
   document.getElementById("forms").innerHTML = FORMS.map(f =>
     `<button type="button" data-f="${f}">${f}</button>`).join("");
   document.querySelectorAll("#forms button").forEach(b => b.addEventListener("click", () => {
-    state.form = b.dataset.f; refresh();
+    state.form = b.dataset.f; state._preset = undefined; refresh();
+  }));
+  document.getElementById("presets").innerHTML = PRESETS.map((p,i) =>
+    `<button type="button" class="preset" data-i="${i}">${p.name}</button>`).join("");
+  document.querySelectorAll("#presets .preset").forEach(b => b.addEventListener("click", () => {
+    PRESETS[Number(b.dataset.i)].apply();
+    state._preset = Number(b.dataset.i);
+    refresh();
   }));
   document.getElementById("copyBtn").addEventListener("click", async () => {
     const box = document.getElementById("urlBox");
     try { await navigator.clipboard.writeText(box.value); }
     catch { box.select(); document.execCommand("copy"); }
   });
-  document.getElementById("baseLine").textContent = BASE;
+  document.getElementById("openBtn").addEventListener("click", () => {
+    window.open(document.getElementById("urlBox").value, "_blank");
+  });
   refresh();
 }
 init();
