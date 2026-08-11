@@ -1,11 +1,11 @@
 # Mark — Delivery Authority
 
-Status: **Normative candidate** · 2026-08-11
+Status: **Normative** · 2026-08-11
 
 ## Product ambition
 
 **Any URL. One image. Your brand.**  
-Stateless SVG identity marks from **one grammar** — hero, pill, strip, identity, deploy marks — deterministic, CDN-friendly. Host: `mark.sylphx.com`.
+Stateless SVG identity marks from **one grammar** — hero, pill, strip, **profile**, deploy marks (`identity` form retired → use profile; silent hero fallback is a defect) — deterministic, CDN-friendly. Host: `mark.sylphx.com`.
 
 ## Clean-break class (ADR-0002/0003)
 
@@ -40,3 +40,7 @@ IF claim third-party live data product without contract: REJECT.
 | M1 | GET mark form → valid SVG |
 | M2 | Invalid paint → safe fallback |
 | M3 | Deploy identity mark renders |
+
+
+## Form SSOT
+Canonical forms: `hero|pill|strip|profile|deploy` (ADR-0004). ADR-0003 `identity` wording is superseded for form ids.
