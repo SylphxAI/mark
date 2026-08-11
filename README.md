@@ -155,3 +155,7 @@ One capability, one grammar: see
 ## License
 
 MIT — see product intent in `PROJECT.md`.
+
+## Delivery authority
+
+[docs/north-star/DELIVERY-AUTHORITY.md](docs/north-star/DELIVERY-AUTHORITY.md)
