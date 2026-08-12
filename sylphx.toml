@@ -18,11 +18,11 @@ graceful_shutdown = 15
 name = "web"
 type = "web"
 port = 8787
-# Public free image host — keep at least one warm instance.
-min_instances = 1
+# Serverless-first: dens STZ after public /health 200.
+min_instances = 0
 max_instances = 10
 instance_type = "micro"
-scale_to_zero = false
+scale_to_zero = true
 path_prefixes = ["/", "/api", "/badge", "/health"]
 watch_paths = [
   "src/**",
