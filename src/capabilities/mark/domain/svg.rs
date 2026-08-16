@@ -50,6 +50,33 @@ pub fn normalize_hex_token(v: &str) -> Option<String> {
     }
 }
 
+/// Two-letter monogram from a display name (profile tile + hero plate).
+pub fn monogram(text: &str) -> String {
+    let parts: Vec<&str> = text
+        .split(|c: char| c.is_whitespace() || c == '-' || c == '_')
+        .filter(|s| !s.is_empty())
+        .collect();
+    if parts.len() >= 2 {
+        let a = parts[0].chars().next().unwrap_or('M');
+        let b = parts[1].chars().next().unwrap_or('K');
+        format!("{}{}", a.to_ascii_uppercase(), b.to_ascii_uppercase())
+    } else {
+        let alnum: String = text
+            .chars()
+            .filter(|c| c.is_ascii_alphanumeric())
+            .take(2)
+            .collect::<String>()
+            .to_ascii_uppercase();
+        if alnum.is_empty() {
+            "MK".into()
+        } else if alnum.len() == 1 {
+            format!("{alnum}{alnum}")
+        } else {
+            alnum
+        }
+    }
+}
+
 /// Cap a display string at `max` chars, marking truncation with `…`.
 /// Total length never exceeds `max`.
 pub fn cap_text(s: &str, max: usize) -> String {

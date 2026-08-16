@@ -92,34 +92,83 @@ fn strip_renders_and_caps() {
 }
 
 #[test]
-fn profile_renders_text_and_art() {
+fn profile_renders_text_art_and_monogram() {
     let plain = render(&MarkSpec {
         form: MarkForm::Profile,
         text: Some("Kyle Tse".into()),
         ..Default::default()
     });
     assert!(plain.contains("Kyle Tse"));
+    assert!(plain.contains(">KT<"), "profile owns a name monogram");
     let art = render(&MarkSpec {
         form: MarkForm::Profile,
         art: Some("aurora".into()),
         theme: Some("neon".into()),
-        text: Some("Sylphx".into()),
+        text: Some("Ada Lovelace".into()),
         desc: Some("AI-native platform".into()),
         ..Default::default()
     });
-    assert!(art.contains("Sylphx"));
+    assert!(art.contains("Ada Lovelace"));
     assert!(art.contains("AI-native platform"));
+    assert!(art.contains(">AL<"));
+    assert!(art.contains("clipPath"), "art is clipped to the card");
+    assert!(
+        art.contains("id=\"mg\""),
+        "profile art must share the hero chromatic kernel ids"
+    );
 }
 
 #[test]
-fn profile_scales_to_any_width() {
-    let wide = render(&MarkSpec {
+fn profile_uses_native_geometry() {
+    let svg = render(&MarkSpec {
         form: MarkForm::Profile,
         width: Some(320),
+        height: Some(120),
         text: Some("Kyle Tse".into()),
         ..Default::default()
     });
-    assert!(wide.contains("scale(0.5)"), "profile must scale to width");
+    assert!(svg.contains("width=\"320\""), "profile honors width");
+    assert!(svg.contains("height=\"120\""), "profile honors height");
+    assert!(
+        !svg.contains("scale("),
+        "profile must compose at native geometry, not scale a 640 canvas"
+    );
+}
+
+#[test]
+fn identity_form_is_the_profile_card() {
+    assert_eq!(MarkForm::parse(Some("identity")), MarkForm::Profile);
+    let identity = render(&MarkSpec {
+        form: MarkForm::parse(Some("identity")),
+        text: Some("Ada Lovelace".into()),
+        desc: Some("First programmer".into()),
+        ..Default::default()
+    });
+    let profile = render(&MarkSpec {
+        form: MarkForm::Profile,
+        text: Some("Ada Lovelace".into()),
+        desc: Some("First programmer".into()),
+        ..Default::default()
+    });
+    assert_eq!(identity, profile, "retired identity form is the profile card");
+    assert!(identity.contains("Ada Lovelace"));
+    assert!(identity.contains(">AL<"));
+}
+
+#[test]
+fn profile_marks_overflowing_name() {
+    let svg = render(&MarkSpec {
+        form: MarkForm::Profile,
+        width: Some(320),
+        height: Some(120),
+        text: Some("A Very Long Display Name That Should Not Escape The Card".into()),
+        ..Default::default()
+    });
+    assert!(svg.contains('…'), "overflowing profile names are marked");
+    assert!(
+        !svg.contains("Should Not Escape The Card"),
+        "profile name must fit the card"
+    );
 }
 
 #[test]
