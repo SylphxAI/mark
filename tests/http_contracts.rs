@@ -60,6 +60,18 @@ async fn mark_surface_serves_every_form() {
 }
 
 #[tokio::test]
+async fn badge_shorthand_accepts_grammar_query() {
+    let (status, _, styled) = get("/badge/build-passing-brightgreen?style=for-the-badge").await;
+    assert_eq!(status, StatusCode::OK);
+    assert!(styled.contains("height=\"28\""), "for-the-badge must apply");
+    assert!(styled.contains("BUILD"), "for-the-badge paints uppercase");
+
+    let (_, _, flat) = get("/badge/build-passing-brightgreen").await;
+    assert!(flat.contains("height=\"20\""), "bare shorthand stays flat");
+    assert!(flat.contains("passing"));
+}
+
+#[tokio::test]
 async fn legacy_surfaces_are_removed() {
     for path in [
         "/api/v1/banner",

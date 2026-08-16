@@ -81,11 +81,12 @@ fully transparent canvas for typing-line compositions.
 
 ```markdown
 ![build](https://mark.sylphx.com/badge/build-passing-brightgreen)
+![build-fat](https://mark.sylphx.com/badge/build-passing-brightgreen?style=for-the-badge)
 ![license](https://mark.sylphx.com/api/v1/mark/pill?label=license&message=MIT&color=blue&style=for-the-badge&theme=github)
 ```
 
 Styles: `flat` · `plastic` · `for-the-badge` · `social` · `pill`
-Colors: shields named colors, semantic names (`success` `important` `critical` `informational` `inactive`), fleet names, or hex. A `theme` defines the palette and overrides `color`/`labelColor`. Motion applies at text level — a glowing pill is a valid mark.
+Colors: shields named colors, semantic names (`success` `important` `critical` `informational` `inactive`), or hex. A `theme` defines the palette and overrides `color`/`labelColor`. The `/badge/...` shorthand accepts the same `style` `theme` `animation` `labelColor` query as `/pill`. Motion applies at text level — a glowing pill is a valid mark.
 
 ### Strip
 
