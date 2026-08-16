@@ -142,6 +142,19 @@ async fn injection_is_inert_over_http() {
 }
 
 #[tokio::test]
+async fn nonfinite_geometry_is_normalized_over_http() {
+    let (status, _, body) = get(
+        "/api/v1/mark/hero?text=probe&fontAlign=NaN&fontAlignY=inf&rotate=-inf&stroke=%2300ff00&strokeWidth=NaN&color=NaN%3AFF0000%2C100%3A000000",
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK);
+    for invalid in ["NaN", "inf", "-inf"] {
+        assert!(!body.contains(invalid), "non-finite input escaped: {invalid}");
+    }
+    assert!(body.contains("stroke=\"#00ff00\""));
+}
+
+#[tokio::test]
 async fn determinism_over_http() {
     let path = "/api/v1/mark/hero?type=aurora&text=Same&animation=none";
     let (_, _, a) = get(path).await;
