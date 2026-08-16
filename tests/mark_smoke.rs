@@ -76,6 +76,26 @@ fn pill_styles_render() {
 }
 
 #[test]
+fn strip_new_catalog_icons_render() {
+    let spec = MarkSpec {
+        form: MarkForm::Strip,
+        theme: Some("dark".into()),
+        strip: mark::capabilities::mark::domain::StripSpec {
+            icons: Some("java,terraform,mongodb,kotlin,swift".into()),
+            per_line: Some(8),
+        },
+        ..Default::default()
+    };
+    let svg = render(&spec);
+    assert!(svg.contains("<title>java</title>"));
+    assert!(svg.contains("<title>terraform</title>"));
+    assert!(
+        !svg.contains(">?</text>"),
+        "catalog ids must not fall back to the unknown tile"
+    );
+}
+
+#[test]
 fn strip_renders_and_caps() {
     let spec = MarkSpec {
         form: MarkForm::Strip,

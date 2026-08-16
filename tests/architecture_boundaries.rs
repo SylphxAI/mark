@@ -128,6 +128,28 @@ fn one_capability_and_no_retired_trees() {
 }
 
 #[test]
+fn every_advertised_icon_has_a_glyph() {
+    let icons = fs::read_to_string("src/capabilities/mark/domain/icons.rs").unwrap();
+    let start = icons.find("pub fn available").expect("available()");
+    let block = &icons[start..];
+    let block = &block[..block.find(']').expect("end of available")];
+    let mut advertised = Vec::new();
+    for part in block.split('"') {
+        if !part.is_empty() && part.chars().all(|c| c.is_ascii_lowercase()) {
+            advertised.push(part);
+        }
+    }
+    assert!(!advertised.is_empty(), "parsed icon catalog");
+    let glyph_fn = &icons[..icons.find("pub fn available").expect("glyph before available")];
+    for id in advertised {
+        assert!(
+            glyph_fn.contains(&format!("\"{id}\"")),
+            "icon {id} advertised but missing a glyph arm"
+        );
+    }
+}
+
+#[test]
 fn every_advertised_art_type_has_a_shape_arm() {
     let shapes = fs::read_to_string("src/capabilities/mark/domain/shapes.rs").unwrap();
     let body = &shapes[shapes.find("pub fn shape_background").expect("shape_background")..];
