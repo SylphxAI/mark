@@ -186,6 +186,30 @@ fn mono_font_composes_into_hero_and_profile() {
 }
 
 #[test]
+fn mono_font_composes_into_pill_and_deploy() {
+    let pill = render(&MarkSpec {
+        form: MarkForm::Pill,
+        font: Some("mono".into()),
+        pill: mark::capabilities::mark::domain::PillSpec {
+            label: Some("build".into()),
+            message: Some("passing".into()),
+            ..Default::default()
+        },
+        ..Default::default()
+    });
+    assert!(pill.contains("ui-monospace"), "pill mono font");
+    let deploy = render(&MarkSpec {
+        form: MarkForm::Deploy,
+        font: Some("mono".into()),
+        deploy: mark::capabilities::mark::domain::DeploySpec {
+            service: Some("mark".into()),
+        },
+        ..Default::default()
+    });
+    assert!(deploy.contains("ui-monospace"), "deploy mono font");
+}
+
+#[test]
 fn same_spec_renders_same_svg_forever() {
     let a = render(&hero("aurora", "Ship your release"));
     let b = render(&hero("aurora", "Ship your release"));
