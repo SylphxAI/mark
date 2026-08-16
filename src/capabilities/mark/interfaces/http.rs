@@ -1,9 +1,10 @@
 //! Mark HTTP surface — one grammar, one endpoint.
 
-use axum::extract::{Path, Query};
+use axum::extract::{Path, Query, State};
 use axum::response::Response;
 use serde::Deserialize;
 
+use crate::bootstrap::AppState;
 use crate::capabilities::mark::domain::{cap_text, MarkForm, MarkSpec, MAX_SERVICE_CHARS};
 use crate::capabilities::mark::render;
 use crate::interfaces::http::response::{decode_text, decode_token, parse_bool, svg_response};
@@ -62,15 +63,19 @@ pub struct MarkQuery {
 }
 
 pub async fn mark_handler(
+    State(st): State<AppState>,
     Path(form): Path<String>,
     Query(q): Query<MarkQuery>,
 ) -> Response {
-    let spec = q.to_spec(MarkForm::parse(Some(&form)));
+    let spec = q.to_spec(MarkForm::parse(Some(&form)), st.default_credit);
     svg_response(&render(&spec), cache_for(&spec))
 }
 
-pub async fn mark_default_handler(Query(q): Query<MarkQuery>) -> Response {
-    let spec = q.to_spec(MarkForm::Hero);
+pub async fn mark_default_handler(
+    State(st): State<AppState>,
+    Query(q): Query<MarkQuery>,
+) -> Response {
+    let spec = q.to_spec(MarkForm::Hero, st.default_credit);
     svg_response(&render(&spec), cache_for(&spec))
 }
 
@@ -118,13 +123,13 @@ fn split_badge_path(tail: &str) -> (String, String, Option<String>) {
 }
 
 impl MarkQuery {
-    pub fn to_spec(&self, form: MarkForm) -> MarkSpec {
+    pub fn to_spec(&self, form: MarkForm, default_credit: bool) -> MarkSpec {
         MarkSpec {
             form,
             color: self.color.clone(),
             theme: self.theme.clone(),
             art: self.art.clone(),
-            credit: parse_bool(self.credit.as_deref(), false),
+            credit: parse_bool(self.credit.as_deref(), default_credit),
             animation: self.animation.clone(),
             width: self.width,
             height: self.height,
