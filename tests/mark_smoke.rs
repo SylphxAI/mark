@@ -75,6 +75,40 @@ fn pill_styles_render() {
     }
 }
 
+fn svg_width(svg: &str) -> u32 {
+    svg.split("width=\"")
+        .nth(1)
+        .and_then(|s| s.split('"').next())
+        .and_then(|s| s.parse().ok())
+        .unwrap_or(0)
+}
+
+#[test]
+fn pill_width_follows_glyph_advance() {
+    let wide = render(&MarkSpec {
+        form: MarkForm::Pill,
+        pill: mark::capabilities::mark::domain::PillSpec {
+            message: Some("WWWWWW".into()),
+            ..Default::default()
+        },
+        ..Default::default()
+    });
+    let narrow = render(&MarkSpec {
+        form: MarkForm::Pill,
+        pill: mark::capabilities::mark::domain::PillSpec {
+            message: Some("iiiiii".into()),
+            ..Default::default()
+        },
+        ..Default::default()
+    });
+    let wide_w = svg_width(&wide);
+    let narrow_w = svg_width(&narrow);
+    assert!(
+        wide_w > narrow_w,
+        "wide glyphs must get a wider pill; WWWWWW={wide_w} iiiiii={narrow_w}"
+    );
+}
+
 #[test]
 fn strip_renders_and_caps() {
     let spec = MarkSpec {

@@ -6,7 +6,9 @@
 use crate::capabilities::mark::domain::color::resolve_fill;
 use crate::capabilities::mark::domain::motion::{ambient_gain, text_children, text_open_attrs};
 use crate::capabilities::mark::domain::shapes::{normalize_art_type, shape_background, shape_defs};
-use crate::capabilities::mark::domain::svg::{credit_mark, ensure_hash, esc, svg_doc};
+use crate::capabilities::mark::domain::svg::{
+    char_advance, credit_mark, ensure_hash, esc, line_advance, svg_doc,
+};
 use crate::capabilities::mark::domain::{
     cap_text, normalize_animation, normalize_hex_token, normalize_layout, MarkSpec,
     MAX_DESC_CHARS, MAX_LINES, MAX_TEXT_CHARS,
@@ -39,30 +41,6 @@ fn monogram(text: &str) -> String {
 }
 
 /// True typewriter: per-character opacity + optional cursor.
-///
-/// Uses a proportional advance table (not a flat monospace factor) so common
-/// UI sans glyphs do not look "letter-spaced apart" at README sizes.
-fn char_advance(ch: char, font_size: f32) -> f32 {
-    // Relative widths tuned for system UI sans at banner sizes.
-    let unit = match ch {
-        ' ' => 0.30,
-        '\u{00A0}' => 0.30,
-        'i' | 'l' | 'I' | 'j' | 't' | 'f' | 'r' | '|' | '\'' | '`' | '!' | '.' | ',' | ':' | ';' => {
-            0.34
-        }
-        'm' | 'w' | 'M' | 'W' | '@' | '%' => 0.78,
-        '1' | '(' | ')' | '[' | ']' | '{' | '}' | '/' | '\\' => 0.40,
-        c if c.is_ascii_uppercase() => 0.58,
-        c if c.is_ascii_digit() => 0.54,
-        _ => 0.52,
-    };
-    font_size * unit
-}
-
-fn line_advance(line: &str, font_size: f32) -> f32 {
-    line.chars().map(|c| char_advance(c, font_size)).sum()
-}
-
 #[allow(clippy::too_many_arguments)]
 fn typewriter_line(
     line: &str,
