@@ -144,7 +144,7 @@ async fn injection_is_inert_over_http() {
 #[tokio::test]
 async fn nonfinite_geometry_is_normalized_over_http() {
     let (status, _, body) = get(
-        "/api/v1/mark/hero?text=probe&fontAlign=NaN&fontAlignY=inf&rotate=-inf&stroke=%2300ff00&strokeWidth=NaN&color=NaN%3AFF0000%2C100%3A000000",
+        "/api/v1/mark/hero?text=probe&fontAlign=NaN&fontAlignY=inf&descAlign=NaN&descAlignY=-inf&rotate=-inf&stroke=%2300ff00&strokeWidth=NaN&color=NaN%3AFF0000%2C100%3A000000",
     )
     .await;
     assert_eq!(status, StatusCode::OK);
