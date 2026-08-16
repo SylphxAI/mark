@@ -111,6 +111,16 @@ async fn svg_responses_have_csp_and_nosniff() {
 }
 
 #[tokio::test]
+async fn studio_binds_to_the_catalog() {
+    let (status, _, body) = get("/").await;
+    assert_eq!(status, StatusCode::OK);
+    assert!(
+        body.contains("/api/v1/catalog"),
+        "studio must load the one grammar vocabulary"
+    );
+}
+
+#[tokio::test]
 async fn catalog_exposes_the_one_vocabulary() {
     let (status, _, body) = get("/api/v1/catalog").await;
     assert_eq!(status, StatusCode::OK);
