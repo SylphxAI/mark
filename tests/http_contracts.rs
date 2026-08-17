@@ -42,6 +42,16 @@ async fn health_is_json_liveness_with_revision() {
 }
 
 #[tokio::test]
+async fn studio_exposes_recovery_and_svg_export_controls() {
+    let (status, ctype, body) = get("/").await;
+    assert_eq!(status, StatusCode::OK);
+    assert!(ctype.contains("html"), "ctype={ctype}");
+    for marker in ["previewStatus", "retryBtn", "downloadBtn", "Preparing SVG export"] {
+        assert!(body.contains(marker), "studio control missing: {marker}");
+    }
+}
+
+#[tokio::test]
 async fn mark_surface_serves_every_form() {
     for (path, needle) in [
         ("/api/v1/mark?type=aurora&text=Hi&animation=none", "Hi"),
@@ -147,4 +157,15 @@ async fn determinism_over_http() {
     let (_, _, a) = get(path).await;
     let (_, _, b) = get(path).await;
     assert_eq!(a, b, "same URL, same mark, forever");
+}
+
+#[tokio::test]
+async fn svg_export_has_no_raw_template_markers() {
+    let (status, ctype, body) = get("/api/v1/mark/hero?type=wave&text=Export&animation=none").await;
+    assert_eq!(status, StatusCode::OK);
+    assert!(ctype.contains("svg"), "ctype={ctype}");
+    assert!(
+        !body.contains('\\'),
+        "SVG must not expose Rust template continuation markers"
+    );
 }

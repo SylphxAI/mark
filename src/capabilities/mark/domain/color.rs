@@ -169,58 +169,58 @@ fn chromatic_defs(
     glow: &str,
 ) -> String {
     format!(
-        r##"<linearGradient id="{id}" x1="0%" y1="0%" x2="100%" y2="100%">\
-          <stop offset="0%" stop-color="{base}"/>\
-          <stop offset="34%" stop-color="{mid}"/>\
-          <stop offset="68%" stop-color="{end}"/>\
-          <stop offset="100%" stop-color="{edge}"/>\
-        </linearGradient>\
-        <radialGradient id="{id}Bloom" cx="74%" cy="16%" r="72%">\
-          <stop offset="0%" stop-color="{edge}" stop-opacity="0.55"/>\
-          <stop offset="42%" stop-color="{end}" stop-opacity="0.22"/>\
-          <stop offset="100%" stop-color="{base}" stop-opacity="0"/>\
-        </radialGradient>\
-        <radialGradient id="{id}Bloom2" cx="18%" cy="78%" r="65%">\
-          <stop offset="0%" stop-color="{warm}" stop-opacity="0.34"/>\
-          <stop offset="55%" stop-color="{end}" stop-opacity="0.1"/>\
-          <stop offset="100%" stop-color="{base}" stop-opacity="0"/>\
-        </radialGradient>\
-        <linearGradient id="{id}Sheen" x1="0%" y1="0%" x2="0%" y2="100%">\
-          <stop offset="0%" stop-color="{glow}" stop-opacity="0.2"/>\
-          <stop offset="42%" stop-color="{edge}" stop-opacity="0.04"/>\
-          <stop offset="100%" stop-color="{base}" stop-opacity="0"/>\
-        </linearGradient>\
-        <radialGradient id="{id}Vig" cx="50%" cy="38%" r="78%">\
-          <stop offset="0%" stop-color="{glow}" stop-opacity="0"/>\
-          <stop offset="70%" stop-color="{base}" stop-opacity="0.08"/>\
-          <stop offset="100%" stop-color="{base}" stop-opacity="0.38"/>\
-        </radialGradient>\
-        <linearGradient id="{id}Holo" x1="0%" y1="0%" x2="100%" y2="100%">\
-          <stop offset="0%" stop-color="{edge}" stop-opacity="0"/>\
-          <stop offset="28%" stop-color="{end}" stop-opacity="0.42"/>\
-          <stop offset="52%" stop-color="{warm}" stop-opacity="0.34"/>\
-          <stop offset="74%" stop-color="{edge}" stop-opacity="0.28"/>\
-          <stop offset="100%" stop-color="{end}" stop-opacity="0"/>\
-        </linearGradient>\
-        <linearGradient id="{id}Drift" x1="0%" y1="0%" x2="100%" y2="0%">\
-          <stop offset="0%" stop-color="{edge}" stop-opacity="0">\\
-          </stop>\
-          <stop offset="45%" stop-color="{warm}" stop-opacity="0.22">\\
-          </stop>\
-          <stop offset="100%" stop-color="{end}" stop-opacity="0">\\
-          </stop>\
-        </linearGradient>\
-        <linearGradient id="{id}WaveA" x1="0%" y1="0%" x2="0%" y2="100%">\
-          <stop offset="0%" stop-color="{edge}" stop-opacity="0.55"/>\
-          <stop offset="100%" stop-color="{end}" stop-opacity="0.22"/>\
-        </linearGradient>\
-        <linearGradient id="{id}WaveB" x1="0%" y1="0%" x2="0%" y2="100%">\
-          <stop offset="0%" stop-color="{warm}" stop-opacity="0.5"/>\
-          <stop offset="100%" stop-color="{end}" stop-opacity="0.18"/>\
-        </linearGradient>\
-        <linearGradient id="{id}WaveC" x1="0%" y1="0%" x2="0%" y2="100%">\
-          <stop offset="0%" stop-color="{glow}" stop-opacity="0.42"/>\
-          <stop offset="100%" stop-color="{mid}" stop-opacity="0.14"/>\
+        r##"<linearGradient id="{id}" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="{base}"/>
+          <stop offset="34%" stop-color="{mid}"/>
+          <stop offset="68%" stop-color="{end}"/>
+          <stop offset="100%" stop-color="{edge}"/>
+        </linearGradient>
+        <radialGradient id="{id}Bloom" cx="74%" cy="16%" r="72%">
+          <stop offset="0%" stop-color="{edge}" stop-opacity="0.55"/>
+          <stop offset="42%" stop-color="{end}" stop-opacity="0.22"/>
+          <stop offset="100%" stop-color="{base}" stop-opacity="0"/>
+        </radialGradient>
+        <radialGradient id="{id}Bloom2" cx="18%" cy="78%" r="65%">
+          <stop offset="0%" stop-color="{warm}" stop-opacity="0.34"/>
+          <stop offset="55%" stop-color="{end}" stop-opacity="0.1"/>
+          <stop offset="100%" stop-color="{base}" stop-opacity="0"/>
+        </radialGradient>
+        <linearGradient id="{id}Sheen" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stop-color="{glow}" stop-opacity="0.2"/>
+          <stop offset="42%" stop-color="{edge}" stop-opacity="0.04"/>
+          <stop offset="100%" stop-color="{base}" stop-opacity="0"/>
+        </linearGradient>
+        <radialGradient id="{id}Vig" cx="50%" cy="38%" r="78%">
+          <stop offset="0%" stop-color="{glow}" stop-opacity="0"/>
+          <stop offset="70%" stop-color="{base}" stop-opacity="0.08"/>
+          <stop offset="100%" stop-color="{base}" stop-opacity="0.38"/>
+        </radialGradient>
+        <linearGradient id="{id}Holo" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="{edge}" stop-opacity="0"/>
+          <stop offset="28%" stop-color="{end}" stop-opacity="0.42"/>
+          <stop offset="52%" stop-color="{warm}" stop-opacity="0.34"/>
+          <stop offset="74%" stop-color="{edge}" stop-opacity="0.28"/>
+          <stop offset="100%" stop-color="{end}" stop-opacity="0"/>
+        </linearGradient>
+        <linearGradient id="{id}Drift" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" stop-color="{edge}" stop-opacity="0">
+          </stop>
+          <stop offset="45%" stop-color="{warm}" stop-opacity="0.22">
+          </stop>
+          <stop offset="100%" stop-color="{end}" stop-opacity="0">
+          </stop>
+        </linearGradient>
+        <linearGradient id="{id}WaveA" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stop-color="{edge}" stop-opacity="0.55"/>
+          <stop offset="100%" stop-color="{end}" stop-opacity="0.22"/>
+        </linearGradient>
+        <linearGradient id="{id}WaveB" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stop-color="{warm}" stop-opacity="0.5"/>
+          <stop offset="100%" stop-color="{end}" stop-opacity="0.18"/>
+        </linearGradient>
+        <linearGradient id="{id}WaveC" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stop-color="{glow}" stop-opacity="0.42"/>
+          <stop offset="100%" stop-color="{mid}" stop-opacity="0.14"/>
         </linearGradient>"##
     )
 }
@@ -386,4 +386,13 @@ mod tests {
         assert!(p.defs.contains("#FF6B6B") || p.defs.contains("#ff6b6b") || p.defs.contains("FF6B6B"));
     }
 
+    #[test]
+    fn chromatic_defs_do_not_emit_raw_string_continuations() {
+        let p = resolve_fill(Some("gradient"), None, "x", "mg");
+        assert!(
+            !p.defs.contains('\\'),
+            "gradient definitions must not contain literal Rust continuation markers"
+        );
     }
+
+}
