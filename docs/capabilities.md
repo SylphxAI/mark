@@ -75,9 +75,9 @@ flowchart LR
   paint, text and list limits, geometry ranges, boolean aliases, and motion
   aliases follow the documented total normalization rules. Floating-point
   geometry and custom-gradient offsets must be finite; offsets must be within
-  `0..=100`; non-finite or out-of-range values fall back without serializing
-  `NaN`, `inf`, or an invalid percentage. User text is capped and escaped, and
-  only validated tokens reach SVG attributes.
+  `0..=100`; non-finite or out-of-range values normalize, clamp, or fall back
+  without serializing `NaN`, `inf`, or an invalid percentage. User text is
+  capped and escaped, and only validated tokens reach SVG attributes.
 - **Fails if:** Raw request text becomes an SVG attribute; a renderer invents
   different defaults; malformed numeric state survives into output; input size
   can amplify render work without the declared cap; or invalid input selects an

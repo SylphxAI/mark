@@ -52,7 +52,7 @@ mutable identity is a different product, not another Mark rendering path.
 
 ## Exact shipped oracle
 
-The shipped customer terminal is the canonical host serving an admitted
+The shipped customer terminal is `https://mark.sylphx.com` serving an admitted
 artifact revision and passing all of these observations against that same
 instance:
 
@@ -69,10 +69,11 @@ instance:
 6. `/api/v1/catalog` projects the accepted grammar, the studio composes that
    grammar, and retired capability routes remain unavailable.
 
-Repository tests are the source-level executable oracle for these semantics:
+These repository tests are the source-level executable homes for the semantics:
 `tests/http_contracts.rs`, `tests/clean_break.rs`, `tests/mark_smoke.rs`, and
-`tests/architecture_boundaries.rs`. A local pass proves the checked source; it
-does not substitute for the artifact-bound shipped observations above.
+`tests/architecture_boundaries.rs`. A behavior is source-proven only when its
+case is present and passes at the exact candidate SHA. That local pass does not
+substitute for the artifact-bound shipped observations above.
 
 ## Durable decisions
 
