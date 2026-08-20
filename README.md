@@ -1,15 +1,14 @@
-# Sylphx Mark
+# Mark
 
-**Any URL. One image. Your brand.**
+Mark is the dependable image language for software identity: a maintainer expresses a complete mark in one public URL, embeds that URL in a README, site, or product surface, and receives a polished SVG without an account, asset build, or data dependency.
 
-The identity layer of the README: embeddable **SVG** marks — hero banners, status pills, tech strips, fleet identity cards, and “deployed on Sylphx” conversion marks — all from **one grammar** and **one URL**, rendered deterministically forever.
+- Ordinary: https://mark.sylphx.com — product-declared customer host (`docs/vision.md` shipped terminal, `PUBLIC_BASE_URL`, `sylphx.toml`). A `200` is not the product contract.
+- Preview: `none` — this repository has no current honest preview URL. GitHub Pages and deployments are absent. `https://mark-web-prod.sylphx.app` is a stale platform auto host (404), not a preview.
+- Vision: [`docs/vision.md`](docs/vision.md)
+- Capabilities: [`docs/capabilities.md`](docs/capabilities.md)
+- Decisions: [`docs/adr/`](docs/adr/)
 
-Built in **Rust** (`axum`). Stateless. No clock, no upstream, no account. CDN-friendly.
-
-Product host: **`https://mark.sylphx.com`** (sole canonical host)
-Platform auto host: `https://mark-web-prod.sylphx.app` (runtime-assigned; not a vanity product URL).
-
----
+Embeddable **SVG** marks — hero banners, status pills, tech strips, profile cards, and “deployed on Sylphx” conversion marks — from **one grammar** and **one URL**, rendered deterministically. Built in **Rust** (`axum`). Stateless. No clock, no upstream, no account. CDN-friendly.
 
 ## Quick start
 
