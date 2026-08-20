@@ -37,6 +37,19 @@ fn line_advance(line: &str, font_size: f32) -> f32 {
     line.chars().map(|c| char_advance(c, font_size)).sum()
 }
 
+/// Normalize user-supplied floating-point geometry before it reaches SVG.
+///
+/// Rust's `f32::clamp` preserves `NaN`, which would otherwise serialize as an
+/// invalid SVG attribute (for example `x="NaN"`). Non-finite values are
+/// treated as omitted input and finite values are bounded to the grammar's
+/// useful range.
+fn finite_clamp(value: Option<f32>, default: f32, min: f32, max: f32) -> f32 {
+    value
+        .filter(|v| v.is_finite())
+        .unwrap_or(default)
+        .clamp(min, max)
+}
+
 #[allow(clippy::too_many_arguments)]
 fn typewriter_line(
     line: &str,
@@ -207,16 +220,18 @@ pub fn render(spec: &MarkSpec) -> String {
         .unwrap_or(if text.is_empty() { 40 } else { def_fs })
         .clamp(10, 120);
     let desc_size = spec.hero.desc_size.unwrap_or(def_ds).clamp(8, 60);
-    let font_align = spec.hero.font_align.unwrap_or(def_align).clamp(0.0, 100.0);
-    let font_align_y = spec.hero.font_align_y.unwrap_or(def_align_y).clamp(0.0, 100.0);
-    let desc_align = spec.hero.desc_align.unwrap_or(def_desc_align).clamp(0.0, 100.0);
-    let desc_align_y = spec.hero.desc_align_y.unwrap_or(def_desc_y).clamp(0.0, 100.0);
-    let rotate = spec.hero.rotate.unwrap_or(0.0);
+    let font_align = finite_clamp(spec.hero.font_align, def_align, 0.0, 100.0);
+    let font_align_y = finite_clamp(spec.hero.font_align_y, def_align_y, 0.0, 100.0);
+    let desc_align = finite_clamp(spec.hero.desc_align, def_desc_align, 0.0, 100.0);
+    let desc_align_y = finite_clamp(spec.hero.desc_align_y, def_desc_y, 0.0, 100.0);
+    let rotate = finite_clamp(spec.hero.rotate, 0.0, -360.0, 360.0);
     let stroke = spec.hero.stroke.as_deref().and_then(normalize_hex_token);
-    let stroke_width = spec
-        .hero
-        .stroke_width
-        .unwrap_or(if stroke.is_some() { 1.0 } else { 0.0 });
+    let stroke_width = finite_clamp(
+        spec.hero.stroke_width,
+        if stroke.is_some() { 1.0 } else { 0.0 },
+        0.0,
+        24.0,
+    );
 
     // Plate lifts title below monogram row
     let title_y_bias = if layout == "plate" && height >= 280 {

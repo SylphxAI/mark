@@ -63,6 +63,25 @@ fn hero_accepts_valid_hex_tokens() {
     assert!(svg.contains("stroke=\"#00ff00\""), "valid stroke token kept");
 }
 
+#[test]
+fn nonfinite_geometry_never_reaches_svg() {
+    let mut spec = hero("soft", "Hi");
+    spec.hero.font_align = Some(f32::NAN);
+    spec.hero.font_align_y = Some(f32::INFINITY);
+    spec.hero.desc_align = Some(f32::NEG_INFINITY);
+    spec.hero.desc_align_y = Some(f32::NAN);
+    spec.hero.rotate = Some(f32::INFINITY);
+    spec.hero.stroke = Some("#00ff00".into());
+    spec.hero.stroke_width = Some(f32::NAN);
+    spec.animation = Some("none".into());
+
+    let svg = render(&spec);
+    for invalid in ["NaN", "inf", "-inf"] {
+        assert!(!svg.contains(invalid), "non-finite geometry escaped: {invalid}");
+    }
+    assert!(svg.contains("stroke=\"#00ff00\""));
+}
+
 // ---------- escaping across every form ----------
 
 #[test]
