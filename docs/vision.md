@@ -3,6 +3,9 @@
 This file is the product destination. It is not a delivery claim, work status,
 or release plan.
 
+The identity graph lives in [`capabilities.md`](capabilities.md): identities,
+fates, truth-edges, and oracles. This file does not copy that table.
+
 ## What finished is
 
 Mark is the dependable image language for software identity: a maintainer
@@ -14,6 +17,8 @@ One grammar composes form × art × paint × content × geometry × motion acros
 five canonical forms: `hero`, `pill`, `strip`, `profile`, and `deploy`. The
 same URL has one meaning and renders the same image. The catalog and studio
 project that grammar for discovery; neither is a second rendering authority.
+
+The finished-customer identity is `MARK-EMBED`.
 
 ## For whom
 
@@ -83,5 +88,5 @@ substitute for the artifact-bound shipped observations above.
   stateless product shape.
 - [`ADR-0004`](adr/ADR-0004-neutral-ux-redesign.md) owns the neutral vocabulary
   and canonical `profile` form.
-- [`capabilities.md`](capabilities.md) owns stable capability IDs, hard edges,
-  and falsifiable done-when predicates.
+- [`capabilities.md`](capabilities.md) is the identity graph: IDs, fates,
+  truth-edges, and oracles.
