@@ -50,7 +50,7 @@ One endpoint: `GET /api/v1/mark/{form}` — plus the shields-style pill shorthan
 | `hero` | The flagship banner (42 art types, 4 layouts) | `type` `text` `desc` `layout` `height` `width` |
 | `pill` | Atomic status mark (shields-style) | `label` `message` `style` |
 | `strip` | Tech identity row (32 icons) | `icons` `perline` |
-| `profile` | Name + tagline card (text-driven) | `text` `desc` `type` (art background) `width` |
+| `profile` | Name + tagline card (text-driven) | `text` `desc` `type` (art background) `width` `height` |
 | `deploy` | “deployed on Sylphx” conversion pill | `service` `style` |
 
 Shared params on every form: `theme` · `color` · `animation` · `credit` · `font` (`sans` | `mono`).

@@ -46,14 +46,15 @@ pub fn render(spec: &MarkSpec) -> String {
     let tag_size = (hf * 0.08).clamp(12.0, 16.0);
     let mono_size = (tile * 0.38).clamp(20.0, 36.0);
     let has_tag = !tagline.is_empty();
-    let name_y = if has_tag {
-        hf * 0.44
-    } else {
-        hf * 0.52
-    };
+    let name_y = if has_tag { hf * 0.44 } else { hf * 0.52 };
     let tag_y = hf * 0.64;
 
-    let font_family = match spec.font.as_deref().map(|f| f.to_ascii_lowercase()).as_deref() {
+    let font_family = match spec
+        .font
+        .as_deref()
+        .map(|f| f.to_ascii_lowercase())
+        .as_deref()
+    {
         Some("mono") => "ui-monospace,SFMono-Regular,Menlo,Consolas,monospace",
         _ => "ui-sans-serif,system-ui,-apple-system,Segoe UI,Helvetica,sans-serif",
     };
@@ -78,11 +79,10 @@ pub fn render(spec: &MarkSpec) -> String {
         )
     };
 
-    let art_defs = art
-        .map(|ty| shape_defs(ty, 0.0, &fill))
-        .unwrap_or_default();
+    let art_defs = art.map(|ty| shape_defs(ty, 0.0, &fill)).unwrap_or_default();
 
-    let text_max = (wf - text_x - (wf * 0.04).clamp(16.0, 28.0)).max(48.0);
+    let right_pad = (wf * 0.04).clamp(16.0, 28.0) + radius;
+    let text_max = (wf - text_x - right_pad).max(48.0);
     let name = fit_line(&name, text_max, name_size);
     let tagline = if has_tag {
         fit_line(&tagline, text_max, tag_size)
@@ -110,6 +110,7 @@ pub fn render(spec: &MarkSpec) -> String {
              <stop offset=\"0%\" stop-color=\"{accent}\" stop-opacity=\"0.95\"/>\
              <stop offset=\"100%\" stop-color=\"{warm}\" stop-opacity=\"0.72\"/>\
            </linearGradient>\
+           <clipPath id=\"pt\"><rect x=\"{text_x}\" y=\"0\" width=\"{text_max}\" height=\"{h}\"/></clipPath>\
          </defs>\
          {field}\
          <rect x=\"{tile_x}\" y=\"{tile_y}\" width=\"{tile}\" height=\"{tile}\" rx=\"{tile_rx}\" \
@@ -117,9 +118,11 @@ pub fn render(spec: &MarkSpec) -> String {
          <text x=\"{mx}\" y=\"{my}\" text-anchor=\"middle\" dominant-baseline=\"middle\" \
            font-family=\"{font_family}\" font-weight=\"750\" font-size=\"{mono_size}\" \
            letter-spacing=\"-0.04em\" fill=\"{mono_ink}\">{initials}</text>\
+         <g clip-path=\"url(#pt)\">\
          <text x=\"{text_x}\" y=\"{name_y}\" font-family=\"{font_family}\" font-size=\"{name_size}\" \
            font-weight=\"700\" letter-spacing=\"-0.02em\" fill=\"{ink}\"{name_open}>{name}{name_children}</text>\
          {tag_node}\
+         </g>\
          {credit}",
         fill_defs = fill.defs,
         mx = tile_x + tile / 2.0,
@@ -133,7 +136,42 @@ pub fn render(spec: &MarkSpec) -> String {
 }
 
 fn fit_line(text: &str, max_px: f32, font_size: f32) -> String {
-    let unit = font_size * 0.55;
-    let max_chars = (max_px / unit).floor() as usize;
-    cap_text(text, max_chars.max(4))
+    if line_advance(text, font_size) <= max_px {
+        return text.to_string();
+    }
+    let ellipsis = '\u{2026}';
+    let budget = (max_px - glyph_advance(ellipsis, font_size)).max(0.0);
+    let mut used = 0.0;
+    let mut out = String::new();
+    for ch in text.chars() {
+        let adv = glyph_advance(ch, font_size);
+        if used + adv > budget {
+            break;
+        }
+        out.push(ch);
+        used += adv;
+    }
+    out.push(ellipsis);
+    out
+}
+
+/// Proportional sans advances so wide glyphs (`W`, CJK) cannot outrun a 0.55em cap.
+fn glyph_advance(ch: char, font_size: f32) -> f32 {
+    let unit = match ch {
+        ' ' | '\u{00A0}' => 0.30,
+        'i' | 'l' | 'I' | 'j' | 't' | 'f' | 'r' | '|' | '\'' | '`' | '!' | '.' | ',' | ':'
+        | ';' => 0.34,
+        'm' | 'w' | 'M' | 'W' | '@' | '%' => 0.95,
+        '1' | '(' | ')' | '[' | ']' | '{' | '}' | '/' | '\\' => 0.40,
+        c if c.is_ascii_uppercase() => 0.70,
+        c if c.is_ascii_digit() => 0.58,
+        c if !c.is_ascii() && c.is_alphanumeric() => 1.05,
+        _ => 0.60,
+    };
+    // Bold name weight plus sidebearings run wider than a regular table.
+    font_size * unit * 1.12
+}
+
+fn line_advance(line: &str, font_size: f32) -> f32 {
+    line.chars().map(|c| glyph_advance(c, font_size)).sum()
 }
