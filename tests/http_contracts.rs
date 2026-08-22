@@ -13,6 +13,24 @@ fn state() -> AppState {
     }
 }
 
+fn state_with_credit() -> AppState {
+    AppState {
+        default_credit: true,
+        public_base: "http://test.local".into(),
+    }
+}
+
+async fn get_with(st: AppState, path: &str) -> (StatusCode, String) {
+    let app = app(st);
+    let res = app
+        .oneshot(Request::builder().uri(path).body(Body::empty()).unwrap())
+        .await
+        .unwrap();
+    let status = res.status();
+    let body = res.into_body().collect().await.unwrap().to_bytes();
+    (status, String::from_utf8_lossy(&body).into_owned())
+}
+
 async fn get(path: &str) -> (StatusCode, String, String) {
     let app = app(state());
     let res = app
@@ -28,6 +46,30 @@ async fn get(path: &str) -> (StatusCode, String, String) {
         .to_string();
     let body = res.into_body().collect().await.unwrap().to_bytes();
     (status, ctype, String::from_utf8_lossy(&body).into_owned())
+}
+
+#[tokio::test]
+async fn default_credit_applies_unless_query_overrides() {
+    let (status, on) = get_with(
+        state_with_credit(),
+        "/api/v1/mark/hero?text=Hi&animation=none",
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK);
+    assert!(on.contains(">mark</text>"), "DEFAULT_CREDIT must watermark");
+
+    let (_, off) = get_with(
+        state_with_credit(),
+        "/api/v1/mark/hero?text=Hi&animation=none&credit=0",
+    )
+    .await;
+    assert!(!off.contains(">mark</text>"), "credit=0 must win over default");
+
+    let (_, _, unset) = get("/api/v1/mark/hero?text=Hi&animation=none").await;
+    assert!(
+        !unset.contains(">mark</text>"),
+        "default off stays unmarked"
+    );
 }
 
 #[tokio::test]
