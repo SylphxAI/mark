@@ -23,5 +23,6 @@ pub fn render(spec: &MarkSpec) -> String {
         PillStyle::parse(spec.pill.style.as_deref().unwrap_or("flat")),
         spec.theme.as_deref(),
         spec.animation.as_deref(),
+        spec.font.as_deref(),
     )
 }
