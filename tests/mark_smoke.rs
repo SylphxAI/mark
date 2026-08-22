@@ -245,6 +245,10 @@ fn deploy_renders_conversion_pill() {
     });
     assert!(svg.contains("deployed on"));
     assert!(svg.contains("mark · Sylphx"));
+    assert!(
+        svg.contains("<circle"),
+        "deploy conversion mark owns a tile, not a generic two-rect pill"
+    );
 }
 
 #[test]
