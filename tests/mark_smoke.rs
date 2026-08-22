@@ -81,6 +81,27 @@ fn pill_styles_render() {
     }
 }
 
+fn strip_groups_are_balanced(svg: &str) {
+    assert_eq!(
+        svg.matches("<g").count(),
+        svg.matches("</g>").count(),
+        "strip SVG groups must be well-formed"
+    );
+}
+
+fn strip_spec(anim: &str) -> MarkSpec {
+    MarkSpec {
+        form: MarkForm::Strip,
+        theme: Some("dark".into()),
+        animation: Some(anim.into()),
+        strip: mark::capabilities::mark::domain::StripSpec {
+            icons: Some("rust,ts,docker".into()),
+            per_line: Some(8),
+        },
+        ..Default::default()
+    }
+}
+
 #[test]
 fn strip_renders_and_caps() {
     let spec = MarkSpec {
@@ -95,6 +116,28 @@ fn strip_renders_and_caps() {
     let svg = render(&spec);
     assert!(svg.contains("<svg"));
     assert!(svg.contains("rust"));
+    strip_groups_are_balanced(&svg);
+}
+
+#[test]
+fn strip_motion_wraps_the_icon_row() {
+    let fade = render(&strip_spec("fade"));
+    strip_groups_are_balanced(&fade);
+    assert!(fade.contains("<animate"), "fade must emit SMIL");
+    let rust = fade.find("<title>rust</title>").expect("rust icon");
+    let wrap_close = fade.rfind("</g>").expect("row wrap");
+    assert!(
+        fade.find("<animate").expect("animate") < rust && rust < wrap_close,
+        "fade SMIL must wrap the icon row, not an empty group"
+    );
+
+    let glow = render(&strip_spec("glow"));
+    strip_groups_are_balanced(&glow);
+    assert!(glow.contains("<animate"), "glow must compose onto the strip");
+
+    let none = render(&strip_spec("none"));
+    strip_groups_are_balanced(&none);
+    assert!(!none.contains("<animate"), "static strip stays still");
 }
 
 #[test]
