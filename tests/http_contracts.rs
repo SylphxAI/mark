@@ -49,6 +49,7 @@ async fn mark_surface_serves_every_form() {
         ("/api/v1/mark/pill?label=build&message=passing", "passing"),
         ("/api/v1/mark/strip?icons=rust,ts", "rust"),
         ("/api/v1/mark/profile?text=Kyle%20Tse", "Kyle Tse"),
+        ("/api/v1/mark/identity?text=Ada%20Lovelace", "Ada Lovelace"),
         ("/api/v1/mark/deploy?service=mark", "Sylphx"),
         ("/badge/build-passing-brightgreen", "passing"),
     ] {
@@ -139,6 +140,16 @@ async fn injection_is_inert_over_http() {
     .await;
     assert_eq!(status, StatusCode::OK);
     assert!(!body.contains("onload="), "injection must be inert");
+}
+
+#[tokio::test]
+async fn identity_form_matches_profile_over_http() {
+    let query = "?text=Ada%20Lovelace&desc=First%20programmer&theme=tokyonight";
+    let (_, _, identity) = get(&format!("/api/v1/mark/identity{query}")).await;
+    let (_, _, profile) = get(&format!("/api/v1/mark/profile{query}")).await;
+    assert_eq!(identity, profile, "identity URLs must render the profile card");
+    assert!(identity.contains("Ada Lovelace"));
+    assert!(identity.contains(">AL<"));
 }
 
 #[tokio::test]

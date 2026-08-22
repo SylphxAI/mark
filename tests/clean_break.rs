@@ -250,5 +250,10 @@ fn unknown_inputs_normalize_never_fail() {
         ..Default::default()
     };
     assert_eq!(spec.form, MarkForm::Hero, "unknown form normalizes to hero");
+    assert_eq!(
+        MarkForm::parse(Some("identity")),
+        MarkForm::Profile,
+        "retired identity form must not silently fall back to hero"
+    );
     let _ = render(&spec);
 }

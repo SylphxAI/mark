@@ -50,7 +50,7 @@ One endpoint: `GET /api/v1/mark/{form}` — plus the shields-style pill shorthan
 | `hero` | The flagship banner (42 art types, 4 layouts) | `type` `text` `desc` `layout` `height` `width` |
 | `pill` | Atomic status mark (shields-style) | `label` `message` `style` |
 | `strip` | Tech identity row (32 icons) | `icons` `perline` |
-| `profile` | Name + tagline card (text-driven) | `text` `desc` `type` (art background) `width` |
+| `profile` | Name + tagline card (text-driven) | `text` `desc` `type` (art background) `width` `height` |
 | `deploy` | “deployed on Sylphx” conversion pill | `service` `style` |
 
 Shared params on every form: `theme` · `color` · `animation` · `credit` · `font` (`sans` | `mono`).
@@ -84,7 +84,7 @@ fully transparent canvas for typing-line compositions.
 ```
 
 Styles: `flat` · `plastic` · `for-the-badge` · `social` · `pill`
-Colors: shields named colors, semantic names (`success` `important` `critical` `informational` `inactive`), fleet names, or hex. A `theme` defines the palette and overrides `color`/`labelColor`. Motion applies at text level — a glowing pill is a valid mark.
+Colors: shields named colors, semantic names (`success` `important` `critical` `informational` `inactive`), or hex. A `theme` defines the palette and overrides `color`/`labelColor`. Motion applies at text level — a glowing pill is a valid mark.
 
 ### Strip
 
@@ -99,7 +99,7 @@ Colors: shields named colors, semantic names (`success` `important` `critical` `
 ![profile-art](https://mark.sylphx.com/api/v1/mark/profile?text=Kyle%20Tse&desc=AI-native%20platforms&type=wave&width=480)
 ```
 
-The profile card is text-driven: the URL supplies the name (`text`) and tagline (`desc`) — nothing is baked into the product.
+The profile card is text-driven: the URL supplies the name (`text`) and tagline (`desc`) — nothing is baked into the product. Retired `identity` URLs render this card (they no longer silently fall back to hero).
 
 ### Typing lines (mono)
 

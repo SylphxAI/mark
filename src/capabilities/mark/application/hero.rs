@@ -6,37 +6,11 @@
 use crate::capabilities::mark::domain::color::resolve_fill;
 use crate::capabilities::mark::domain::motion::{ambient_gain, text_children, text_open_attrs};
 use crate::capabilities::mark::domain::shapes::{normalize_art_type, shape_background, shape_defs};
-use crate::capabilities::mark::domain::svg::{credit_mark, ensure_hash, esc, svg_doc};
+use crate::capabilities::mark::domain::svg::{credit_mark, ensure_hash, esc, monogram, svg_doc};
 use crate::capabilities::mark::domain::{
     cap_text, normalize_animation, normalize_hex_token, normalize_layout, MarkSpec,
     MAX_DESC_CHARS, MAX_LINES, MAX_TEXT_CHARS,
 };
-
-fn monogram(text: &str) -> String {
-    let parts: Vec<&str> = text
-        .split(|c: char| c.is_whitespace() || c == '-' || c == '_')
-        .filter(|s| !s.is_empty())
-        .collect();
-    if parts.len() >= 2 {
-        let a = parts[0].chars().next().unwrap_or('O');
-        let b = parts[1].chars().next().unwrap_or('S');
-        format!("{}{}", a.to_ascii_uppercase(), b.to_ascii_uppercase())
-    } else {
-        let alnum: String = text
-            .chars()
-            .filter(|c| c.is_ascii_alphanumeric())
-            .take(2)
-            .collect::<String>()
-            .to_ascii_uppercase();
-        if alnum.is_empty() {
-            "OS".into()
-        } else if alnum.len() == 1 {
-            format!("{alnum}{alnum}")
-        } else {
-            alnum
-        }
-    }
-}
 
 /// True typewriter: per-character opacity + optional cursor.
 ///
