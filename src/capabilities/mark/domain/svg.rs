@@ -53,6 +53,27 @@ pub fn normalize_hex_token(v: &str) -> Option<String> {
     }
 }
 
+/// Relative advance for system UI sans at banner/pill sizes.
+pub fn char_advance(ch: char, font_size: f32) -> f32 {
+    let unit = match ch {
+        ' ' => 0.30,
+        '\u{00A0}' => 0.30,
+        'i' | 'l' | 'I' | 'j' | 't' | 'f' | 'r' | '|' | '\'' | '`' | '!' | '.' | ',' | ':' | ';' => {
+            0.34
+        }
+        'm' | 'w' | 'M' | 'W' | '@' | '%' => 0.78,
+        '1' | '(' | ')' | '[' | ']' | '{' | '}' | '/' | '\\' => 0.40,
+        c if c.is_ascii_uppercase() => 0.58,
+        c if c.is_ascii_digit() => 0.54,
+        _ => 0.52,
+    };
+    font_size * unit
+}
+
+pub fn line_advance(line: &str, font_size: f32) -> f32 {
+    line.chars().map(|c| char_advance(c, font_size)).sum()
+}
+
 /// Two-letter monogram from a display name (profile tile + hero plate).
 ///
 /// Letters come from the supplied name. The `MK` fallback is only for empty

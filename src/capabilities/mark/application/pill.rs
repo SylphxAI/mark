@@ -6,7 +6,7 @@
 
 use crate::capabilities::mark::domain::color::contrasting_fg;
 use crate::capabilities::mark::domain::motion::{text_children, text_open_attrs};
-use crate::capabilities::mark::domain::svg::{ensure_hash, esc, svg_doc};
+use crate::capabilities::mark::domain::svg::{ensure_hash, esc, line_advance, svg_doc};
 use crate::capabilities::mark::domain::theme;
 use crate::capabilities::mark::domain::{
     cap_text, named_color, normalize_animation, normalize_hex_token, MarkSpec, PillStyle,
@@ -24,17 +24,20 @@ fn resolve_color(c: Option<&str>, fallback: &str) -> String {
 }
 
 fn measure(text: &str, style: PillStyle) -> u32 {
-    let unit = if style == PillStyle::ForTheBadge {
-        7.2
+    let font_size = 11.0;
+    let tracking = if style == PillStyle::ForTheBadge {
+        0.5
     } else {
-        6.5
+        0.0
     };
     let pad = if style == PillStyle::ForTheBadge {
         20.0
     } else {
         14.0
     };
-    (text.chars().count() as f32 * unit + pad).ceil() as u32
+    let n = text.chars().count() as f32;
+    let extra = if n > 1.0 { tracking * (n - 1.0) } else { 0.0 };
+    (line_advance(text, font_size) + extra + pad).ceil().max(1.0) as u32
 }
 
 /// Render a pill from resolved parts (shared by the deploy mark).
@@ -85,12 +88,22 @@ pub(crate) fn render_pill(
         PillStyle::ForTheBadge => 28,
         _ => 20,
     };
+    let label_text = if style == PillStyle::ForTheBadge {
+        label.to_uppercase()
+    } else {
+        label.clone()
+    };
+    let message_text = if style == PillStyle::ForTheBadge {
+        message.to_uppercase()
+    } else {
+        message.clone()
+    };
     let lw = if label.is_empty() {
         0
     } else {
-        measure(&label, style)
+        measure(&label_text, style)
     };
-    let mw = measure(&message, style);
+    let mw = measure(&message_text, style);
     let w = (lw + mw).max(30);
     let radius = match style {
         PillStyle::Pill | PillStyle::Social => h as f32 / 2.0,
@@ -109,16 +122,6 @@ pub(crate) fn render_pill(
         18
     } else {
         14
-    };
-    let label_text = if style == PillStyle::ForTheBadge {
-        label.to_uppercase()
-    } else {
-        label.clone()
-    };
-    let message_text = if style == PillStyle::ForTheBadge {
-        message.to_uppercase()
-    } else {
-        message.clone()
     };
 
     let mut body = String::new();
