@@ -60,6 +60,37 @@ fn hero_typewriter_is_per_character() {
 }
 
 #[test]
+fn hero_long_title_is_marked_inside_the_canvas() {
+    let spec = MarkSpec {
+        form: MarkForm::Hero,
+        art: Some("soft".into()),
+        animation: Some("none".into()),
+        width: Some(360),
+        height: Some(120),
+        text: Some("A Very Long Display Name That Should Not Escape The Banner Canvas".into()),
+        desc: Some("A similarly long tagline that also has to live inside the mark".into()),
+        ..Default::default()
+    };
+    let svg = render(&spec);
+    assert!(svg.contains('…'), "overflowing hero text is marked");
+    assert!(
+        !svg.contains("Should Not Escape The Banner Canvas"),
+        "hero title must fit the canvas"
+    );
+    assert!(
+        !svg.contains("also has to live inside the mark"),
+        "hero desc must fit the canvas"
+    );
+}
+
+#[test]
+fn hero_short_title_is_not_truncated() {
+    let svg = render(&hero("soft", "Ship it"));
+    assert!(svg.contains("Ship it"));
+    assert!(!svg.contains('…'));
+}
+
+#[test]
 fn pill_styles_render() {
     for style in ["flat", "plastic", "for-the-badge", "social", "pill"] {
         let spec = MarkSpec {

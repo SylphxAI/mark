@@ -37,6 +37,36 @@ fn line_advance(line: &str, font_size: f32) -> f32 {
     line.chars().map(|c| char_advance(c, font_size)).sum()
 }
 
+fn line_max_px(width: u32, x: f32, anchor: &str) -> f32 {
+    let pad = (width as f32 * 0.04).clamp(16.0, 36.0);
+    match anchor {
+        "start" | "left" => (width as f32 - x - pad).max(24.0),
+        "end" | "right" => (x - pad).max(24.0),
+        _ => (width as f32 - pad * 2.0).max(24.0),
+    }
+}
+
+/// Cap a painted line so it stays inside the canvas. Overflow is marked with `…`.
+fn fit_to_width(line: &str, max_px: f32, font_size: f32) -> String {
+    if line_advance(line, font_size) <= max_px {
+        return line.to_string();
+    }
+    let ell = '\u{2026}';
+    let budget = (max_px - char_advance(ell, font_size)).max(0.0);
+    let mut out = String::new();
+    let mut used = 0.0;
+    for ch in line.chars() {
+        let adv = char_advance(ch, font_size);
+        if used + adv > budget {
+            break;
+        }
+        out.push(ch);
+        used += adv;
+    }
+    out.push(ell);
+    out
+}
+
 /// Normalize user-supplied floating-point geometry before it reaches SVG.
 ///
 /// Rust's `f32::clamp` preserves `NaN`, which would otherwise serialize as an
@@ -240,10 +270,13 @@ pub fn render(spec: &MarkSpec) -> String {
         0.0
     };
 
-    let lines: Vec<&str> = text
+    let x0 = width as f32 * font_align / 100.0;
+    let title_budget = line_max_px(width, x0, anchor);
+    let lines: Vec<String> = text
         .split('\n')
         .filter(|l| !l.is_empty())
         .take(MAX_LINES)
+        .map(|l| fit_to_width(l, title_budget, font_size as f32))
         .collect();
     let mut text_nodes = String::new();
     let n = lines.len().max(1) as f32;
@@ -251,7 +284,7 @@ pub fn render(spec: &MarkSpec) -> String {
 
     for (i, line) in lines.iter().enumerate() {
         let dy = (i as f32 - (n - 1.0) / 2.0) * font_size as f32 * 1.15;
-        let x = width as f32 * font_align / 100.0;
+        let x = x0;
         let y = height as f32 * font_align_y / 100.0 + dy + title_y_bias;
         if spec.hero.text_bg {
             let bw = line_advance(line, font_size as f32).max(40.0);
@@ -313,6 +346,7 @@ pub fn render(spec: &MarkSpec) -> String {
         let dx = width as f32 * desc_align / 100.0;
         let dy = height as f32 * desc_align_y / 100.0
             + if layout == "plate" { title_y_bias * 0.35 } else { 0.0 };
+        let desc = fit_to_width(&desc, line_max_px(width, dx, anchor), desc_size as f32);
         if use_typewriter {
             let base = lines.len() as f32 * 0.55 + 0.2;
             typewriter_line(
