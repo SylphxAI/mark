@@ -44,7 +44,10 @@ pub fn normalize_hex_token(v: &str) -> Option<String> {
         return None;
     }
     if h.len() == 3 {
-        Some(format!("#{}", h.chars().flat_map(|c| [c, c]).collect::<String>()))
+        Some(format!(
+            "#{}",
+            h.chars().flat_map(|c| [c, c]).collect::<String>()
+        ))
     } else {
         Some(format!("#{h}"))
     }
@@ -69,6 +72,40 @@ pub fn char_advance(ch: char, font_size: f32) -> f32 {
 
 pub fn line_advance(line: &str, font_size: f32) -> f32 {
     line.chars().map(|c| char_advance(c, font_size)).sum()
+}
+
+/// Two-letter monogram from a display name (profile tile + hero plate).
+///
+/// Letters come from the supplied name. The `MK` fallback is only for empty
+/// or punctuation-only input — never a substitute for non-Latin letters.
+pub fn monogram(text: &str) -> String {
+    let parts: Vec<&str> = text
+        .split(|c: char| c.is_whitespace() || c == '-' || c == '_')
+        .filter(|s| !s.is_empty())
+        .collect();
+    if parts.len() >= 2 {
+        match (first_letter(parts[0]), first_letter(parts[1])) {
+            (Some(a), Some(b)) => format!("{a}{b}"),
+            (Some(a), None) => format!("{a}{a}"),
+            (None, Some(b)) => format!("{b}{b}"),
+            (None, None) => "MK".into(),
+        }
+    } else {
+        let mut chars = text.chars().filter(|c| c.is_alphanumeric()).map(upcase);
+        match (chars.next(), chars.next()) {
+            (None, _) => "MK".into(),
+            (Some(a), None) => format!("{a}{a}"),
+            (Some(a), Some(b)) => format!("{a}{b}"),
+        }
+    }
+}
+
+fn first_letter(s: &str) -> Option<char> {
+    s.chars().find(|c| c.is_alphanumeric()).map(upcase)
+}
+
+fn upcase(c: char) -> char {
+    c.to_uppercase().next().unwrap_or(c)
 }
 
 /// Cap a display string at `max` chars, marking truncation with `…`.
@@ -102,7 +139,29 @@ pub fn credit_mark(width: u32, height: u32, enabled: bool) -> String {
     )
 }
 
-pub const SVG_CACHE: &str =
-    "public, max-age=3600, s-maxage=86400, stale-while-revalidate=604800";
-pub const SVG_CACHE_SHORT: &str =
-    "public, max-age=300, s-maxage=600, stale-while-revalidate=3600";
+pub const SVG_CACHE: &str = "public, max-age=3600, s-maxage=86400, stale-while-revalidate=604800";
+pub const SVG_CACHE_SHORT: &str = "public, max-age=300, s-maxage=600, stale-while-revalidate=3600";
+
+#[cfg(test)]
+mod tests {
+    use super::monogram;
+
+    #[test]
+    fn monogram_latin_and_empty_fallback() {
+        assert_eq!(monogram("PDF Reader MCP"), "PR");
+        assert_eq!(monogram("coderag"), "CO");
+        assert_eq!(monogram("Kyle Tse"), "KT");
+        assert_eq!(monogram(""), "MK");
+        assert_eq!(monogram("---"), "MK");
+        assert_eq!(monogram("Jo"), "JO");
+    }
+
+    #[test]
+    fn monogram_uses_supplied_non_latin_letters() {
+        assert_eq!(monogram("日本語"), "日本");
+        assert_eq!(monogram("李小龙"), "李小");
+        assert_eq!(monogram("山田 太郎"), "山太");
+        assert_eq!(monogram("Владимир"), "ВЛ");
+        assert_eq!(monogram("Émile Zola"), "ÉZ");
+    }
+}

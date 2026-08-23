@@ -13,6 +13,24 @@ fn state() -> AppState {
     }
 }
 
+fn state_with_credit() -> AppState {
+    AppState {
+        default_credit: true,
+        public_base: "http://test.local".into(),
+    }
+}
+
+async fn get_with(st: AppState, path: &str) -> (StatusCode, String) {
+    let app = app(st);
+    let res = app
+        .oneshot(Request::builder().uri(path).body(Body::empty()).unwrap())
+        .await
+        .unwrap();
+    let status = res.status();
+    let body = res.into_body().collect().await.unwrap().to_bytes();
+    (status, String::from_utf8_lossy(&body).into_owned())
+}
+
 async fn get(path: &str) -> (StatusCode, String, String) {
     let app = app(state());
     let res = app
@@ -31,6 +49,30 @@ async fn get(path: &str) -> (StatusCode, String, String) {
 }
 
 #[tokio::test]
+async fn default_credit_applies_unless_query_overrides() {
+    let (status, on) = get_with(
+        state_with_credit(),
+        "/api/v1/mark/hero?text=Hi&animation=none",
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK);
+    assert!(on.contains(">mark</text>"), "DEFAULT_CREDIT must watermark");
+
+    let (_, off) = get_with(
+        state_with_credit(),
+        "/api/v1/mark/hero?text=Hi&animation=none&credit=0",
+    )
+    .await;
+    assert!(!off.contains(">mark</text>"), "credit=0 must win over default");
+
+    let (_, _, unset) = get("/api/v1/mark/hero?text=Hi&animation=none").await;
+    assert!(
+        !unset.contains(">mark</text>"),
+        "default off stays unmarked"
+    );
+}
+
+#[tokio::test]
 async fn health_is_json_liveness_with_revision() {
     let (status, ctype, body) = get("/health").await;
     assert_eq!(status, StatusCode::OK);
@@ -42,6 +84,16 @@ async fn health_is_json_liveness_with_revision() {
 }
 
 #[tokio::test]
+async fn studio_exposes_recovery_and_svg_export_controls() {
+    let (status, ctype, body) = get("/").await;
+    assert_eq!(status, StatusCode::OK);
+    assert!(ctype.contains("html"), "ctype={ctype}");
+    for marker in ["previewStatus", "retryBtn", "downloadBtn", "Preparing SVG export"] {
+        assert!(body.contains(marker), "studio control missing: {marker}");
+    }
+}
+
+#[tokio::test]
 async fn mark_surface_serves_every_form() {
     for (path, needle) in [
         ("/api/v1/mark?type=aurora&text=Hi&animation=none", "Hi"),
@@ -49,6 +101,7 @@ async fn mark_surface_serves_every_form() {
         ("/api/v1/mark/pill?label=build&message=passing", "passing"),
         ("/api/v1/mark/strip?icons=rust,ts", "rust"),
         ("/api/v1/mark/profile?text=Kyle%20Tse", "Kyle Tse"),
+        ("/api/v1/mark/identity?text=Ada%20Lovelace", "Ada Lovelace"),
         ("/api/v1/mark/deploy?service=mark", "Sylphx"),
         ("/badge/build-passing-brightgreen", "passing"),
     ] {
@@ -57,6 +110,61 @@ async fn mark_surface_serves_every_form() {
         assert!(ctype.contains("svg"), "ctype={ctype} for {path}");
         assert!(body.contains(needle), "needle {needle} missing in {path}");
     }
+}
+
+#[tokio::test]
+async fn badge_shorthand_accepts_grammar_query() {
+    let (status, _, styled) = get("/badge/build-passing-brightgreen?style=for-the-badge").await;
+    assert_eq!(status, StatusCode::OK);
+    assert!(styled.contains("height=\"28\""), "for-the-badge must apply");
+    assert!(styled.contains("BUILD"), "for-the-badge paints uppercase");
+
+    let (_, _, flat) = get("/badge/build-passing-brightgreen").await;
+    assert!(flat.contains("height=\"20\""), "bare shorthand stays flat");
+    assert!(flat.contains("passing"));
+
+    let (_, _, themed) = get("/badge/build-passing-brightgreen?theme=github").await;
+    assert!(
+        themed.contains("fill=\"#1F6FEB\""),
+        "theme query must paint"
+    );
+    assert!(
+        !themed.contains("fill=\"#44CC11\""),
+        "theme query must override path color"
+    );
+
+    let (_, _, glow) = get("/badge/build-passing-brightgreen?animation=glow").await;
+    assert!(glow.contains("<animate"), "animation query must compose");
+
+    let (_, _, labeled) = get("/badge/build-passing-brightgreen?labelColor=red").await;
+    assert!(
+        labeled.contains("fill=\"#E05D44\""),
+        "labelColor query must paint the label"
+    );
+
+    let (font_status, _, fonted) = get("/badge/build-passing-brightgreen?font=mono").await;
+    assert_eq!(font_status, StatusCode::OK);
+    assert!(
+        fonted.contains("passing"),
+        "font query must stay a valid mark"
+    );
+
+    let (credit_status, _, credited) = get("/badge/build-passing-brightgreen?credit=1").await;
+    assert_eq!(credit_status, StatusCode::OK);
+    assert!(
+        credited.contains("passing"),
+        "credit query must stay a valid mark"
+    );
+
+    let (_, _, path_color) = get("/badge/build-passing-brightgreen?color=red").await;
+    assert!(
+        path_color.contains("fill=\"#44CC11\""),
+        "path color still wins over ?color="
+    );
+    assert!(
+        !path_color.contains("fill=\"#E05D44\""),
+        "query color must not replace the shields path token"
+    );
 }
 
 #[tokio::test]
@@ -111,6 +219,16 @@ async fn svg_responses_have_csp_and_nosniff() {
 }
 
 #[tokio::test]
+async fn studio_binds_to_the_catalog() {
+    let (status, _, body) = get("/").await;
+    assert_eq!(status, StatusCode::OK);
+    assert!(
+        body.contains("/api/v1/catalog"),
+        "studio must load the one grammar vocabulary"
+    );
+}
+
+#[tokio::test]
 async fn catalog_exposes_the_one_vocabulary() {
     let (status, _, body) = get("/api/v1/catalog").await;
     assert_eq!(status, StatusCode::OK);
@@ -142,9 +260,43 @@ async fn injection_is_inert_over_http() {
 }
 
 #[tokio::test]
+async fn identity_form_matches_profile_over_http() {
+    let query = "?text=Ada%20Lovelace&desc=First%20programmer&theme=tokyonight";
+    let (_, _, identity) = get(&format!("/api/v1/mark/identity{query}")).await;
+    let (_, _, profile) = get(&format!("/api/v1/mark/profile{query}")).await;
+    assert_eq!(identity, profile, "identity URLs must render the profile card");
+    assert!(identity.contains("Ada Lovelace"));
+    assert!(identity.contains(">AL<"));
+}
+
+#[tokio::test]
+async fn nonfinite_geometry_is_normalized_over_http() {
+    let (status, _, body) = get(
+        "/api/v1/mark/hero?text=probe&fontAlign=NaN&fontAlignY=inf&descAlign=NaN&descAlignY=-inf&rotate=-inf&stroke=%2300ff00&strokeWidth=NaN&color=NaN%3AFF0000%2C100%3A000000",
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK);
+    for invalid in ["NaN", "inf", "-inf"] {
+        assert!(!body.contains(invalid), "non-finite input escaped: {invalid}");
+    }
+    assert!(body.contains("stroke=\"#00ff00\""));
+}
+
+#[tokio::test]
 async fn determinism_over_http() {
     let path = "/api/v1/mark/hero?type=aurora&text=Same&animation=none";
     let (_, _, a) = get(path).await;
     let (_, _, b) = get(path).await;
     assert_eq!(a, b, "same URL, same mark, forever");
+}
+
+#[tokio::test]
+async fn svg_export_has_no_raw_template_markers() {
+    let (status, ctype, body) = get("/api/v1/mark/hero?type=wave&text=Export&animation=none").await;
+    assert_eq!(status, StatusCode::OK);
+    assert!(ctype.contains("svg"), "ctype={ctype}");
+    assert!(
+        !body.contains('\\'),
+        "SVG must not expose Rust template continuation markers"
+    );
 }

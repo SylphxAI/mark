@@ -6,41 +6,80 @@
 use crate::capabilities::mark::domain::color::resolve_fill;
 use crate::capabilities::mark::domain::motion::{ambient_gain, text_children, text_open_attrs};
 use crate::capabilities::mark::domain::shapes::{normalize_art_type, shape_background, shape_defs};
-use crate::capabilities::mark::domain::svg::{
-    char_advance, credit_mark, ensure_hash, esc, line_advance, svg_doc,
-};
+use crate::capabilities::mark::domain::svg::{credit_mark, ensure_hash, esc, monogram, svg_doc};
 use crate::capabilities::mark::domain::{
     cap_text, normalize_animation, normalize_hex_token, normalize_layout, MarkSpec,
     MAX_DESC_CHARS, MAX_LINES, MAX_TEXT_CHARS,
 };
 
-fn monogram(text: &str) -> String {
-    let parts: Vec<&str> = text
-        .split(|c: char| c.is_whitespace() || c == '-' || c == '_')
-        .filter(|s| !s.is_empty())
-        .collect();
-    if parts.len() >= 2 {
-        let a = parts[0].chars().next().unwrap_or('O');
-        let b = parts[1].chars().next().unwrap_or('S');
-        format!("{}{}", a.to_ascii_uppercase(), b.to_ascii_uppercase())
-    } else {
-        let alnum: String = text
-            .chars()
-            .filter(|c| c.is_ascii_alphanumeric())
-            .take(2)
-            .collect::<String>()
-            .to_ascii_uppercase();
-        if alnum.is_empty() {
-            "OS".into()
-        } else if alnum.len() == 1 {
-            format!("{alnum}{alnum}")
-        } else {
-            alnum
+/// True typewriter: per-character opacity + optional cursor.
+///
+/// Uses a proportional advance table (not a flat monospace factor) so common
+/// UI sans glyphs do not look "letter-spaced apart" at README sizes.
+fn char_advance(ch: char, font_size: f32) -> f32 {
+    // Relative widths tuned for system UI sans at banner sizes.
+    let unit = match ch {
+        ' ' => 0.30,
+        '\u{00A0}' => 0.30,
+        'i' | 'l' | 'I' | 'j' | 't' | 'f' | 'r' | '|' | '\'' | '`' | '!' | '.' | ',' | ':' | ';' => {
+            0.34
         }
+        'm' | 'w' | 'M' | 'W' | '@' | '%' => 0.78,
+        '1' | '(' | ')' | '[' | ']' | '{' | '}' | '/' | '\\' => 0.40,
+        c if c.is_ascii_uppercase() => 0.58,
+        c if c.is_ascii_digit() => 0.54,
+        _ => 0.52,
+    };
+    font_size * unit
+}
+
+fn line_advance(line: &str, font_size: f32) -> f32 {
+    line.chars().map(|c| char_advance(c, font_size)).sum()
+}
+
+fn line_max_px(width: u32, x: f32, anchor: &str) -> f32 {
+    let pad = (width as f32 * 0.04).clamp(16.0, 36.0);
+    match anchor {
+        "start" | "left" => (width as f32 - x - pad).max(24.0),
+        "end" | "right" => (x - pad).max(24.0),
+        _ => (width as f32 - pad * 2.0).max(24.0),
     }
 }
 
-/// True typewriter: per-character opacity + optional cursor.
+/// Cap a painted line so it stays inside the canvas. Overflow is marked with `…`.
+fn fit_to_width(line: &str, max_px: f32, font_size: f32) -> String {
+    if line_advance(line, font_size) <= max_px {
+        return line.to_string();
+    }
+    let ell = '\u{2026}';
+    let budget = (max_px - char_advance(ell, font_size)).max(0.0);
+    let mut out = String::new();
+    let mut used = 0.0;
+    for ch in line.chars() {
+        let adv = char_advance(ch, font_size);
+        if used + adv > budget {
+            break;
+        }
+        out.push(ch);
+        used += adv;
+    }
+    out.push(ell);
+    out
+}
+
+/// Normalize user-supplied floating-point geometry before it reaches SVG.
+///
+/// Rust's `f32::clamp` preserves `NaN`, which would otherwise serialize as an
+/// invalid SVG attribute (for example `x="NaN"`). Non-finite values are
+/// treated as omitted input and finite values are bounded to the grammar's
+/// useful range.
+fn finite_clamp(value: Option<f32>, default: f32, min: f32, max: f32) -> f32 {
+    value
+        .filter(|v| v.is_finite())
+        .unwrap_or(default)
+        .clamp(min, max)
+}
+
 #[allow(clippy::too_many_arguments)]
 fn typewriter_line(
     line: &str,
@@ -211,16 +250,18 @@ pub fn render(spec: &MarkSpec) -> String {
         .unwrap_or(if text.is_empty() { 40 } else { def_fs })
         .clamp(10, 120);
     let desc_size = spec.hero.desc_size.unwrap_or(def_ds).clamp(8, 60);
-    let font_align = spec.hero.font_align.unwrap_or(def_align).clamp(0.0, 100.0);
-    let font_align_y = spec.hero.font_align_y.unwrap_or(def_align_y).clamp(0.0, 100.0);
-    let desc_align = spec.hero.desc_align.unwrap_or(def_desc_align).clamp(0.0, 100.0);
-    let desc_align_y = spec.hero.desc_align_y.unwrap_or(def_desc_y).clamp(0.0, 100.0);
-    let rotate = spec.hero.rotate.unwrap_or(0.0);
+    let font_align = finite_clamp(spec.hero.font_align, def_align, 0.0, 100.0);
+    let font_align_y = finite_clamp(spec.hero.font_align_y, def_align_y, 0.0, 100.0);
+    let desc_align = finite_clamp(spec.hero.desc_align, def_desc_align, 0.0, 100.0);
+    let desc_align_y = finite_clamp(spec.hero.desc_align_y, def_desc_y, 0.0, 100.0);
+    let rotate = finite_clamp(spec.hero.rotate, 0.0, -360.0, 360.0);
     let stroke = spec.hero.stroke.as_deref().and_then(normalize_hex_token);
-    let stroke_width = spec
-        .hero
-        .stroke_width
-        .unwrap_or(if stroke.is_some() { 1.0 } else { 0.0 });
+    let stroke_width = finite_clamp(
+        spec.hero.stroke_width,
+        if stroke.is_some() { 1.0 } else { 0.0 },
+        0.0,
+        24.0,
+    );
 
     // Plate lifts title below monogram row
     let title_y_bias = if layout == "plate" && height >= 280 {
@@ -229,10 +270,13 @@ pub fn render(spec: &MarkSpec) -> String {
         0.0
     };
 
-    let lines: Vec<&str> = text
+    let x0 = width as f32 * font_align / 100.0;
+    let title_budget = line_max_px(width, x0, anchor);
+    let lines: Vec<String> = text
         .split('\n')
         .filter(|l| !l.is_empty())
         .take(MAX_LINES)
+        .map(|l| fit_to_width(l, title_budget, font_size as f32))
         .collect();
     let mut text_nodes = String::new();
     let n = lines.len().max(1) as f32;
@@ -240,7 +284,7 @@ pub fn render(spec: &MarkSpec) -> String {
 
     for (i, line) in lines.iter().enumerate() {
         let dy = (i as f32 - (n - 1.0) / 2.0) * font_size as f32 * 1.15;
-        let x = width as f32 * font_align / 100.0;
+        let x = x0;
         let y = height as f32 * font_align_y / 100.0 + dy + title_y_bias;
         if spec.hero.text_bg {
             let bw = line_advance(line, font_size as f32).max(40.0);
@@ -302,6 +346,7 @@ pub fn render(spec: &MarkSpec) -> String {
         let dx = width as f32 * desc_align / 100.0;
         let dy = height as f32 * desc_align_y / 100.0
             + if layout == "plate" { title_y_bias * 0.35 } else { 0.0 };
+        let desc = fit_to_width(&desc, line_max_px(width, dx, anchor), desc_size as f32);
         if use_typewriter {
             let base = lines.len() as f32 * 0.55 + 0.2;
             typewriter_line(

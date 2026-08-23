@@ -33,6 +33,22 @@ pub fn glyph(id: &str) -> Option<&'static str> {
         "nginx" => "<path d=\"M8 24 L16 6 L24 24 Z\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"/>",
         "cloudflare" => "<path d=\"M6 18 H22 C26 18 26 12 20 12 C19 8 14 8 12 11 C8 11 6 14 6 18 Z\" fill=\"currentColor\"/>",
         "vercel" => "<path d=\"M16 6 L26 24 H6 Z\" fill=\"currentColor\"/>",
+        "java" => "<ellipse cx=\"16\" cy=\"20\" rx=\"8\" ry=\"6\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"/><path d=\"M24 18 Q28 20 24 22\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"/><path d=\"M12 8 C16 6 20 10 16 14\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\"/>",
+        "kotlin" => "<path d=\"M6 6 H16 L6 16 Z M16 6 L26 6 L6 26 L6 16 Z M16 16 L26 26 H16 Z\" fill=\"currentColor\"/>",
+        "csharp" | "c#" => "<rect x=\"6\" y=\"6\" width=\"20\" height=\"20\" rx=\"4\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"/><text x=\"16\" y=\"21\" text-anchor=\"middle\" font-size=\"11\" font-weight=\"700\" font-family=\"sans-serif\" fill=\"currentColor\">C#</text>",
+        "php" => "<ellipse cx=\"16\" cy=\"16\" rx=\"12\" ry=\"8\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"/><text x=\"16\" y=\"20\" text-anchor=\"middle\" font-size=\"8\" font-weight=\"700\" font-family=\"sans-serif\" fill=\"currentColor\">PHP</text>",
+        "ruby" => "<path d=\"M16 5 L26 12 L22 26 H10 L6 12 Z\" fill=\"currentColor\"/>",
+        "elixir" => "<path d=\"M16 4 C22 10 24 16 16 28 C8 16 10 10 16 4 Z\" fill=\"currentColor\"/>",
+        "zig" => "<path d=\"M6 10 H18 L8 22 H26 M10 10 L22 22\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.4\" stroke-linejoin=\"round\"/>",
+        "terraform" | "tf" => "<path d=\"M8 6 H14 V14 H8 Z M16 10 H22 V18 H16 Z M8 16 H14 V24 H8 Z\" fill=\"currentColor\"/>",
+        "helm" => "<circle cx=\"16\" cy=\"16\" r=\"10\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"/><path d=\"M16 6 V26 M6 16 H26 M9 9 L23 23 M23 9 L9 23\" stroke=\"currentColor\" stroke-width=\"1.5\"/>",
+        "mongodb" | "mongo" => "<path d=\"M16 4 C22 10 22 20 16 28 C10 20 10 10 16 4 Z\" fill=\"currentColor\"/><path d=\"M16 8 V24\" stroke=\"#0D1117\" stroke-width=\"1.5\"/>",
+        "mysql" => "<path d=\"M6 20 C8 10 12 8 16 14 C20 20 24 18 26 12\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.2\"/><ellipse cx=\"10\" cy=\"22\" rx=\"3\" ry=\"2\" fill=\"currentColor\"/>",
+        "prometheus" => "<circle cx=\"16\" cy=\"16\" r=\"10\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"/><path d=\"M16 8 V18 L21 21\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"/><circle cx=\"16\" cy=\"8\" r=\"1.6\" fill=\"currentColor\"/>",
+        "grafana" => "<circle cx=\"16\" cy=\"16\" r=\"10\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"/><path d=\"M16 16 L24 12 M16 16 L12 24\" stroke=\"currentColor\" stroke-width=\"2\"/><circle cx=\"16\" cy=\"16\" r=\"2.2\" fill=\"currentColor\"/>",
+        "flutter" => "<path d=\"M8 16 L16 8 L28 8 L16 20 Z M16 20 L22 26 L16 26 L10 20 Z\" fill=\"currentColor\"/>",
+        "swift" => "<path d=\"M6 22 C14 8 24 6 28 10 C18 12 12 20 8 28 C16 22 24 20 26 16\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.2\"/>",
+        "ansible" => "<circle cx=\"16\" cy=\"16\" r=\"11\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"/><path d=\"M11 22 L16 8 L21 22 M13 17 H19\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"/>",
         _ => return None,
     })
 }
@@ -42,7 +58,9 @@ pub fn available() -> Vec<&'static str> {
         "rust", "go", "ts", "js", "python", "react", "node", "docker", "kubernetes", "linux",
         "git", "github", "postgres", "redis", "aws", "gcp", "azure", "nextjs", "vue", "svelte",
         "bun", "deno", "css", "html", "graphql", "tailwind", "prisma", "sqlite", "nginx",
-        "cloudflare", "vercel",
+        "cloudflare", "vercel", "java", "kotlin", "csharp", "php", "ruby", "elixir", "zig",
+        "terraform", "helm", "mongodb", "mysql", "prometheus", "grafana", "flutter", "swift",
+        "ansible",
     ]
     .to_vec()
 }
@@ -57,6 +75,9 @@ pub fn normalize_id(raw: &str) -> String {
         "k8s" => "kubernetes".into(),
         "postgresql" => "postgres".into(),
         "next" => "nextjs".into(),
+        "c#" | "c-sharp" | "cs" => "csharp".into(),
+        "tf" => "terraform".into(),
+        "mongo" => "mongodb".into(),
         other => other.to_string(),
     }
 }

@@ -226,3 +226,15 @@ pub fn text_children(anim: &str, line_index: usize, width: u32, height: u32) -> 
         _ => String::new(),
     }
 }
+
+/// Wrap a row/group (strip icons) with the same text-level SMIL contract.
+/// Empty pair means the animation is static at this scale (`none` / `ambient`).
+pub fn group_wrap(anim: &str, index: usize, width: u32, height: u32) -> (String, String) {
+    let attrs = text_open_attrs(anim, index, width, height);
+    let children = text_children(anim, index, width, height);
+    if attrs.is_empty() && children.is_empty() {
+        (String::new(), String::new())
+    } else {
+        (format!("<g{attrs}>{children}"), "</g>".into())
+    }
+}

@@ -30,7 +30,7 @@ Env: see `.env.example` (`PORT`, `HOST`, `PUBLIC_BASE_URL`, `DEFAULT_CREDIT`, `R
 This repository is the north-star end state: **one capability, one grammar**.
 
 1. **One surface:** `GET /api/v1/mark/{form}` is the whole product — forms
-   `hero` `pill` `strip` `identity` `deploy` — plus the shields-style pill
+   `hero` `pill` `strip` `profile` `deploy` — plus the shields-style pill
    shorthand `/badge/{label}-{message}-{color}`. Every legacy capability route
    (banner, badge, icons, brand, deploy, stats, org, repo) is deleted; do not
    reintroduce them.
