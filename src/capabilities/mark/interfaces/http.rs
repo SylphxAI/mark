@@ -80,20 +80,23 @@ pub async fn mark_default_handler(
 }
 
 /// Shields-style pill shorthand: `/badge/{label}-{message}-{color}`.
-pub async fn badge_path(Path(tail): Path<String>) -> Response {
+///
+/// Path tokens stay the shields embed. Grammar query (`style`, `theme`,
+/// `animation`, `labelColor`, `font`, `credit`) composes the same way as
+/// `/api/v1/mark/pill` — a `?style=for-the-badge` URL is a valid mark.
+pub async fn badge_path(
+    State(st): State<AppState>,
+    Path(tail): Path<String>,
+    Query(q): Query<MarkQuery>,
+) -> Response {
     let (label, message, color) = split_badge_path(&tail);
-    let spec = MarkSpec {
-        form: MarkForm::Pill,
-        pill: crate::capabilities::mark::domain::PillSpec {
-            label: Some(label),
-            message: Some(message),
-            style: None,
-            label_color: None,
-        },
-        color,
-        ..Default::default()
-    };
-    svg_response(&render(&spec), crate::capabilities::mark::domain::svg::SVG_CACHE)
+    let mut spec = q.to_spec(MarkForm::Pill, st.default_credit);
+    spec.pill.label = Some(label);
+    spec.pill.message = Some(message);
+    // Path tokens stay the shields embed.
+    // Query `color` only fills a missing path token.
+    spec.color = color.or(spec.color);
+    svg_response(&render(&spec), cache_for(&spec))
 }
 
 fn split_badge_path(tail: &str) -> (String, String, Option<String>) {

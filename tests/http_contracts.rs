@@ -113,6 +113,61 @@ async fn mark_surface_serves_every_form() {
 }
 
 #[tokio::test]
+async fn badge_shorthand_accepts_grammar_query() {
+    let (status, _, styled) = get("/badge/build-passing-brightgreen?style=for-the-badge").await;
+    assert_eq!(status, StatusCode::OK);
+    assert!(styled.contains("height=\"28\""), "for-the-badge must apply");
+    assert!(styled.contains("BUILD"), "for-the-badge paints uppercase");
+
+    let (_, _, flat) = get("/badge/build-passing-brightgreen").await;
+    assert!(flat.contains("height=\"20\""), "bare shorthand stays flat");
+    assert!(flat.contains("passing"));
+
+    let (_, _, themed) = get("/badge/build-passing-brightgreen?theme=github").await;
+    assert!(
+        themed.contains("fill=\"#1F6FEB\""),
+        "theme query must paint"
+    );
+    assert!(
+        !themed.contains("fill=\"#44CC11\""),
+        "theme query must override path color"
+    );
+
+    let (_, _, glow) = get("/badge/build-passing-brightgreen?animation=glow").await;
+    assert!(glow.contains("<animate"), "animation query must compose");
+
+    let (_, _, labeled) = get("/badge/build-passing-brightgreen?labelColor=red").await;
+    assert!(
+        labeled.contains("fill=\"#E05D44\""),
+        "labelColor query must paint the label"
+    );
+
+    let (font_status, _, fonted) = get("/badge/build-passing-brightgreen?font=mono").await;
+    assert_eq!(font_status, StatusCode::OK);
+    assert!(
+        fonted.contains("passing"),
+        "font query must stay a valid mark"
+    );
+
+    let (credit_status, _, credited) = get("/badge/build-passing-brightgreen?credit=1").await;
+    assert_eq!(credit_status, StatusCode::OK);
+    assert!(
+        credited.contains("passing"),
+        "credit query must stay a valid mark"
+    );
+
+    let (_, _, path_color) = get("/badge/build-passing-brightgreen?color=red").await;
+    assert!(
+        path_color.contains("fill=\"#44CC11\""),
+        "path color still wins over ?color="
+    );
+    assert!(
+        !path_color.contains("fill=\"#E05D44\""),
+        "query color must not replace the shields path token"
+    );
+}
+
+#[tokio::test]
 async fn legacy_surfaces_are_removed() {
     for path in [
         "/api/v1/banner",
