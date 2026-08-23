@@ -50,6 +50,7 @@ pub(crate) fn render_pill(
     style: PillStyle,
     theme_name: Option<&str>,
     animation: Option<&str>,
+    font: Option<&str>,
 ) -> String {
     let theme = theme_name.and_then(theme::get);
 
@@ -113,10 +114,17 @@ pub(crate) fn render_pill(
 
     let label_fg = ensure_hash(&contrasting_fg(&lbl_color));
     let msg_fg = ensure_hash(&contrasting_fg(&msg_color));
+    let family = match font.map(|f| f.to_ascii_lowercase()).as_deref() {
+        Some("mono") => "ui-monospace,SFMono-Regular,Menlo,Consolas,monospace",
+        _ if style == PillStyle::ForTheBadge => "ui-sans-serif,system-ui,sans-serif",
+        _ => "-apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,Arial,sans-serif",
+    };
     let font = if style == PillStyle::ForTheBadge {
-        "font-family=\"ui-sans-serif,system-ui,sans-serif\" font-size=\"11\" font-weight=\"700\" letter-spacing=\"0.5\""
+        format!(
+            "font-family=\"{family}\" font-size=\"11\" font-weight=\"700\" letter-spacing=\"0.5\""
+        )
     } else {
-        "font-family=\"-apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,Arial,sans-serif\" font-size=\"11\" font-weight=\"500\""
+        format!("font-family=\"{family}\" font-size=\"11\" font-weight=\"500\"")
     };
     let ty = if style == PillStyle::ForTheBadge {
         18
@@ -186,5 +194,6 @@ pub fn render(spec: &MarkSpec) -> String {
         PillStyle::parse(spec.pill.style.as_deref().unwrap_or("flat")),
         spec.theme.as_deref(),
         spec.animation.as_deref(),
+        spec.font.as_deref(),
     )
 }
