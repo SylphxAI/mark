@@ -1,92 +1,31 @@
-# Vision — Mark
+# Mark Vision
 
-This file is the product destination. It is not a delivery claim, work status,
-or release plan.
+**Status:** Canonical product destination
+**Identity graph:** [`capabilities.md`](capabilities.md)
+**Binding ADRs:** [`adr/ADR-0002-clean-break-end-state.md`](adr/ADR-0002-clean-break-end-state.md), [`adr/ADR-0003-one-grammar-end-state.md`](adr/ADR-0003-one-grammar-end-state.md), [`adr/ADR-0004-neutral-ux-redesign.md`](adr/ADR-0004-neutral-ux-redesign.md)
+**Delivery authority:** [`north-star/DELIVERY-AUTHORITY.md`](north-star/DELIVERY-AUTHORITY.md)
 
-The identity graph lives in [`capabilities.md`](capabilities.md): identities,
-fates, truth-edges, and oracles. This file does not copy that table.
+This document owns the long-term product destination. It does not claim the destination is landed or live.
 
-## What finished is
+## Destination
 
-Mark is the dependable image language for software identity: a maintainer
-expresses a complete mark in one public URL, embeds that URL in a README, site,
-or product surface, and receives a polished SVG without an account, asset
-build, or data dependency.
+**Any URL. One image. Your brand.** The identity layer of the README: embeddable SVG marks — hero banners, status pills, tech strips, fleet identity cards, and `deployed on Sylphx` conversion marks — all from one grammar and one URL, rendered deterministically forever. Built in Rust (`axum`), stateless, no clock, no upstream, no account, CDN-friendly. Canonical host `https://mark.sylphx.com`; runtime Platform host is not a vanity URL.
 
-One grammar composes form × art × paint × content × geometry × motion across
-five canonical forms: `hero`, `pill`, `strip`, `profile`, and `deploy`. The
-same URL has one meaning and renders the same image. The catalog and studio
-project that grammar for discovery; neither is a second rendering authority.
+Grammar: `mark = form × art (type) × paint (theme/color) × content (text/desc/font) × geometry (width/height) × motion (animation)` via `GET /api/v1/mark/{form}` plus shields-style `GET /badge/{label}-{message}-{color}`.
 
-The finished-customer identity is `MARK-EMBED`.
+## Users and their jobs
 
-## For whom
+- **README authors** who need one deterministic URL to render a brand-correct SVG that never breaks.
+- **Fleet operators** who need fleet identity cards and deployment marks from the same grammar without live-account coupling.
 
-- Maintainers and documentation authors who need durable, expressive images
-  that work as ordinary `<img>` or Markdown embeds.
-- Product teams that need one neutral visual vocabulary across banners, status
-  marks, technology strips, profile cards, and explicit Sylphx deploy marks.
-- Operators who need an artifact-bound, directly testable HTTP product with no
-  upstream-data failure path on the render hot path.
+## Not doing
 
-## Product promise
+- Live GitHub stats/clock/upstream as a core render product (named focus decision; may not return as silent dependency).
+- A second render authority or grammar.
+- Personal or company names in theme definitions — themes are neutral.
 
-Every syntactically accepted Mark URL resolves through a bounded grammar to a
-valid, finite, injection-safe SVG. Unknown or out-of-range values normalize to
-documented safe semantics; they do not create a second dialect or an error SVG.
-User content remains user-supplied, neutral themes remain unbranded, and the
-only Sylphx-bearing compositions are the explicit deploy mark and optional
-credit watermark.
+## Product oracle
 
-Determinism is the reliability moat: rendering does not consult a clock,
-network, account, secret, mutable store, or remote asset. A Mark therefore
-stays cacheable and meaningful wherever an image URL can be embedded.
+The destination is true only when a customer can `GET /api/v1/mark/{form}` (or `/badge/...`) with form+art+paint+content+geometry+motion and receive a deterministic, XSS-safe SVG at the live layer on `https://mark.sylphx.com`, with canonical hex-only paint tokens and pure render without clock/upstream, at the live layer.
 
-## Product boundaries
-
-Mark owns the URL grammar, vocabulary, input normalization, pure SVG kernel,
-form composition, public HTTP contract, catalog projection, and generator
-studio. The runtime platform owns generic build, deployment, routing, and
-runtime availability. `/health.revision` identifies the artifact being served;
-it is not proof that the Mark contract passes.
-
-Mark does not own live GitHub or repository cards, analytics, arbitrary file
-hosting, AI generation on the hot path, clocks, customer state, or a general
-replacement for every badge vendor. A feature that needs upstream data or
-mutable identity is a different product, not another Mark rendering path.
-
-## Exact shipped oracle
-
-The shipped customer terminal is `https://mark.sylphx.com` serving an admitted
-artifact revision and passing all of these observations against that same
-instance:
-
-1. `/health.revision` equals the admitted artifact SHA.
-2. `GET /api/v1/mark/{form}` returns HTTP 200 `image/svg+xml` for each of
-   `hero`, `pill`, `strip`, `profile`, and `deploy`; `/badge/{label}-{message}-{color}`
-   returns the same pill product through its documented shorthand.
-3. Two requests for the same complete URL return byte-identical SVG bodies.
-4. Representative unknown, oversized, hostile, non-finite, and out-of-range
-   inputs produce bounded SVG with no raw scriptable attribute, `NaN`, `inf`,
-   or non-finite gradient offset.
-5. SVG responses carry the contract security and cache headers, user text is
-   escaped, and animated/static cache policy follows the normalized motion.
-6. `/api/v1/catalog` projects the accepted grammar, the studio composes that
-   grammar, and retired capability routes remain unavailable.
-
-These repository tests are the source-level executable homes for the semantics:
-`tests/http_contracts.rs`, `tests/clean_break.rs`, `tests/mark_smoke.rs`, and
-`tests/architecture_boundaries.rs`. A behavior is source-proven only when its
-case is present and passes at the exact candidate SHA. That local pass does not
-substitute for the artifact-bound shipped observations above.
-
-## Durable decisions
-
-- [`ADR-0002`](adr/ADR-0002-clean-break-end-state.md) owns the hardened public
-  contract and clean break.
-- [`ADR-0003`](adr/ADR-0003-one-grammar-end-state.md) owns the one-grammar,
-  stateless product shape.
-- [`ADR-0004`](adr/ADR-0004-neutral-ux-redesign.md) owns the neutral vocabulary
-  and canonical `profile` form.
-- [`capabilities.md`](capabilities.md) is the identity graph: IDs, fates,
-  truth-edges, and oracles.
+`cargo test` green is not the live fetch oracle.
