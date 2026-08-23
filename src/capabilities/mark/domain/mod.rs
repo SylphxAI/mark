@@ -20,4 +20,4 @@ pub use catalog::{
 };
 pub use pill::{named_color, PillStyle};
 pub use spec::{DeploySpec, HeroSpec, MarkForm, MarkSpec, PillSpec, StripSpec};
-pub use svg::{cap_text, esc, normalize_hex_token};
+pub use svg::{cap_text, esc, monogram, normalize_hex_token};
