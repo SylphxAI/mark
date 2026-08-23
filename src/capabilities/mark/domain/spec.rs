@@ -41,7 +41,7 @@ impl MarkForm {
         match raw.map(|s| s.trim().to_ascii_lowercase()).as_deref() {
             Some("pill") | Some("badge") => Self::Pill,
             Some("strip") | Some("icons") | Some("iconsrow") => Self::Strip,
-            Some("profile") | Some("card") => Self::Profile,
+            Some("profile") | Some("card") | Some("identity") => Self::Profile,
             Some("deploy") | Some("deploymark") => Self::Deploy,
             _ => Self::Hero,
         }
