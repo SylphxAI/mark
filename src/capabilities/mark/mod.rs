@@ -1,7 +1,7 @@
 //! Mark capability — the one concept (ADR-0003).
 //!
 //! Consumer outcome: URL parameters become a beautiful, deterministic, branded
-//! SVG mark — hero, pill, strip, identity, or deploy — from one grammar.
+//! SVG mark — hero, pill, strip, profile, or deploy — from one grammar.
 
 pub mod application;
 pub mod domain;

@@ -2,23 +2,12 @@
 
 use crate::capabilities::mark::domain::color::contrasting_fg;
 use crate::capabilities::mark::domain::icons::{glyph, normalize_id};
+use crate::capabilities::mark::domain::motion::group_wrap;
 use crate::capabilities::mark::domain::svg::{esc, svg_doc};
 use crate::capabilities::mark::domain::theme;
 use crate::capabilities::mark::domain::{
     normalize_animation, normalize_hex_token, MarkSpec, MAX_ICONS,
 };
-
-fn entry_anim(anim: &str) -> Option<&'static str> {
-    match anim {
-        "fade" => Some(
-            "<g opacity=\"0\"><animate attributeName=\"opacity\" from=\"0\" to=\"1\" dur=\"0.9s\" fill=\"freeze\"/></g>",
-        ),
-        "rise" => Some(
-            "<g opacity=\"0\" transform=\"translate(0 14)\"><animate attributeName=\"opacity\" from=\"0\" to=\"1\" dur=\"0.9s\" fill=\"freeze\"/><animateTransform attributeName=\"transform\" type=\"translate\" from=\"0 14\" to=\"0 0\" dur=\"1s\" fill=\"freeze\"/></g>",
-        ),
-        _ => None,
-    }
-}
 
 pub fn render(spec: &MarkSpec) -> String {
     let ids: Vec<String> = spec
@@ -58,9 +47,9 @@ pub fn render(spec: &MarkSpec) -> String {
     let h = rows * tile + (rows.saturating_sub(1)) * gap + 16;
 
     let anim = normalize_animation(spec.animation.as_deref());
-    let wrap = entry_anim(anim).unwrap_or("");
+    let (open, close) = group_wrap(anim, 0, w, h);
     let mut body = format!(
-        "<rect width=\"{w}\" height=\"{h}\" rx=\"12\" fill=\"{bg}\"/>{wrap}"
+        "<rect width=\"{w}\" height=\"{h}\" rx=\"12\" fill=\"{bg}\"/>{open}"
     );
     let fallback = "<rect x=\"6\" y=\"6\" width=\"20\" height=\"20\" rx=\"4\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"/><text x=\"16\" y=\"20\" text-anchor=\"middle\" font-size=\"8\" fill=\"currentColor\">?</text>";
     for (i, id) in ids.iter().enumerate() {
@@ -77,11 +66,8 @@ pub fn render(spec: &MarkSpec) -> String {
             esc(id)
         ));
     }
-    if wrap.is_empty() {
-        svg_doc(w, h, &body)
-    } else {
-        svg_doc(w, h, &format!("{body}</g>"))
-    }
+    body.push_str(&close);
+    svg_doc(w, h, &body)
 }
 
 fn ensure_fg(hex: &str) -> String {
