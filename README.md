@@ -1,15 +1,14 @@
-# Sylphx Mark
+# Mark
 
-**Any URL. One image. Your brand.**
+Mark is the dependable image language for software identity: a maintainer expresses a complete mark in one public URL, embeds that URL in a README, site, or product surface, and receives a polished SVG without an account, asset build, or data dependency.
 
-The identity layer of the README: embeddable **SVG** marks — hero banners, status pills, tech strips, fleet identity cards, and “deployed on Sylphx” conversion marks — all from **one grammar** and **one URL**, rendered deterministically forever.
+- Ordinary: https://mark.sylphx.com — product-declared customer host (`docs/vision.md` shipped terminal, `PUBLIC_BASE_URL`, `sylphx.toml`). A `200` is not the product contract.
+- Preview: `none` — this repository has no current honest preview URL. GitHub Pages and deployments are absent. `https://mark-web-prod.sylphx.app` is a stale platform auto host (404), not a preview.
+- Vision: [`docs/vision.md`](docs/vision.md)
+- Capabilities: [`docs/capabilities.md`](docs/capabilities.md)
+- Decisions: [`docs/adr/`](docs/adr/)
 
-Built in **Rust** (`axum`). Stateless. No clock, no upstream, no account. CDN-friendly.
-
-Product host: **`https://mark.sylphx.com`** (sole canonical host)
-Platform auto host: `https://mark-web-prod.sylphx.app` (runtime-assigned; not a vanity product URL).
-
----
+Embeddable **SVG** marks — hero banners, status pills, tech strips, profile cards, and “deployed on Sylphx” conversion marks — from **one grammar** and **one URL**, rendered deterministically. Built in **Rust** (`axum`). Stateless. No clock, no upstream, no account. CDN-friendly.
 
 ## Quick start
 
@@ -51,7 +50,7 @@ One endpoint: `GET /api/v1/mark/{form}` — plus the shields-style pill shorthan
 | `hero` | The flagship banner (42 art types, 4 layouts) | `type` `text` `desc` `layout` `height` `width` |
 | `pill` | Atomic status mark (shields-style) | `label` `message` `style` |
 | `strip` | Tech identity row (32 icons) | `icons` `perline` |
-| `profile` | Name + tagline card (text-driven) | `text` `desc` `type` (art background) `width` |
+| `profile` | Name + tagline card (text-driven) | `text` `desc` `type` (art background) `width` `height` |
 | `deploy` | “deployed on Sylphx” conversion pill | `service` `style` |
 
 Shared params on every form: `theme` · `color` · `animation` · `credit` · `font` (`sans` | `mono`).
@@ -85,7 +84,7 @@ fully transparent canvas for typing-line compositions.
 ```
 
 Styles: `flat` · `plastic` · `for-the-badge` · `social` · `pill`
-Colors: shields named colors, semantic names (`success` `important` `critical` `informational` `inactive`), fleet names, or hex. A `theme` defines the palette and overrides `color`/`labelColor`. Motion applies at text level — a glowing pill is a valid mark.
+Colors: shields named colors, semantic names (`success` `important` `critical` `informational` `inactive`), or hex. A `theme` defines the palette and overrides `color`/`labelColor`. Motion applies at text level — a glowing pill is a valid mark.
 
 ### Strip
 
@@ -100,7 +99,7 @@ Colors: shields named colors, semantic names (`success` `important` `critical` `
 ![profile-art](https://mark.sylphx.com/api/v1/mark/profile?text=Kyle%20Tse&desc=AI-native%20platforms&type=wave&width=480)
 ```
 
-The profile card is text-driven: the URL supplies the name (`text`) and tagline (`desc`) — nothing is baked into the product.
+The profile card is text-driven: the URL supplies the name (`text`) and tagline (`desc`) — nothing is baked into the product. Retired `identity` URLs render this card (they no longer silently fall back to hero).
 
 ### Typing lines (mono)
 

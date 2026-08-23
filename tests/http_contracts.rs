@@ -13,6 +13,24 @@ fn state() -> AppState {
     }
 }
 
+fn state_with_credit() -> AppState {
+    AppState {
+        default_credit: true,
+        public_base: "http://test.local".into(),
+    }
+}
+
+async fn get_with(st: AppState, path: &str) -> (StatusCode, String) {
+    let app = app(st);
+    let res = app
+        .oneshot(Request::builder().uri(path).body(Body::empty()).unwrap())
+        .await
+        .unwrap();
+    let status = res.status();
+    let body = res.into_body().collect().await.unwrap().to_bytes();
+    (status, String::from_utf8_lossy(&body).into_owned())
+}
+
 async fn get(path: &str) -> (StatusCode, String, String) {
     let app = app(state());
     let res = app
@@ -28,6 +46,30 @@ async fn get(path: &str) -> (StatusCode, String, String) {
         .to_string();
     let body = res.into_body().collect().await.unwrap().to_bytes();
     (status, ctype, String::from_utf8_lossy(&body).into_owned())
+}
+
+#[tokio::test]
+async fn default_credit_applies_unless_query_overrides() {
+    let (status, on) = get_with(
+        state_with_credit(),
+        "/api/v1/mark/hero?text=Hi&animation=none",
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK);
+    assert!(on.contains(">mark</text>"), "DEFAULT_CREDIT must watermark");
+
+    let (_, off) = get_with(
+        state_with_credit(),
+        "/api/v1/mark/hero?text=Hi&animation=none&credit=0",
+    )
+    .await;
+    assert!(!off.contains(">mark</text>"), "credit=0 must win over default");
+
+    let (_, _, unset) = get("/api/v1/mark/hero?text=Hi&animation=none").await;
+    assert!(
+        !unset.contains(">mark</text>"),
+        "default off stays unmarked"
+    );
 }
 
 #[tokio::test]
@@ -59,6 +101,7 @@ async fn mark_surface_serves_every_form() {
         ("/api/v1/mark/pill?label=build&message=passing", "passing"),
         ("/api/v1/mark/strip?icons=rust,ts", "rust"),
         ("/api/v1/mark/profile?text=Kyle%20Tse", "Kyle Tse"),
+        ("/api/v1/mark/identity?text=Ada%20Lovelace", "Ada Lovelace"),
         ("/api/v1/mark/deploy?service=mark", "Sylphx"),
         ("/badge/build-passing-brightgreen", "passing"),
     ] {
@@ -121,6 +164,16 @@ async fn svg_responses_have_csp_and_nosniff() {
 }
 
 #[tokio::test]
+async fn studio_binds_to_the_catalog() {
+    let (status, _, body) = get("/").await;
+    assert_eq!(status, StatusCode::OK);
+    assert!(
+        body.contains("/api/v1/catalog"),
+        "studio must load the one grammar vocabulary"
+    );
+}
+
+#[tokio::test]
 async fn catalog_exposes_the_one_vocabulary() {
     let (status, _, body) = get("/api/v1/catalog").await;
     assert_eq!(status, StatusCode::OK);
@@ -149,6 +202,29 @@ async fn injection_is_inert_over_http() {
     .await;
     assert_eq!(status, StatusCode::OK);
     assert!(!body.contains("onload="), "injection must be inert");
+}
+
+#[tokio::test]
+async fn identity_form_matches_profile_over_http() {
+    let query = "?text=Ada%20Lovelace&desc=First%20programmer&theme=tokyonight";
+    let (_, _, identity) = get(&format!("/api/v1/mark/identity{query}")).await;
+    let (_, _, profile) = get(&format!("/api/v1/mark/profile{query}")).await;
+    assert_eq!(identity, profile, "identity URLs must render the profile card");
+    assert!(identity.contains("Ada Lovelace"));
+    assert!(identity.contains(">AL<"));
+}
+
+#[tokio::test]
+async fn nonfinite_geometry_is_normalized_over_http() {
+    let (status, _, body) = get(
+        "/api/v1/mark/hero?text=probe&fontAlign=NaN&fontAlignY=inf&descAlign=NaN&descAlignY=-inf&rotate=-inf&stroke=%2300ff00&strokeWidth=NaN&color=NaN%3AFF0000%2C100%3A000000",
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK);
+    for invalid in ["NaN", "inf", "-inf"] {
+        assert!(!body.contains(invalid), "non-finite input escaped: {invalid}");
+    }
+    assert!(body.contains("stroke=\"#00ff00\""));
 }
 
 #[tokio::test]

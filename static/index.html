@@ -139,31 +139,33 @@
 </div>
 <script>
 const BASE = "{{BASE}}";
-const FORMS = ["hero","pill","strip","profile","deploy"];
-const THEMES = ["","dark","light","tokyonight","dracula","nord","monokai","radical","gruvbox","ocean","sunset","forest","neon","github"];
-const ART = ["wave","waving","aurora","soft","rounded","slice","glass","product","terminal","mesh","plasma","holo","neon","liquid","silk","orbit","constellation","grid","blur","ring","circuit","hud","pulse","noise","cylinder","checkered","egg","shark","venom","speech","org","transparent"];
-const LAYOUTS = ["default","plate","signal","terminal"];
-const ANIMS = ["none","ambient","fade","rise","scale","float","glow","breathe","slide","cascade","shimmer","glitch","wave","orbit","neon","bounce","type"];
-const STYLES = ["flat","plastic","for-the-badge","social","pill"];
-const ICONS = ["rust","go","ts","js","python","react","node","docker","kubernetes","linux","git","github","postgres","redis","aws","gcp","azure","nextjs","vue","svelte","bun","deno","css","html","graphql","tailwind","prisma","sqlite","nginx","cloudflare","vercel"];
+let FORMS = ["hero","pill","strip","profile","deploy"];
+let THEMES = ["","dark","light","tokyonight","dracula","nord","monokai","radical","gruvbox","ocean","sunset","forest","neon","github"];
+let ART = ["wave","waving","aurora","soft","rounded","slice","glass","product","terminal","mesh","plasma","holo","neon","liquid","silk","orbit","constellation","grid","blur","ring","circuit","hud","pulse","noise","cylinder","checkered","egg","shark","venom","speech","org","transparent"];
+let LAYOUTS = ["default","plate","signal","terminal"];
+let ANIMS = ["none","ambient","fade","rise","scale","float","glow","breathe","slide","cascade","shimmer","glitch","wave","orbit","neon","bounce","type"];
+let STYLES = ["flat","plastic","for-the-badge","social","pill"];
+let ICONS = ["rust","go","ts","js","python","react","node","docker","kubernetes","linux","git","github","postgres","redis","aws","gcp","azure","nextjs","vue","svelte","bun","deno","css","html","graphql","tailwind","prisma","sqlite","nginx","cloudflare","vercel"];
 const RANDOM = ["667EEA,764BA2","4FACFE,00F2FE","43E97B,38F9D7","FA709A,FEE140","FF6B35,F15BB5","7C3AED,00F5D4","E03840,FF6B35","00F5D4,F15BB5","4338CA,F093FB","0EA5E9,A78BFA","F43F5E,FB923C","14B8A6,6366F1","D87000,4A90E2"];
 const SIG_GRAD = "0:1A1A2E,50:4A90E2,100:D87000";
 const SIG_REV = "0:D87000,50:4A90E2,100:1A1A2E";
 let previewToken = 0;
 let previewUrl = "";
 let previewReady = false;
+const HERO_H = 220;
+const HERO_W = 880;
 
 const state = {
   form:"hero", color:SIG_GRAD, theme:"", type:"waving", layout:"default", animation:"ambient",
   font:"sans", text:"Your name", desc:"A short line about what you build",
-  height:200, width:880, credit:false,
+  height:HERO_H, width:HERO_W, credit:false,
   pill:{label:"build", message:"passing", style:"flat"},
   strip:{icons:["rust","ts","docker","kubernetes"], perline:12},
   deploy:{service:"app", style:"flat"}
 };
 
 const PRESETS = [
-  { name:"README header", apply(){ Object.assign(state,{form:"hero",color:SIG_GRAD,theme:"",type:"waving",layout:"default",animation:"ambient",font:"sans",text:"Your name",desc:"A short line about what you build",height:200,width:880}); } },
+  { name:"README header", apply(){ Object.assign(state,{form:"hero",color:SIG_GRAD,theme:"",type:"waving",layout:"default",animation:"ambient",font:"sans",text:"Your name",desc:"A short line about what you build",height:HERO_H,width:HERO_W}); } },
   { name:"README footer", apply(){ Object.assign(state,{form:"hero",color:SIG_REV,theme:"",type:"waving",layout:"default",animation:"glow",font:"sans",text:"thanks for reading.",desc:"",height:120,width:880}); } },
   { name:"Typing lines", apply(){ Object.assign(state,{form:"hero",color:"4A90E2",theme:"",type:"transparent",layout:"signal",animation:"type",font:"mono",text:"First line\nSecond line\nThird line",desc:"",height:150,width:880}); } },
   { name:"Profile card", apply(){ Object.assign(state,{form:"profile",color:"",theme:"tokyonight",type:"",animation:"none",font:"sans",text:"Your name",desc:"What you build",width:640}); } },
@@ -389,12 +391,36 @@ function renderControls(){
   }));
 }
 
+function applyCatalog(v){
+  if (!v || typeof v !== "object") return;
+  if (Array.isArray(v.forms) && v.forms.length) FORMS = v.forms;
+  if (Array.isArray(v.themes) && v.themes.length) THEMES = [""].concat(v.themes);
+  if (Array.isArray(v.layouts) && v.layouts.length) LAYOUTS = v.layouts;
+  if (Array.isArray(v.animations) && v.animations.length) ANIMS = v.animations;
+  if (Array.isArray(v.badge_styles) && v.badge_styles.length) STYLES = v.badge_styles;
+  if (Array.isArray(v.icons) && v.icons.length) ICONS = v.icons;
+  const all = Array.isArray(v.art_types) ? v.art_types : [];
+  const featured = Array.isArray(v.featured_art_types) ? v.featured_art_types : [];
+  if (all.length || featured.length) {
+    const seen = new Set();
+    ART = [];
+    for (const t of featured.concat(all)) {
+      if (!t || seen.has(t)) continue;
+      seen.add(t);
+      ART.push(t);
+    }
+  }
+}
+
+async function loadCatalog(){
+  try {
+    const r = await fetch("/api/v1/catalog");
+    if (!r.ok) return;
+    applyCatalog(await r.json());
+  } catch (_) { /* keep fallback vocabulary */ }
+}
+
 function init(){
-  document.getElementById("forms").innerHTML = FORMS.map(f =>
-    `<button type="button" data-f="${f}">${f}</button>`).join("");
-  document.querySelectorAll("#forms button").forEach(b => b.addEventListener("click", () => {
-    state.form = b.dataset.f; state._preset = undefined; refresh();
-  }));
   document.getElementById("retryBtn").addEventListener("click", () => loadPreview(buildURL()));
   document.getElementById("copyBtn").addEventListener("click", async () => {
     const box = document.getElementById("urlBox");
@@ -428,7 +454,14 @@ function init(){
       setPreviewStatus("error", "SVG export unavailable — retry the render before downloading.", true);
     }
   });
-  refresh();
+  loadCatalog().then(() => {
+    document.getElementById("forms").innerHTML = FORMS.map(f =>
+      `<button type="button" data-f="${f}">${f}</button>`).join("");
+    document.querySelectorAll("#forms button").forEach(b => b.addEventListener("click", () => {
+      state.form = b.dataset.f; state._preset = undefined; refresh();
+    }));
+    refresh();
+  });
 }
 init();
 </script>

@@ -74,7 +74,7 @@ pub fn maybe_print_cli_and_exit() -> bool {
             build_revision()
         );
         println!("Usage: mark");
-        println!("  Serves embeddable SVG marks (banners, badges, stats, …).");
+        println!("  Serves embeddable SVG marks (hero, pill, strip, profile, deploy).");
         println!("  Env: PORT HOST PUBLIC_BASE_URL DEFAULT_CREDIT RUST_LOG");
         return true;
     }

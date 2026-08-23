@@ -6,37 +6,11 @@
 use crate::capabilities::mark::domain::color::resolve_fill;
 use crate::capabilities::mark::domain::motion::{ambient_gain, text_children, text_open_attrs};
 use crate::capabilities::mark::domain::shapes::{normalize_art_type, shape_background, shape_defs};
-use crate::capabilities::mark::domain::svg::{credit_mark, ensure_hash, esc, svg_doc};
+use crate::capabilities::mark::domain::svg::{credit_mark, ensure_hash, esc, monogram, svg_doc};
 use crate::capabilities::mark::domain::{
     cap_text, normalize_animation, normalize_hex_token, normalize_layout, MarkSpec,
     MAX_DESC_CHARS, MAX_LINES, MAX_TEXT_CHARS,
 };
-
-fn monogram(text: &str) -> String {
-    let parts: Vec<&str> = text
-        .split(|c: char| c.is_whitespace() || c == '-' || c == '_')
-        .filter(|s| !s.is_empty())
-        .collect();
-    if parts.len() >= 2 {
-        let a = parts[0].chars().next().unwrap_or('O');
-        let b = parts[1].chars().next().unwrap_or('S');
-        format!("{}{}", a.to_ascii_uppercase(), b.to_ascii_uppercase())
-    } else {
-        let alnum: String = text
-            .chars()
-            .filter(|c| c.is_ascii_alphanumeric())
-            .take(2)
-            .collect::<String>()
-            .to_ascii_uppercase();
-        if alnum.is_empty() {
-            "OS".into()
-        } else if alnum.len() == 1 {
-            format!("{alnum}{alnum}")
-        } else {
-            alnum
-        }
-    }
-}
 
 /// True typewriter: per-character opacity + optional cursor.
 ///
@@ -61,6 +35,19 @@ fn char_advance(ch: char, font_size: f32) -> f32 {
 
 fn line_advance(line: &str, font_size: f32) -> f32 {
     line.chars().map(|c| char_advance(c, font_size)).sum()
+}
+
+/// Normalize user-supplied floating-point geometry before it reaches SVG.
+///
+/// Rust's `f32::clamp` preserves `NaN`, which would otherwise serialize as an
+/// invalid SVG attribute (for example `x="NaN"`). Non-finite values are
+/// treated as omitted input and finite values are bounded to the grammar's
+/// useful range.
+fn finite_clamp(value: Option<f32>, default: f32, min: f32, max: f32) -> f32 {
+    value
+        .filter(|v| v.is_finite())
+        .unwrap_or(default)
+        .clamp(min, max)
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -233,16 +220,18 @@ pub fn render(spec: &MarkSpec) -> String {
         .unwrap_or(if text.is_empty() { 40 } else { def_fs })
         .clamp(10, 120);
     let desc_size = spec.hero.desc_size.unwrap_or(def_ds).clamp(8, 60);
-    let font_align = spec.hero.font_align.unwrap_or(def_align).clamp(0.0, 100.0);
-    let font_align_y = spec.hero.font_align_y.unwrap_or(def_align_y).clamp(0.0, 100.0);
-    let desc_align = spec.hero.desc_align.unwrap_or(def_desc_align).clamp(0.0, 100.0);
-    let desc_align_y = spec.hero.desc_align_y.unwrap_or(def_desc_y).clamp(0.0, 100.0);
-    let rotate = spec.hero.rotate.unwrap_or(0.0);
+    let font_align = finite_clamp(spec.hero.font_align, def_align, 0.0, 100.0);
+    let font_align_y = finite_clamp(spec.hero.font_align_y, def_align_y, 0.0, 100.0);
+    let desc_align = finite_clamp(spec.hero.desc_align, def_desc_align, 0.0, 100.0);
+    let desc_align_y = finite_clamp(spec.hero.desc_align_y, def_desc_y, 0.0, 100.0);
+    let rotate = finite_clamp(spec.hero.rotate, 0.0, -360.0, 360.0);
     let stroke = spec.hero.stroke.as_deref().and_then(normalize_hex_token);
-    let stroke_width = spec
-        .hero
-        .stroke_width
-        .unwrap_or(if stroke.is_some() { 1.0 } else { 0.0 });
+    let stroke_width = finite_clamp(
+        spec.hero.stroke_width,
+        if stroke.is_some() { 1.0 } else { 0.0 },
+        0.0,
+        24.0,
+    );
 
     // Plate lifts title below monogram row
     let title_y_bias = if layout == "plate" && height >= 280 {

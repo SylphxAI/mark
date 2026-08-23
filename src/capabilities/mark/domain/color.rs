@@ -236,6 +236,11 @@ fn parse_custom_gradient(spec: &str, gid: &str) -> Option<FillPlan> {
     for (i, p) in parts.iter().enumerate() {
         if let Some((off, hex)) = p.split_once(':') {
             let o: f32 = off.parse().ok()?;
+            // SVG offsets must be finite percentages in the public grammar.
+            // Reject malformed values instead of serializing `NaN%`/`inf%`.
+            if !o.is_finite() || !(0.0..=100.0).contains(&o) {
+                return None;
+            }
             let h = strip_hash(hex);
             if !is_hex_color(h) {
                 return None;
@@ -395,4 +400,19 @@ mod tests {
         );
     }
 
+    #[test]
+    fn custom_stops_reject_nonfinite_or_out_of_range_offsets() {
+        for spec in [
+            "NaN:FF6B6B,100:C44569",
+            "inf:FF6B6B,100:C44569",
+            "-1:FF6B6B,100:C44569",
+            "0:FF6B6B,101:C44569",
+        ] {
+            let p = resolve_fill(Some(spec), None, "x", "mg");
+            assert!(!p.defs.contains("NaN"), "invalid offset escaped: {spec}");
+            assert!(!p.defs.contains("inf"), "invalid offset escaped: {spec}");
+            assert!(!p.defs.contains("-1%"), "invalid offset escaped: {spec}");
+            assert!(!p.defs.contains("101%"), "invalid offset escaped: {spec}");
+        }
+    }
 }
