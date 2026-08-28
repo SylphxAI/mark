@@ -29,3 +29,11 @@ Grammar: `mark = form × art (type) × paint (theme/color) × content (text/desc
 The destination is true only when a customer can `GET /api/v1/mark/{form}` (or `/badge/...`) with form+art+paint+content+geometry+motion and receive a deterministic, XSS-safe SVG at the live layer on `https://mark.sylphx.com`, with canonical hex-only paint tokens and pure render without clock/upstream, at the live layer.
 
 `cargo test` green is not the live fetch oracle.
+
+## Clients (company dest)
+
+Consume owner ADR-038. This product calls peer public APIs with those
+products' credentials and their generated Rust or TypeScript SDKs. It
+does not implement Backend-as-a-Service, compile a mega-client, or use
+`{project}.api.sylphx.com` as dest.
+
