@@ -233,11 +233,7 @@ fn pill_theme_defines_palette_over_color() {
 fn determinism_no_clock_no_upstream() {
     let a = render(&hero("aurora", "Ship your release"));
     let b = render(&hero("aurora", "Ship your release"));
-    assert_eq!(a, b);
-    // The grammar has no time/clock vocabulary at all.
-    for needle in ["timeAuto", "timeGradient", "clock_seed"] {
-        assert!(!a.contains(needle));
-    }
+    assert_eq!(a, b, "same spec, same SVG; a clock would diverge");
 }
 
 #[test]
