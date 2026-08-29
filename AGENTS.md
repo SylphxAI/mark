@@ -11,7 +11,7 @@ This file is local commands/hazards only.
 
 ```bash
 cargo test
-cargo test --test architecture_boundaries
+cargo test --test public_contract
 cargo run
 cargo build --release
 ```

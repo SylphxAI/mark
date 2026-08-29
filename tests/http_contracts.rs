@@ -88,8 +88,8 @@ async fn studio_exposes_recovery_and_svg_export_controls() {
     let (status, ctype, body) = get("/").await;
     assert_eq!(status, StatusCode::OK);
     assert!(ctype.contains("html"), "ctype={ctype}");
-    for marker in ["previewStatus", "retryBtn", "downloadBtn", "Preparing SVG export"] {
-        assert!(body.contains(marker), "studio control missing: {marker}");
+    for marker in ["Download SVG", "Retry", "Preparing SVG export"] {
+        assert!(body.contains(marker), "studio copy missing: {marker}");
     }
 }
 
@@ -232,6 +232,8 @@ async fn studio_binds_to_the_catalog() {
 async fn catalog_exposes_the_one_vocabulary() {
     let (status, _, body) = get("/api/v1/catalog").await;
     assert_eq!(status, StatusCode::OK);
+    let v: serde_json::Value = serde_json::from_str(&body).expect("catalog JSON");
+    let obj = v.as_object().expect("catalog object");
     for key in [
         "forms",
         "art_types",
@@ -245,7 +247,7 @@ async fn catalog_exposes_the_one_vocabulary() {
         "limits",
         "notes",
     ] {
-        assert!(body.contains(key), "missing catalog key {key}");
+        assert!(obj.contains_key(key), "missing catalog key {key}");
     }
 }
 
