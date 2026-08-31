@@ -1,5 +1,7 @@
 # Mark identity graph
 
+Clients consume owner ADR-038: peer generated SDKs and peer credentials on dest peels. Mega-clients and `{project}.api.sylphx.com` are not dest.
+
 **Status:** Identity registry. Not live proof.
 **Scope:** Mark — stateless SVG identity marks from one grammar.
 **Cite:** the **ID** column.
