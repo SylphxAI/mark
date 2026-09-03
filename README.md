@@ -121,7 +121,7 @@ The profile card is text-driven: the URL supplies the name (`text`) and tagline 
 - **Determinism:** same URL, same mark, forever. No clock-sampled fills, no upstream, no state, no secrets. (Retired: `timeAuto`/`timeGradient`, GitHub stats/org/repo cards, all legacy capability routes.)
 - **Totality:** rendering never fails. Unknown form → hero, unknown art → `aurora`, invalid colors → fallback paint.
 - **CSP + escaping:** SVG responses carry `Content-Security-Policy: script-src 'none'` + `X-Content-Type-Options: nosniff`; every user string is escaped; color-bearing attributes accept only validated hex/named tokens.
-- **Cache:** static marks are immutable-by-URL and cache long; animated marks cache short.
+- **Cache:** every mark URL pins its bytes (pure function of the URL, including SMIL-animated variants) and caches long as immutable (`max-age=31536000, s-maxage=31536000, immutable` + `ETag` + `CDN-Cache-Control`/`Cloudflare-CDN-Cache-Control`); conditional `If-None-Match` returns `304`. Edge `HIT` additionally needs a Cache Rule for `/api/v1/mark*` + `/badge/*` (key = full query string).
 
 ## Input limits (public contract)
 

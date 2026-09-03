@@ -139,7 +139,21 @@ pub fn credit_mark(width: u32, height: u32, enabled: bool) -> String {
     )
 }
 
-pub const SVG_CACHE: &str = "public, max-age=3600, s-maxage=86400, stale-while-revalidate=604800";
+/// CDN-forever contract (MARK-HOST): every mark URL pins its bytes — the render
+/// is a pure function of the URL (ADR-0003, no clock/upstream/state), including
+/// SMIL-animated variants whose `<animate*>` declarations are part of the bytes.
+/// Query-pinned content is therefore immutable: browsers and edge may cache for
+/// one year without revalidation. `stale-while-revalidate` keeps edge refresh
+/// async. Cloudflare edge additionally needs a Cache Rule (Cache Everything for
+/// `/api/v1/mark*` + `/badge/*`, cache key = full query string) — origin headers
+/// alone cannot flip `cf-cache-status` from DYNAMIC on extensionless API paths.
+/// `CDN-Cache-Control` / `Cloudflare-CDN-Cache-Control` carry the same edge TTL
+/// explicitly so the rule has an origin intent to honor.
+pub const SVG_CACHE: &str = "public, max-age=31536000, s-maxage=31536000, stale-while-revalidate=86400, immutable";
+/// Edge TTL mirror for `CDN-Cache-Control` / `Cloudflare-CDN-Cache-Control`.
+pub const SVG_EDGE_CACHE: &str = "public, s-maxage=31536000, stale-while-revalidate=86400";
+/// Retired short TTL (animated marks once cached 60s). Kept for reference only;
+/// all marks are immutable-by-URL so `cache_for` no longer branches on animation.
 pub const SVG_CACHE_SHORT: &str = "public, max-age=300, s-maxage=600, stale-while-revalidate=3600";
 
 #[cfg(test)]
