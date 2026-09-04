@@ -18,7 +18,7 @@ Sylphx **Mark** is the identity layer of the README: an embeddable image API —
 - Neutral design themes only — no personal names, no company names in the
   public catalog (ADR-0004); content is always supplied by the URL
 - High cacheability, stateless, deterministic render kernel
-- Dogfood Sylphx Platform when deploying the public endpoint
+- Ordinary Apps Service on `https://mark.sylphx.com`; the Apps auto host is not dest
 - Soft brand exposure via optional credit watermark + deploy marks
 
 ## Non-goals
