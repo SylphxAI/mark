@@ -1,3 +1,5 @@
+# Release promotion 2026-09-04: promote 3d7ff482 (incl. b5fd77fc CDN immutable+ETag+304) to production.
+# Origin immutable headers are Mark's write; live edge HIT on /api/v1/mark* + /badge/* is Apps (SaaS Custom Hostname + Cache Rule).
 version = "1"
 
 [project]
