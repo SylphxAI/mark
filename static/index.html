@@ -7,7 +7,9 @@
 <meta name="description" content="One URL. One image. Your brand. Neutral themes, one grammar: hero, pill, strip, profile, deploy." />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" />
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" media="print" onload="this.media='all'" />
+<noscript><link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" /></noscript>
 <style>
   :root {
     --bg:#07080c; --panel:#0c0f15; --elev:#12161f; --fg:#f2f4f8; --muted:#8b93a7;
@@ -98,6 +100,12 @@
   .theme .orb { width:10px; height:10px; border-radius:50%; flex-shrink:0; box-shadow:0 0 0 1px rgba(255,255,255,0.12); }
   .foot { font-size:.72rem; color:var(--faint); display:flex; gap:1rem; justify-content:space-between; flex-wrap:wrap; }
   .hint { font-size:.74rem; color:var(--faint); line-height:1.45; }
+  .noscript-panel { padding:1rem 1.1rem; gap:.6rem; }
+  .noscript-panel h2 { margin:.1rem 0 .4rem; font-size:1rem; }
+  .noscript-panel p { margin:.4rem 0; color:var(--muted); font-size:.84rem; line-height:1.5; }
+  .noscript-panel ul { margin:.4rem 0; padding-left:1.1rem; color:var(--muted); font-size:.84rem; line-height:1.7; }
+  .noscript-panel img { max-width:100%; height:auto; border-radius:12px;
+    background:repeating-conic-gradient(#10131a 0 25%, #0b0e14 0 50%) 0 0/18px 18px; }
   @media (max-width: 900px) {
     body { overflow:auto; }
     .app { height:auto; grid-template-rows:auto auto auto auto auto; }
@@ -114,6 +122,21 @@
     <div class="host">mark.sylphx.com</div>
   </div>
   <div class="forms" id="forms"></div>
+  <noscript>
+    <div class="panel noscript-panel">
+      <h2>Mark without JavaScript</h2>
+      <p>The interactive studio needs JavaScript to render controls. Every mark below is a plain link — same URL, same SVG, forever. No account, no clock, no upstream.</p>
+      <ul>
+        <li><a href="/api/v1/mark/hero?text=Hello&amp;desc=World&amp;type=wave&amp;animation=none&amp;width=880&amp;height=200">hero example</a></li>
+        <li><a href="/api/v1/mark/pill?label=build&amp;message=passing">pill example</a></li>
+        <li><a href="/api/v1/mark/strip?icons=rust,ts,docker&amp;theme=dark&amp;perline=12">strip example</a></li>
+        <li><a href="/api/v1/mark/profile?text=Your%20name&amp;desc=What%20you%20build&amp;theme=tokyonight&amp;width=640">profile example</a></li>
+        <li><a href="/api/v1/mark/deploy?service=app">deploy example</a></li>
+      </ul>
+      <p><a href="/api/v1/catalog">Catalog vocabulary</a> &#183; <a href="/api/v1">API index</a> &#183; <a href="/health">Health</a></p>
+      <img src="/api/v1/mark/hero?text=Hello&amp;desc=World&amp;type=wave&amp;animation=none&amp;width=880&amp;height=200" alt="Example hero mark reading Hello World" width="880" height="200" loading="lazy" />
+    </div>
+  </noscript>
   <div class="studio">
     <div class="panel">
       <div class="stage" id="stage"><img id="previewImg" alt="mark preview" /></div>
