@@ -156,6 +156,6 @@ One capability, one grammar: see
 
 MIT — see product intent in `PROJECT.md`.
 
-## Delivery authority
+## Destination
 
-[docs/north-star/DELIVERY-AUTHORITY.md](docs/north-star/DELIVERY-AUTHORITY.md)
+Product destination: [`docs/vision.md`](docs/vision.md). Identity graph: [`docs/capabilities.md`](docs/capabilities.md). Historical north-star notes remain under [`docs/north-star/`](docs/north-star/) and are not dest.

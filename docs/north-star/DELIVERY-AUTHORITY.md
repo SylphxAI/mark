@@ -1,6 +1,8 @@
 # Mark — Delivery Authority
 
-Status: **Normative** · 2026-08-11
+Status: **Historical.** Product destination is [`docs/vision.md`](../vision.md) and [`docs/capabilities.md`](../capabilities.md). This file is not dest. Identity, fate, and oracles live there.
+
+Former status: Normative · 2026-08-11
 
 ## Product ambition
 
