@@ -139,8 +139,24 @@ pub fn credit_mark(width: u32, height: u32, enabled: bool) -> String {
     )
 }
 
-pub const SVG_CACHE: &str = "public, max-age=3600, s-maxage=86400, stale-while-revalidate=604800";
-pub const SVG_CACHE_SHORT: &str = "public, max-age=300, s-maxage=600, stale-while-revalidate=3600";
+/// CDN-forever contract (MARK-HOST): every mark URL pins its bytes — the render
+/// is a pure function of the URL (ADR-0003, no clock/upstream/state), including
+/// SMIL-animated variants whose `<animate*>` declarations are part of the bytes.
+/// Query-pinned content is therefore immutable: browsers and edge may cache for
+/// one year without revalidation. `stale-while-revalidate` keeps edge refresh
+/// async. `CDN-Cache-Control` / `Cloudflare-CDN-Cache-Control` carry the same
+/// edge TTL so the Apps Cache Rule has origin intent to honor.
+///
+/// Origin headers are this product's write. Live edge `HIT` on dest
+/// extensionless `/api/v1/mark*` + `/badge/*` is Apps (Cloudflare for SaaS
+/// Custom Hostname + grey CNAME to `cname.sylphx.com`, plus Cache Everything
+/// / eligible-for-cache keyed on the full query string). Hands is generic
+/// kube origin only. Origin headers alone cannot flip `cf-cache-status`
+/// from DYNAMIC on extensionless API paths.
+pub const SVG_CACHE: &str =
+    "public, max-age=31536000, s-maxage=31536000, stale-while-revalidate=86400, immutable";
+/// Edge TTL mirror for `CDN-Cache-Control` / `Cloudflare-CDN-Cache-Control`.
+pub const SVG_EDGE_CACHE: &str = "public, s-maxage=31536000, stale-while-revalidate=86400";
 
 #[cfg(test)]
 mod tests {

@@ -1,13 +1,16 @@
 //! Mark HTTP surface — one grammar, one endpoint.
 
 use axum::extract::{Path, Query, State};
+use axum::http::{header, HeaderMap};
 use axum::response::Response;
 use serde::Deserialize;
 
 use crate::bootstrap::AppState;
 use crate::capabilities::mark::domain::{cap_text, MarkForm, MarkSpec, MAX_SERVICE_CHARS};
 use crate::capabilities::mark::render;
-use crate::interfaces::http::response::{decode_text, decode_token, parse_bool, svg_response};
+use crate::interfaces::http::response::{
+    decode_text, decode_token, parse_bool, svg_response_conditional,
+};
 
 #[derive(Debug, Deserialize)]
 pub struct MarkQuery {
@@ -66,17 +69,19 @@ pub async fn mark_handler(
     State(st): State<AppState>,
     Path(form): Path<String>,
     Query(q): Query<MarkQuery>,
+    headers: HeaderMap,
 ) -> Response {
     let spec = q.to_spec(MarkForm::parse(Some(&form)), st.default_credit);
-    svg_response(&render(&spec), cache_for(&spec))
+    svg_response_conditional(&render(&spec), cache_for(&spec), if_none_match(&headers))
 }
 
 pub async fn mark_default_handler(
     State(st): State<AppState>,
     Query(q): Query<MarkQuery>,
+    headers: HeaderMap,
 ) -> Response {
     let spec = q.to_spec(MarkForm::Hero, st.default_credit);
-    svg_response(&render(&spec), cache_for(&spec))
+    svg_response_conditional(&render(&spec), cache_for(&spec), if_none_match(&headers))
 }
 
 /// Shields-style pill shorthand: `/badge/{label}-{message}-{color}`.
@@ -88,6 +93,7 @@ pub async fn badge_path(
     State(st): State<AppState>,
     Path(tail): Path<String>,
     Query(q): Query<MarkQuery>,
+    headers: HeaderMap,
 ) -> Response {
     let (label, message, color) = split_badge_path(&tail);
     let mut spec = q.to_spec(MarkForm::Pill, st.default_credit);
@@ -96,7 +102,7 @@ pub async fn badge_path(
     // Path tokens stay the shields embed.
     // Query `color` only fills a missing path token.
     spec.color = color.or(spec.color);
-    svg_response(&render(&spec), cache_for(&spec))
+    svg_response_conditional(&render(&spec), cache_for(&spec), if_none_match(&headers))
 }
 
 fn split_badge_path(tail: &str) -> (String, String, Option<String>) {
@@ -174,12 +180,17 @@ impl MarkQuery {
     }
 }
 
-/// Deterministic marks cache long; animated marks cache short.
-fn cache_for(spec: &MarkSpec) -> &'static str {
-    let anim = spec.animation.as_deref().unwrap_or("ambient");
-    if anim.eq_ignore_ascii_case("none") || anim.eq_ignore_ascii_case("static") {
-        crate::capabilities::mark::domain::svg::SVG_CACHE
-    } else {
-        "public, max-age=60, s-maxage=120, stale-while-revalidate=600"
-    }
+/// Every mark URL pins its bytes (pure function of the URL, ADR-0003) — including
+/// SMIL-animated variants, whose `<animate*>` declarations are part of the
+/// deterministic bytes with no clock sampling. All SVG responses are therefore
+/// immutable and cache long at both browser and edge. The query string is part
+/// of the cache key; distinct URLs are distinct marks.
+fn cache_for(_spec: &MarkSpec) -> &'static str {
+    crate::capabilities::mark::domain::svg::SVG_CACHE
+}
+
+fn if_none_match(headers: &HeaderMap) -> Option<&str> {
+    headers
+        .get(header::IF_NONE_MATCH)
+        .and_then(|v| v.to_str().ok())
 }
