@@ -144,17 +144,19 @@ pub fn credit_mark(width: u32, height: u32, enabled: bool) -> String {
 /// SMIL-animated variants whose `<animate*>` declarations are part of the bytes.
 /// Query-pinned content is therefore immutable: browsers and edge may cache for
 /// one year without revalidation. `stale-while-revalidate` keeps edge refresh
-/// async. Cloudflare edge additionally needs a Cache Rule (Cache Everything for
-/// `/api/v1/mark*` + `/badge/*`, cache key = full query string) — origin headers
-/// alone cannot flip `cf-cache-status` from DYNAMIC on extensionless API paths.
-/// `CDN-Cache-Control` / `Cloudflare-CDN-Cache-Control` carry the same edge TTL
-/// explicitly so the rule has an origin intent to honor.
-pub const SVG_CACHE: &str = "public, max-age=31536000, s-maxage=31536000, stale-while-revalidate=86400, immutable";
+/// async. `CDN-Cache-Control` / `Cloudflare-CDN-Cache-Control` carry the same
+/// edge TTL so the Apps Cache Rule has origin intent to honor.
+///
+/// Origin headers are this product's write. Live edge `HIT` on dest
+/// extensionless `/api/v1/mark*` + `/badge/*` is Apps (Cloudflare for SaaS
+/// Custom Hostname + grey CNAME to `cname.sylphx.com`, plus Cache Everything
+/// / eligible-for-cache keyed on the full query string). Hands is generic
+/// kube origin only. Origin headers alone cannot flip `cf-cache-status`
+/// from DYNAMIC on extensionless API paths.
+pub const SVG_CACHE: &str =
+    "public, max-age=31536000, s-maxage=31536000, stale-while-revalidate=86400, immutable";
 /// Edge TTL mirror for `CDN-Cache-Control` / `Cloudflare-CDN-Cache-Control`.
 pub const SVG_EDGE_CACHE: &str = "public, s-maxage=31536000, stale-while-revalidate=86400";
-/// Retired short TTL (animated marks once cached 60s). Kept for reference only;
-/// all marks are immutable-by-URL so `cache_for` no longer branches on animation.
-pub const SVG_CACHE_SHORT: &str = "public, max-age=300, s-maxage=600, stale-while-revalidate=3600";
 
 #[cfg(test)]
 mod tests {

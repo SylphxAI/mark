@@ -9,7 +9,7 @@ mod studio;
 
 use axum::routing::get;
 use axum::Router;
-use tower_http::cors::CorsLayer;
+use tower_http::cors::{Any, CorsLayer};
 use tower_http::services::ServeDir;
 use tower_http::trace::{DefaultMakeSpan, DefaultOnResponse, TraceLayer};
 
@@ -31,7 +31,17 @@ pub fn app(state: AppState) -> Router {
         .route("/badge/{*tail}", get(mark_http::badge_path))
         .route("/", get(studio::index_page))
         .fallback_service(ServeDir::new("static"))
-        .layer(CorsLayer::permissive())
+        // Public SVG GET is origin-independent (`ACAO: *`, no credentials).
+        // Default CorsLayer Vary includes Origin, which splits the CDN cache
+        // key without changing bytes. Empty vary is correct: allowed
+        // origin/methods/headers are constants, not mirrored.
+        .layer(
+            CorsLayer::new()
+                .allow_origin(Any)
+                .allow_methods(Any)
+                .allow_headers(Any)
+                .vary(Vec::<axum::http::HeaderName>::new()),
+        )
         .layer(
             TraceLayer::new_for_http()
                 .make_span_with(DefaultMakeSpan::new().level(tracing::Level::INFO))

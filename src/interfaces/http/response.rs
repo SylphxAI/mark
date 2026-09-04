@@ -42,22 +42,18 @@ pub fn etag_for(svg: &str) -> String {
 fn cache_headers(headers: &mut HeaderMap, cache: &str, etag: &str) {
     headers.insert(header::CACHE_CONTROL, HeaderValue::from_str(cache).unwrap());
     // Explicit edge TTL: Cloudflare honors Cloudflare-CDN-Cache-Control >
-    // CDN-Cache-Control > Cache-Control for edge. Origin intent alone cannot
-    // flip cf-cache-status on extensionless API paths (needs a Cache Rule),
-    // but the edge directive must be present so the rule has TTL to honor.
+    // CDN-Cache-Control > Cache-Control for edge. Origin headers are this
+    // product's write; they cannot flip cf-cache-status on dest extensionless
+    // `/api/v1/mark*` + `/badge/*`. Live edge HIT is Apps (SaaS Custom
+    // Hostname + Cache Rule keyed on the full query string). The edge
+    // directive must be present so that rule has TTL to honor.
     headers.insert(
         header::HeaderName::from_static("cdn-cache-control"),
-        HeaderValue::from_str(
-            crate::capabilities::mark::domain::svg::SVG_EDGE_CACHE,
-        )
-        .unwrap(),
+        HeaderValue::from_str(crate::capabilities::mark::domain::svg::SVG_EDGE_CACHE).unwrap(),
     );
     headers.insert(
         header::HeaderName::from_static("cloudflare-cdn-cache-control"),
-        HeaderValue::from_str(
-            crate::capabilities::mark::domain::svg::SVG_EDGE_CACHE,
-        )
-        .unwrap(),
+        HeaderValue::from_str(crate::capabilities::mark::domain::svg::SVG_EDGE_CACHE).unwrap(),
     );
     headers.insert(header::ETAG, HeaderValue::from_str(etag).unwrap());
 }
@@ -106,10 +102,6 @@ fn etag_matches(if_none_match: Option<&str>, etag: &str) -> bool {
     }
 }
 
-pub fn svg_response(svg: &str, cache: &str) -> Response {
-    svg_response_conditional(svg, cache, None)
-}
-
 /// SVG response with immutable long-cache + ETag + conditional-GET support.
 ///
 /// `if_none_match` is the raw `If-None-Match` request header value, if any.
@@ -117,11 +109,7 @@ pub fn svg_response(svg: &str, cache: &str) -> Response {
 /// no body (HIT-equivalent verifiable without a CDN); otherwise `200` with
 /// identical bytes. Security headers (CSP/nosniff/CORP) are preserved on 200;
 /// 304 carries cache + ETag per RFC 7232 (no body, no content-type).
-pub fn svg_response_conditional(
-    svg: &str,
-    cache: &str,
-    if_none_match: Option<&str>,
-) -> Response {
+pub fn svg_response_conditional(svg: &str, cache: &str, if_none_match: Option<&str>) -> Response {
     let etag = etag_for(svg);
     if etag_matches(if_none_match, &etag) {
         let mut headers = HeaderMap::new();
