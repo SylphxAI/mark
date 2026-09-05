@@ -41,14 +41,14 @@ Env (see `.env.example`):
 
 ## The grammar
 
-**mark = form × art (`type`) × paint (`theme` / `color`) × content (`text` / `desc` / `font`) × geometry (`width` / `height`) × motion (`animation`)**
+**mark = form × art (`type`) × paint (`theme` / `color`, pill `labelColor`) × content (`text` / `desc` / `font`) × geometry (`width` / `height`, hero `layout`) × motion (`animation`)**
 
 One endpoint: `GET /api/v1/mark/{form}` — plus the shields-style pill shorthand `GET /badge/{label}-{message}-{color}`.
 
 | Form | What it is | Key params |
 |------|-----------|-----------|
 | `hero` | The flagship banner (42 art types, 4 layouts) | `type` `text` `desc` `layout` `height` `width` |
-| `pill` | Atomic status mark (shields-style) | `label` `message` `style` |
+| `pill` | Atomic status mark (shields-style) | `label` `message` `style` `labelColor` |
 | `strip` | Tech identity row (47 icons) | `icons` `perline` |
 | `profile` | Name + tagline card (text-driven) | `text` `desc` `type` (art background) `width` `height` |
 | `deploy` | “deployed on Sylphx” conversion pill | `service` `style` |
@@ -74,7 +74,7 @@ fully transparent canvas for typing-line compositions.
 
 **Motion (`animation=`):** SMIL (works when the SVG is loaded as `<img>`): `none` · `ambient` (default) · `fade` · `rise` · `scale` · `float` · `glow` · `breathe` · `slide` · `cascade` · `shimmer` · `glitch` · `wave` · `orbit` · `neon` · `bounce` · `type`
 
-**Text:** use `-nl-` for newlines. Optional: `fontSize` `fontColor` `fontAlign` `fontAlignY` `desc*` `rotate` `stroke` `strokeWidth` `textBg` `section=header|footer` `reversal`. `fontColor` and `stroke` accept canonical hex colors only.
+**Text:** use `-nl-` for newlines.
 
 ### Pill
 

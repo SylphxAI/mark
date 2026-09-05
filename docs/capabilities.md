@@ -18,13 +18,13 @@ The render contract consumes no peer APIs. Mega-clients and `{project}.api.sylph
 
 | ID | Identity | Fate | Depends on | Done when |
 | --- | --- | --- | --- | --- |
-| MARK-GRAMMAR | One-grammar stateless render | live | — | Live `GET https://mark.sylphx.com/api/v1/mark/{form}` for `form∈{hero,pill,strip,profile,deploy}` with `type/theme/color/text/desc/font/width/height/animation` returns a deterministic SVG; no clock, upstream, or account. Unknown form renders hero, except `identity` → profile. |
-| MARK-BADGE | Shields-style pill shorthand | live | MARK-GRAMMAR | Live `GET /badge/{label}-{message}-{color}` is the same pill as `/api/v1/mark/pill` with those tokens. |
+| MARK-GRAMMAR | One-grammar stateless render | live | — | Live `GET https://mark.sylphx.com/api/v1/mark/{form}` for `form∈{hero,pill,strip,profile,deploy}` with `type/theme/color/text/desc/font/width/height/animation` returns a deterministic SVG; no clock, upstream, or account. Hero dest geometry includes `layout`. Pill dest paint includes `labelColor` when no theme pack. An unknown theme name is not a theme pack. Unknown form renders hero, except `identity` → profile. Predecessor capsule-render typography and placement knobs are leftover, not dest. |
+| MARK-BADGE | Shields-style pill shorthand | live | MARK-GRAMMAR | Live `GET /badge/{label}-{message}-{color}` is the same pill as `/api/v1/mark/pill` with those tokens. Query `style`, `theme`, `animation`, `labelColor`, `font`, and `credit` compose the same way as `/pill`. |
 | MARK-SVG | Valid SVG + XSS-safe paint | live | MARK-GRAMMAR | Live SVG is well-formed, user text is escaped, non-canonical paint falls back, and responses carry `Content-Security-Policy: script-src 'none'` plus `X-Content-Type-Options: nosniff`. |
 | MARK-HOST | Canonical customer host | live | MARK-GRAMMAR | Ordinary URL is `https://mark.sylphx.com` and a grammar GET there returns the product SVG. The Apps auto host `mark-web-prod.sylphx.app` is not dest. Naming the locator is not live-success. |
 | MARK-CDN | Immutable URL cache | live | MARK-GRAMMAR, MARK-HOST | Live grammar/badge GET returns origin `Cache-Control: public, max-age=31536000, s-maxage=31536000, immutable` plus a strong ETag, `If-None-Match` → 304, and `CDN-Cache-Control` / `Cloudflare-CDN-Cache-Control`. Origin headers are this product's write. Edge `HIT` is Apps (SaaS Custom Hostname + cache rule keyed on the full query), not this identity. Hands is generic kube origin only. |
-| MARK-CATALOG | Public vocabulary | live | MARK-GRAMMAR | Live `GET /api/v1/catalog` publishes forms, art, themes, icons, and limits that the live render honors. Theme and icon ids contain no personal or company names. |
-| MARK-STUDIO | URL composer | live | MARK-GRAMMAR, MARK-CATALOG | Live `GET /` is the no-account composer: catalog-backed SVG preview, copy of the public mark URL, copy of the README markdown embed `![alt](url)`, and download of that SVG. Loading the studio with a public mark URL recovers the same composer state. Noscript still offers grammar links. |
+| MARK-CATALOG | Public vocabulary | live | MARK-GRAMMAR | Live `GET /api/v1/catalog` publishes forms, art, layouts, themes, icons, fonts, and limits that the live render honors, plus a grammar note that matches dest grammar (form × art × paint including pill `labelColor` × content including `font` × geometry including hero `layout` × motion). Theme and icon ids contain no personal or company names. |
+| MARK-STUDIO | URL composer | live | MARK-GRAMMAR, MARK-CATALOG | Live `GET /` is the no-account composer: catalog-backed SVG preview, copy of the public mark URL, copy of the README markdown embed `![alt](url)`, and download of that SVG. Loading the studio with a public mark URL recovers dest composer state, including pill `labelColor` when no theme pack. The studio page uses system font stacks only — no webfont origin. Noscript still offers grammar links. |
 | MARK-PROFILE | Text-driven profile card | live | MARK-GRAMMAR | Live `/api/v1/mark/profile?text&desc` renders name and tagline from the URL. Retired `identity` URLs map here, not silent hero. |
 | MARK-DEPLOY | Conversion mark | live | MARK-GRAMMAR | Live `/api/v1/mark/deploy?service=…` renders the “deployed on Sylphx” pill. |
 | MARK-STATS | Live GitHub stats / clock / upstream as product authority | dead | — | Must not return as a silent dependency. Reintroduction needs an explicit capability and a network contract. |
@@ -66,8 +66,10 @@ not live proof. Facts not establishable here are `Unknown`, never green.
   cache headers are this product's write (`MARK-CDN`). Edge `HIT` is
   Apps, not this product.
 - **Forbidden writes:** never a second render authority or grammar
-  (vision). Never live GitHub stats, clock, or upstream as product
-  authority (`MARK-STATS` `dead`). Never kube, HTTPRoute, or Journal
+  (vision). Predecessor capsule-render typography and placement knobs
+  are leftover, not dest. Never live GitHub stats, clock, or upstream
+  as product authority (`MARK-STATS` `dead`), including a webfont
+  origin on the studio page. Never kube, HTTPRoute, or Journal
   `spec` writes. Never `{project}.api.sylphx.com` or a mega-client
   (ADR-038). Never a GitHub check name, webhook receipt, or
   deploy-status projection as Release admission or `Live`. Never
