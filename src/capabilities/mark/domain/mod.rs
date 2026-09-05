@@ -8,6 +8,7 @@ pub mod color;
 pub mod icons;
 pub mod motion;
 pub mod pill;
+pub mod recovery;
 pub mod shapes;
 pub mod spec;
 pub mod svg;
@@ -19,5 +20,6 @@ pub use catalog::{
     MAX_SERVICE_CHARS, MAX_TEXT_CHARS,
 };
 pub use pill::{named_color, PillStyle};
+pub use recovery::{parse_public_mark_url, readme_markdown_embed, split_badge_path, StudioBoot};
 pub use spec::{DeploySpec, HeroSpec, MarkForm, MarkSpec, PillSpec, StripSpec};
 pub use svg::{cap_text, char_advance, esc, line_advance, monogram, normalize_hex_token};

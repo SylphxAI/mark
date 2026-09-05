@@ -14,14 +14,6 @@ pub fn decode_text(s: String) -> String {
     let decoded = urlencoding::decode(&s).map(|c| c.into_owned()).unwrap_or(s);
     decoded.replace("-nl-", "\n")
 }
-
-pub fn decode_token(s: &str) -> String {
-    urlencoding::decode(s)
-        .map(|c| c.into_owned())
-        .unwrap_or_else(|_| s.to_string())
-        .replace('_', " ")
-}
-
 /// Stable strong ETag for byte-identical SVG URLs (FNV-1a/64 over the bytes).
 ///
 /// std `DefaultHasher` is explicitly unstable across releases, so ETags use an
