@@ -10,11 +10,11 @@ This document owns the finished-product destination with [`capabilities.md`](cap
 
 **Any URL. One image. Your brand.** Mark is the README image language: a stranger writes one public URL and receives a polished, deterministic SVG. Five forms — hero banners, status pills, tech strips, text-driven profile cards, and `deployed on Sylphx` conversion marks — plus the shields-style pill shorthand, from one grammar. Built in Rust (`axum`). Stateless. No clock, no upstream, no account. Soft `credit` watermark is opt-in.
 
-Grammar: `mark = form × art (type) × paint (theme/color) × content (text/desc/font) × geometry (width/height) × motion (animation)` via `GET /api/v1/mark/{form}` plus `GET /badge/{label}-{message}-{color}`. Unknown form renders hero, except retired `identity` URLs, which are the profile card.
+Grammar: `mark = form × art (type) × paint (theme/color, pill labelColor) × content (text/desc/font) × geometry (width/height, hero layout) × motion (animation)` via `GET /api/v1/mark/{form}` plus `GET /badge/{label}-{message}-{color}`. Pill `labelColor` is dest paint when no theme pack; an unknown theme name is not a theme pack. Unknown form renders hero, except retired `identity` URLs, which are the profile card.
 
 Canonical customer host is `https://mark.sylphx.com`. Mark is an ordinary Apps Service. The runtime auto host `mark-web-prod.sylphx.app` is not dest.
 
-The studio at `GET /` is the no-account composer of that grammar: preview the SVG, copy the public URL, copy the README markdown embed, download the SVG, and recover the same mark from its public URL. Noscript still offers grammar links.
+The studio at `GET /` is the no-account composer of that grammar: preview the SVG, copy the public URL, copy the README markdown embed, download the SVG, and recover dest composer state from a public mark URL — including pill `labelColor` when no theme pack. The studio page uses system font stacks only. Noscript still offers grammar links.
 
 ## For whom
 
@@ -23,8 +23,8 @@ The studio at `GET /` is the no-account composer of that grammar: preview the SV
 
 ## Not doing
 
-- Live GitHub stats, clock, or upstream as a core render product. Reintroduction needs an explicit capability and a network contract, not a silent dependency.
-- A second render authority or grammar.
+- Live GitHub stats, clock, or upstream as product authority — including the studio composer. Reintroduction needs an explicit capability and a network contract, not a silent dependency.
+- A second render authority or grammar. Predecessor capsule-render typography and placement knobs are leftover compatibility, not dest.
 - PNG, upload, AI generation on the hot path, accounts, or saved marks.
 - Personal or company names in theme or icon ids. The catalog is neutral. The only Sylphx-branded surfaces are the deploy mark and the opt-in credit watermark.
 - A Mark-owned production Release writer. Apps owns production Release. Hands is generic kube origin only.
