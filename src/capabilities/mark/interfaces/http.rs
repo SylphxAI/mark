@@ -6,11 +6,11 @@ use axum::response::Response;
 use serde::Deserialize;
 
 use crate::bootstrap::AppState;
-use crate::capabilities::mark::domain::{cap_text, MarkForm, MarkSpec, MAX_SERVICE_CHARS};
-use crate::capabilities::mark::render;
-use crate::interfaces::http::response::{
-    decode_text, decode_token, parse_bool, svg_response_conditional,
+use crate::capabilities::mark::domain::{
+    cap_text, split_badge_path, MarkForm, MarkSpec, MAX_SERVICE_CHARS,
 };
+use crate::capabilities::mark::render;
+use crate::interfaces::http::response::{decode_text, parse_bool, svg_response_conditional};
 
 #[derive(Debug, Deserialize)]
 pub struct MarkQuery {
@@ -103,32 +103,6 @@ pub async fn badge_path(
     // Query `color` only fills a missing path token.
     spec.color = color.or(spec.color);
     svg_response_conditional(&render(&spec), cache_for(&spec), if_none_match(&headers))
-}
-
-fn split_badge_path(tail: &str) -> (String, String, Option<String>) {
-    if tail.contains("--") {
-        let parts: Vec<&str> = tail.split("--").collect();
-        (
-            decode_token(parts.first().copied().unwrap_or("")),
-            decode_token(parts.get(1).copied().unwrap_or("ok")),
-            parts.get(2).map(|s| decode_token(s)),
-        )
-    } else {
-        let parts: Vec<&str> = tail.rsplitn(3, '-').collect();
-        match parts.len() {
-            3 => (
-                decode_token(parts[2]),
-                decode_token(parts[1]),
-                Some(decode_token(parts[0])),
-            ),
-            2 => (
-                String::new(),
-                decode_token(parts[1]),
-                Some(decode_token(parts[0])),
-            ),
-            _ => (String::new(), decode_token(tail), None),
-        }
-    }
 }
 
 impl MarkQuery {

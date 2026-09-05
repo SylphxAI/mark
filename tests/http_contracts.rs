@@ -48,6 +48,14 @@ async fn get(path: &str) -> (StatusCode, String, String) {
     (status, ctype, String::from_utf8_lossy(&body).into_owned())
 }
 
+fn studio_boot(html: &str) -> serde_json::Value {
+    const MARKER: &str = "window.__MARK_BOOT__ = ";
+    let start = html.find(MARKER).expect("studio boot marker");
+    let rest = html[start + MARKER.len()..].trim_start();
+    let end = rest.find(';').expect("boot assignment terminator");
+    serde_json::from_str(&rest[..end]).expect("studio boot JSON")
+}
+
 #[tokio::test]
 async fn default_credit_applies_unless_query_overrides() {
     let (status, on) = get_with(
@@ -88,9 +96,75 @@ async fn studio_exposes_recovery_and_svg_export_controls() {
     let (status, ctype, body) = get("/").await;
     assert_eq!(status, StatusCode::OK);
     assert!(ctype.contains("html"), "ctype={ctype}");
-    for marker in ["Download SVG", "Retry", "Preparing SVG export"] {
+    for marker in [
+        "Download SVG",
+        "Retry",
+        "Preparing SVG export",
+        "Copy markdown",
+        "Copy URL",
+    ] {
         assert!(body.contains(marker), "studio copy missing: {marker}");
     }
+    assert_eq!(studio_boot(&body), serde_json::Value::Null);
+    assert!(
+        !body.contains("{{BOOT}}"),
+        "boot placeholder must be substituted"
+    );
+}
+
+#[tokio::test]
+async fn studio_boots_composer_state_from_query() {
+    let (status, _, body) = get("/?form=profile&text=Ada%20Lovelace").await;
+    assert_eq!(status, StatusCode::OK);
+    let boot = studio_boot(&body);
+    assert_eq!(boot["form"], "profile");
+    assert_eq!(boot["text"], "Ada Lovelace");
+}
+
+#[tokio::test]
+async fn studio_identity_query_boots_profile() {
+    let (_, _, body) = get("/?form=identity&text=Ada%20Lovelace").await;
+    let boot = studio_boot(&body);
+    assert_eq!(boot["form"], "profile");
+    assert_eq!(boot["text"], "Ada Lovelace");
+}
+
+#[tokio::test]
+async fn studio_boots_from_wrapped_public_mark_url() {
+    let url = "/?url=https%3A%2F%2Fmark.sylphx.com%2Fapi%2Fv1%2Fmark%2Fhero%3Ftype%3Dwave%26text%3DMark%26height%3D120";
+    let (_, _, body) = get(url).await;
+    let boot = studio_boot(&body);
+    assert_eq!(boot["form"], "hero");
+    assert_eq!(boot["type"], "wave");
+    assert_eq!(boot["text"], "Mark");
+    assert_eq!(boot["height"], 120);
+}
+
+#[tokio::test]
+async fn studio_boots_from_badge_shorthand_url() {
+    let (_, _, body) = get("/?url=%2Fbadge%2Fbuild-passing-brightgreen").await;
+    let boot = studio_boot(&body);
+    assert_eq!(boot["form"], "pill");
+    assert_eq!(boot["pill"]["label"], "build");
+    assert_eq!(boot["pill"]["message"], "passing");
+    assert_eq!(boot["color"], "brightgreen");
+}
+
+#[tokio::test]
+async fn studio_boot_escapes_script_breakout() {
+    let (_, _, body) = get("/?form=hero&text=%3C%2Fscript%3E").await;
+    let boot = studio_boot(&body);
+    assert_eq!(boot["text"], "</script>");
+    let start = body.find("window.__MARK_BOOT__ = ").expect("boot");
+    let line = body[start..].lines().next().expect("boot line");
+    assert!(
+        !line.contains("</script>"),
+        "boot assignment must not break the script: {line}"
+    );
+    assert!(
+        !line.contains("<script"),
+        "boot assignment must not open a script: {line}"
+    );
 }
 
 #[tokio::test]

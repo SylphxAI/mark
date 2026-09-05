@@ -8,4 +8,4 @@ pub mod domain;
 pub mod interfaces;
 
 pub use application::render;
-pub use domain::{MarkForm, MarkSpec};
+pub use domain::{parse_public_mark_url, readme_markdown_embed, MarkForm, MarkSpec, StudioBoot};

@@ -148,7 +148,8 @@
         <input id="urlBox" readonly aria-label="Mark URL" spellcheck="false" />
         <button class="ghost" id="openBtn" type="button">Open</button>
         <button class="ghost" id="downloadBtn" type="button" disabled>Download SVG</button>
-        <button id="copyBtn" type="button">Copy URL</button>
+        <button class="ghost" id="copyBtn" type="button">Copy URL</button>
+        <button id="mdBtn" type="button">Copy markdown</button>
       </div>
     </div>
     <div class="panel">
@@ -162,6 +163,7 @@
 </div>
 <script>
 const BASE = "{{BASE}}";
+window.__MARK_BOOT__ = {{BOOT}};
 let FORMS = ["hero","pill","strip","profile","deploy"];
 let THEMES = ["","dark","light","tokyonight","dracula","nord","monokai","radical","gruvbox","ocean","sunset","forest","neon","github"];
 let ART = ["wave","waving","aurora","soft","rounded","slice","glass","product","terminal","mesh","plasma","holo","neon","liquid","silk","orbit","constellation","grid","blur","ring","circuit","hud","pulse","noise","cylinder","checkered","egg","shark","venom","speech","org","transparent"];
@@ -196,9 +198,230 @@ const PRESETS = [
   { name:"Tech strip", apply(){ Object.assign(state,{form:"strip",color:"",theme:"dark",type:"",animation:"none",strip:{icons:["rust","ts","docker","kubernetes"],perline:12}}); } }
 ];
 
-function esc(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
 
-function buildURL(){
+function parseForm(raw){
+  const s = String(raw == null ? "" : raw).trim().toLowerCase();
+  if (s === "pill" || s === "badge") return "pill";
+  if (s === "strip" || s === "icons" || s === "iconsrow") return "strip";
+  if (s === "profile" || s === "card" || s === "identity") return "profile";
+  if (s === "deploy" || s === "deploymark") return "deploy";
+  return "hero";
+}
+
+function decodeText(s){ return String(s).replace(/-nl-/g, "\n"); }
+
+function splitBadgePath(tail){
+  const decodeTok = t => {
+    let v = String(t);
+    try { v = decodeURIComponent(v); } catch {}
+    return v.replace(/_/g, " ");
+  };
+  if (tail.includes("--")) {
+    const parts = tail.split("--");
+    return {
+      label: decodeTok(parts[0] || ""),
+      message: decodeTok(parts[1] || "ok"),
+      color: parts[2] != null ? decodeTok(parts[2]) : ""
+    };
+  }
+  const bits = tail.split("-");
+  if (bits.length >= 3) {
+    const color = decodeTok(bits.pop());
+    const message = decodeTok(bits.pop());
+    return { label: decodeTok(bits.join("-")), message, color };
+  }
+  if (bits.length === 2) {
+    return { label: "", message: decodeTok(bits[0]), color: decodeTok(bits[1]) };
+  }
+  return { label: "", message: decodeTok(tail), color: "" };
+}
+
+function peelOrigin(s){
+  const i = s.indexOf("://");
+  if (i < 0) return s;
+  const rest = s.slice(i + 3);
+  const slash = rest.indexOf("/");
+  if (slash >= 0) return rest.slice(slash);
+  const q = rest.search(/[?#]/);
+  return q >= 0 ? rest.slice(q) : "/";
+}
+
+function splitPathQuery(raw){
+  let s = String(raw || "").trim();
+  if (!s) return null;
+  if (s.charAt(0) === "#") s = s.slice(1).trim();
+  if (!s) return null;
+  let after = peelOrigin(s);
+  let hash = "";
+  const hashAt = after.indexOf("#");
+  let before = after;
+  if (hashAt >= 0) {
+    hash = after.slice(hashAt + 1);
+    before = after.slice(0, hashAt);
+  }
+  const pathOnly = (before.split("?")[0] || "");
+  const studio = !pathOnly || pathOnly === "/";
+  const locatorLooks = hash && (/^\//.test(hash) || hash.indexOf("://") >= 0 || hash.indexOf("=") >= 0 || hash.indexOf("api/") === 0 || hash.indexOf("badge/") === 0);
+  const locator = (studio && locatorLooks) ? hash : before;
+  if (!locator) return { path: "/", query: "" };
+  const q = locator.indexOf("?");
+  if (q >= 0) return { path: locator.slice(0, q) || "/", query: locator.slice(q + 1) };
+  if (locator.charAt(0) === "/") return { path: locator, query: "" };
+  if (locator.indexOf("=") >= 0) return { path: "/", query: locator };
+  return { path: "/" + locator, query: "" };
+}
+
+function parsePublicMarkUrl(raw, depth){
+  if ((depth || 0) > 2) return null;
+  const loc = splitPathQuery(raw);
+  if (!loc) return null;
+  const params = new URLSearchParams(loc.query || "");
+  if ((depth || 0) < 2 && params.has("url")) {
+    const nested = parsePublicMarkUrl(params.get("url"), (depth || 0) + 1);
+    if (nested) {
+      const overlay = pairsToBoot(params, nested.form);
+      return Object.assign(nested, overlay, {
+        pill: Object.assign({}, nested.pill, overlay.pill),
+        strip: Object.assign({}, nested.strip, overlay.strip),
+        deploy: Object.assign({}, nested.deploy, overlay.deploy)
+      });
+    }
+  }
+  let form = "";
+  let badge = null;
+  const path = (loc.path || "/").replace(/\/+$/, "") || "/";
+  if (path.indexOf("/badge/") === 0) {
+    const tail = path.slice("/badge/".length);
+    if (tail) {
+      form = "pill";
+      badge = splitBadgePath(tail);
+    }
+  } else if (path === "/api/v1/mark") {
+    form = "hero";
+  } else if (path.indexOf("/api/v1/mark/") === 0) {
+    form = parseForm(path.slice("/api/v1/mark/".length).split("/")[0]);
+  } else if (params.has("form")) {
+    form = parseForm(params.get("form"));
+  }
+  const known = ["form","type","theme","color","animation","font","text","desc","width","height","credit","layout","label","message","style","icons","perline","service"];
+  let has = !!form;
+  params.forEach((_, k) => { if (known.indexOf(k) >= 0) has = true; });
+  if (!has) return null;
+  form = form || "hero";
+  const boot = pairsToBoot(params, form);
+  boot.form = form;
+  if (badge) {
+    boot.pill = boot.pill || {};
+    boot.pill.label = badge.label;
+    boot.pill.message = badge.message;
+    if (!boot.theme && badge.color) boot.color = badge.color;
+  }
+  return boot;
+}
+
+function pairsToBoot(params, form){
+  const boot = {};
+  if (params.has("form")) boot.form = parseForm(params.get("form"));
+  if (params.get("theme")) boot.theme = params.get("theme");
+  if (!boot.theme && params.has("color")) boot.color = params.get("color");
+  if (params.has("type")) boot.type = params.get("type");
+  if (params.has("layout")) boot.layout = params.get("layout");
+  if (params.has("animation")) boot.animation = params.get("animation");
+  if (params.has("font")) boot.font = params.get("font");
+  if (params.has("text")) boot.text = decodeText(params.get("text"));
+  if (params.has("desc")) boot.desc = decodeText(params.get("desc"));
+  if (params.has("width") && Number(params.get("width"))) boot.width = Number(params.get("width"));
+  if (params.has("height") && Number(params.get("height"))) boot.height = Number(params.get("height"));
+  if (params.has("credit")) boot.credit = /^(1|true|yes|on)$/i.test(params.get("credit") || "");
+  const f = boot.form || form;
+  if (f === "pill") {
+    boot.pill = {};
+    if (params.has("label")) boot.pill.label = params.get("label");
+    if (params.has("message")) boot.pill.message = params.get("message");
+    if (params.has("style")) boot.pill.style = params.get("style");
+  } else if (f === "strip") {
+    boot.strip = {};
+    if (params.has("icons")) boot.strip.icons = params.get("icons").split(",").map(s => s.trim()).filter(Boolean);
+    if (params.has("perline") && Number(params.get("perline"))) boot.strip.perline = Number(params.get("perline"));
+  } else if (f === "deploy") {
+    boot.deploy = {};
+    if (params.has("service")) boot.deploy.service = params.get("service");
+    if (params.has("style")) boot.deploy.style = params.get("style");
+  }
+  return boot;
+}
+
+function blankState(form){
+  return {
+    form: form || "hero",
+    color: "",
+    theme: "",
+    type: "",
+    layout: "default",
+    animation: "none",
+    font: "sans",
+    text: "",
+    desc: "",
+    height: HERO_H,
+    width: form === "profile" ? 640 : HERO_W,
+    credit: false,
+    pill: {label:"", message:"ok", style:"flat"},
+    strip: {icons:[], perline:12},
+    deploy: {service:"", style:"flat"}
+  };
+}
+
+function applyBoot(boot){
+  if (!boot || typeof boot !== "object") return false;
+  const form = parseForm(boot.form);
+  const next = blankState(form);
+  if (boot.color != null) next.color = String(boot.color);
+  if (boot.theme != null) next.theme = String(boot.theme);
+  if (boot.type != null) next.type = String(boot.type);
+  if (boot.layout != null) next.layout = String(boot.layout);
+  if (boot.animation != null) next.animation = String(boot.animation);
+  if (boot.font != null) next.font = String(boot.font);
+  if (boot.text != null) next.text = String(boot.text);
+  if (boot.desc != null) next.desc = String(boot.desc);
+  if (boot.width != null && Number(boot.width)) next.width = Number(boot.width);
+  if (boot.height != null && Number(boot.height)) next.height = Number(boot.height);
+  if (typeof boot.credit === "boolean") next.credit = boot.credit;
+  if (boot.theme) next.color = "";
+  if (boot.pill && typeof boot.pill === "object") {
+    if (boot.pill.label != null) next.pill.label = String(boot.pill.label);
+    if (boot.pill.message != null) next.pill.message = String(boot.pill.message);
+    if (boot.pill.style != null) next.pill.style = String(boot.pill.style);
+  }
+  if (boot.strip && typeof boot.strip === "object") {
+    if (Array.isArray(boot.strip.icons)) next.strip.icons = boot.strip.icons.map(String);
+    else if (typeof boot.strip.icons === "string") next.strip.icons = boot.strip.icons.split(",").map(s => s.trim()).filter(Boolean);
+    if (boot.strip.perline != null && Number(boot.strip.perline)) next.strip.perline = Number(boot.strip.perline);
+  }
+  if (boot.deploy && typeof boot.deploy === "object") {
+    if (boot.deploy.service != null) next.deploy.service = String(boot.deploy.service);
+    if (boot.deploy.style != null) next.deploy.style = String(boot.deploy.style);
+  }
+  Object.assign(state, next);
+  state.pill = next.pill;
+  state.strip = next.strip;
+  state.deploy = next.deploy;
+  state._preset = undefined;
+  return true;
+}
+
+function recoverFromLocation(){
+  if (window.__MARK_BOOT__ && typeof window.__MARK_BOOT__ === "object") return window.__MARK_BOOT__;
+  if (location.hash && location.hash.length > 1) {
+    const fromHash = parsePublicMarkUrl(location.hash);
+    if (fromHash) return fromHash;
+  }
+  if (location.search && location.search.length > 1) {
+    return parsePublicMarkUrl("/" + location.search);
+  }
+  return null;
+}
+
+function grammarParams(){
   const s = state, q = new URLSearchParams();
   if (s.theme) q.set("theme", s.theme);
   else if (s.color) q.set("color", s.color);
@@ -228,10 +451,62 @@ function buildURL(){
     if (s.deploy.service) q.set("service", s.deploy.service);
     if (s.deploy.style !== "flat") q.set("style", s.deploy.style);
   }
-  const qs = q.toString();
-  return `${BASE}/api/v1/mark/${s.form}${qs ? "?" + qs : ""}`;
+  return q;
 }
 
+function markdownAlt(){
+  const s = state;
+  if (s.form === "pill") return [s.pill.label, s.pill.message].filter(Boolean).join(" ") || "pill";
+  if (s.form === "strip") return s.strip.icons.join(" ") || "strip";
+  if (s.form === "deploy") return s.deploy.service ? s.deploy.service + " deployed on Sylphx" : "deployed on Sylphx";
+  const text = String(s.text || "").split("\n")[0].trim();
+  return text || s.form;
+}
+
+function buildMarkdown(){
+  const alt = markdownAlt().replace(/\\/g, "\\\\").replace(/\]/g, "\\]");
+  return "![" + alt + "](" + buildURL() + ")";
+}
+
+function studioLocation(){
+  const q = grammarParams();
+  const params = new URLSearchParams();
+  params.set("form", state.form);
+  q.forEach((v, k) => { if (k !== "form") params.set(k, v); });
+  return "/?" + params.toString();
+}
+
+function syncStudioUrl(){
+  try {
+    const next = studioLocation();
+    if (location.pathname + location.search !== next) history.replaceState(null, "", next);
+  } catch (_) { /* not a browser history context */ }
+}
+
+function copyText(text){
+  const box = document.getElementById("urlBox");
+  const fallback = () => {
+    const prev = box.value;
+    box.value = text;
+    box.removeAttribute("readonly");
+    box.select();
+    document.execCommand("copy");
+    box.value = prev;
+    box.setAttribute("readonly", "");
+  };
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    return navigator.clipboard.writeText(text).catch(fallback);
+  }
+  fallback();
+  return Promise.resolve();
+}
+
+function esc(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+
+function buildURL(){
+  const qs = grammarParams().toString();
+  return `${BASE}/api/v1/mark/${state.form}${qs ? "?" + qs : ""}`;
+}
 function setPreviewStatus(kind, message, retry = false){
   const status = document.getElementById("previewStatus");
   const text = document.getElementById("statusText");
@@ -252,7 +527,7 @@ function loadPreview(url){
   img.onload = () => {
     if (token !== previewToken) return;
     previewReady = true;
-    setPreviewStatus("ready", "Ready — copy the URL, open it, or download the SVG.");
+    setPreviewStatus("ready", "Ready — copy the markdown embed, copy the URL, or download the SVG.");
   };
   img.onerror = () => {
     if (token !== previewToken) return;
@@ -267,6 +542,7 @@ function refresh(){
   const url = buildURL();
   document.getElementById("urlBox").value = url;
   loadPreview(url);
+  syncStudioUrl();
   document.querySelectorAll("#forms button").forEach(b => b.classList.toggle("active", b.dataset.f === state.form));
   renderControls();
 }
@@ -446,10 +722,12 @@ async function loadCatalog(){
 function init(){
   document.getElementById("retryBtn").addEventListener("click", () => loadPreview(buildURL()));
   document.getElementById("copyBtn").addEventListener("click", async () => {
-    const box = document.getElementById("urlBox");
-    try { await navigator.clipboard.writeText(box.value); }
-    catch { box.select(); document.execCommand("copy"); }
+    await copyText(document.getElementById("urlBox").value);
     if (previewReady) setPreviewStatus("ready", "URL copied — use it again to repeat this mark.");
+  });
+  document.getElementById("mdBtn").addEventListener("click", async () => {
+    await copyText(buildMarkdown());
+    if (previewReady) setPreviewStatus("ready", "Markdown copied — paste it into a README.");
   });
   document.getElementById("openBtn").addEventListener("click", () => {
     window.open(document.getElementById("urlBox").value, "_blank");
@@ -483,6 +761,7 @@ function init(){
     document.querySelectorAll("#forms button").forEach(b => b.addEventListener("click", () => {
       state.form = b.dataset.f; state._preset = undefined; refresh();
     }));
+    applyBoot(recoverFromLocation());
     refresh();
   });
 }

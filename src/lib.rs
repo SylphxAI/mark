@@ -25,4 +25,7 @@ pub mod svg {
 }
 
 pub use bootstrap::AppState;
+pub use capabilities::mark::domain::recovery::{
+    parse_public_mark_url, readme_markdown_embed, StudioBoot,
+};
 pub use interfaces::http::app;
