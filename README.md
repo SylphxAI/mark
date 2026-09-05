@@ -54,7 +54,7 @@ One endpoint: `GET /api/v1/mark/{form}` — plus the shields-style pill shorthan
 | `deploy` | “deployed on Sylphx” conversion pill | `service` `style` |
 
 Shared params on every form: `theme` · `color` · `animation` · `credit` · `font` (`sans` | `mono`).
-A `theme` defines the full palette; an explicit `color` is used when no theme is given.
+A theme pack defines the full palette; an explicit `color` is used when there is no theme pack. An unknown theme name is not a theme pack.
 Themes are **neutral design themes** — no personal or company names anywhere in the product.
 
 ### Hero
@@ -85,7 +85,7 @@ fully transparent canvas for typing-line compositions.
 ```
 
 Styles: `flat` · `plastic` · `for-the-badge` · `social` · `pill`
-Colors: shields named colors, semantic names (`success` `important` `critical` `informational` `inactive`), or hex. A `theme` defines the palette and overrides `color`/`labelColor`. The `/badge/...` shorthand accepts the same `style` `theme` `animation` `labelColor` `font` `credit` query as `/pill`. Motion applies at text level — a glowing pill is a valid mark.
+Colors: shields named colors, semantic names (`success` `important` `critical` `informational` `inactive`), or hex. A theme pack defines the palette and overrides `color`/`labelColor`. Pill `labelColor` is dest paint when no theme pack; an unknown theme name is not a theme pack. The `/badge/...` shorthand accepts the same `style` `theme` `animation` `labelColor` `font` `credit` query as `/pill`. Motion applies at text level — a glowing pill is a valid mark.
 
 ### Strip
 
