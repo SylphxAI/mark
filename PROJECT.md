@@ -16,7 +16,7 @@ Sylphx **Mark** is the identity layer of the README: an embeddable image API —
 - One grammar: form (`hero` `pill` `strip` `profile` `deploy`) × art × paint ×
   content × geometry × motion
 - Neutral design themes only — no personal names, no company names in the
-  public catalog (ADR-0004); content is always supplied by the URL
+  public catalog (see [`docs/adr/`](docs/adr/)); content is always supplied by the URL
 - High cacheability, stateless, deterministic render kernel
 - Ordinary Apps Service on `https://mark.sylphx.com`; the Apps auto host is not dest
 - Soft brand exposure via optional credit watermark + deploy marks
@@ -52,9 +52,8 @@ field wash. Ambient motion is color-bearing (gradient drift + motif phase).
 
 ## Architecture
 
-- Binding shape: one capability (`mark`), one grammar (ADR-0003)
-- Decision: `docs/adr/ADR-0001-capability-first-architecture.md` →
-  `docs/adr/ADR-0003-one-grammar-end-state.md`
+- Binding shape: one capability (`mark`), one grammar (see [`docs/adr/`](docs/adr/))
+- Decisions: [`docs/adr/`](docs/adr/)
 - Code roots: `src/capabilities/mark/*` (domain + application + interfaces),
   `src/interfaces/*`, `src/bootstrap.rs`
 - Default semantic unit: Rust module (single crate)
