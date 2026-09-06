@@ -147,6 +147,44 @@ fn theme_wins_over_color_in_recovery() {
 }
 
 #[test]
+fn recovers_pill_label_color_when_no_theme_pack() {
+    let boot = parse_public_mark_url("/badge/build-passing-brightgreen?labelColor=red")
+        .expect("labelColor badge");
+    assert_eq!(form(&boot), "pill");
+    assert_eq!(boot.color.as_deref(), Some("brightgreen"));
+    assert_eq!(
+        boot.pill.as_ref().and_then(|p| p.label_color.as_deref()),
+        Some("red")
+    );
+}
+
+#[test]
+fn theme_pack_wins_over_label_color_in_recovery() {
+    let boot = parse_public_mark_url(
+        "/api/v1/mark/pill?label=build&message=passing&theme=github&labelColor=red",
+    )
+    .expect("themed pill");
+    assert_eq!(boot.theme.as_deref(), Some("github"));
+    assert_eq!(
+        boot.pill.as_ref().and_then(|p| p.label_color.as_ref()),
+        None
+    );
+}
+
+#[test]
+fn unknown_theme_is_not_a_theme_pack_in_recovery() {
+    let boot =
+        parse_public_mark_url("/badge/build-passing-brightgreen?theme=not-a-theme&labelColor=red")
+            .expect("unknown theme");
+    assert_eq!(boot.theme, None);
+    assert_eq!(boot.color.as_deref(), Some("brightgreen"));
+    assert_eq!(
+        boot.pill.as_ref().and_then(|p| p.label_color.as_deref()),
+        Some("red")
+    );
+}
+
+#[test]
 fn readme_embed_is_the_markdown_image() {
     assert_eq!(
         readme_markdown_embed(

@@ -10,6 +10,7 @@ use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
 
 use crate::capabilities::mark::domain::spec::MarkForm;
+use crate::capabilities::mark::domain::theme;
 
 /// Composer fields recovered from a locator. Absent keys stay studio defaults.
 #[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
@@ -54,6 +55,8 @@ pub struct StudioPillBoot {
     pub message: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub style: Option<String>,
+    #[serde(rename = "labelColor", skip_serializing_if = "Option::is_none")]
+    pub label_color: Option<String>,
 }
 
 #[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
@@ -77,6 +80,7 @@ const GRAMMAR_KEYS: &[&str] = &[
     "type",
     "theme",
     "color",
+    "labelColor",
     "animation",
     "font",
     "text",
@@ -160,6 +164,12 @@ fn parse_bool_token(v: &str) -> bool {
     matches!(v.to_ascii_lowercase().as_str(), "1" | "true" | "yes" | "on")
 }
 
+fn is_theme_pack(name: Option<&str>) -> bool {
+    name.filter(|s| !s.is_empty())
+        .and_then(theme::get)
+        .is_some()
+}
+
 fn parse_at(raw: &str, depth: u8) -> Option<StudioBoot> {
     if depth > 2 {
         return None;
@@ -203,7 +213,7 @@ fn parse_at(raw: &str, depth: u8) -> Option<StudioBoot> {
         let pill = boot.pill.get_or_insert_with(StudioPillBoot::default);
         pill.label = Some(label);
         pill.message = Some(message);
-        if boot.theme.as_deref().unwrap_or("").is_empty() {
+        if !is_theme_pack(boot.theme.as_deref()) {
             if let Some(c) = color {
                 boot.color = Some(c);
             }
@@ -228,9 +238,15 @@ fn apply_pairs(boot: &mut StudioBoot, mut form: MarkForm, pairs: &HashMap<String
         boot.form = Some(form.name().to_string());
     }
     if let Some(v) = pairs.get("theme").filter(|s| !s.is_empty()) {
-        boot.theme = Some(v.clone());
+        if is_theme_pack(Some(v)) {
+            boot.theme = Some(v.clone());
+            boot.color = None;
+            if let Some(pill) = boot.pill.as_mut() {
+                pill.label_color = None;
+            }
+        }
     }
-    if boot.theme.as_deref().unwrap_or("").is_empty() {
+    if !is_theme_pack(boot.theme.as_deref()) {
         if let Some(v) = pairs.get("color") {
             boot.color = Some(v.clone());
         }
@@ -274,6 +290,11 @@ fn apply_pairs(boot: &mut StudioBoot, mut form: MarkForm, pairs: &HashMap<String
             }
             if let Some(v) = pairs.get("style") {
                 pill.style = Some(v.clone());
+            }
+            if !is_theme_pack(boot.theme.as_deref()) {
+                if let Some(v) = pairs.get("labelColor") {
+                    pill.label_color = Some(v.clone());
+                }
             }
         }
         MarkForm::Strip => {

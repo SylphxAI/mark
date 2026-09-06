@@ -41,8 +41,8 @@ pub async fn catalog() -> impl IntoResponse {
         obj.insert(
             "notes".into(),
             json!({
-                "grammar": "mark = form x art x paint(theme/color) x content(text/desc) x geometry x motion",
-                "themes": "neutral design themes — no personal or company names (ADR-0004)",
+                "grammar": "mark = form × art (type) × paint (theme/color, pill labelColor) × content (text/desc/font) × geometry (width/height, hero layout) × motion (animation)",
+                "themes": "neutral design themes — no personal or company names",
                 "determinism": "same URL, same mark, forever — no clock, no upstream, no state",
                 "live_data": "not offered — use specialist hosts; Mark renders only what the URL says",
                 "animation_type": "true per-character typewriter with cursor (SMIL)"
