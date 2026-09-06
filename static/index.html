@@ -5,18 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Mark — the README identity layer</title>
 <meta name="description" content="One URL. One image. Your brand. Neutral themes, one grammar: hero, pill, strip, profile, deploy." />
-<link rel="preconnect" href="https://fonts.googleapis.com" />
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" />
-<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" media="print" onload="this.media='all'" />
-<noscript><link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" /></noscript>
 <style>
   :root {
     --bg:#07080c; --panel:#0c0f15; --elev:#12161f; --fg:#f2f4f8; --muted:#8b93a7;
     --faint:#5c6478; --line:rgba(255,255,255,0.08); --line2:rgba(255,255,255,0.16);
     --accent:#e08712; --accent2:#5b9dff; --ok:#3dd68c; --danger:#ff7b86;
-    --radius:14px; --font:"Instrument Sans",ui-sans-serif,system-ui,sans-serif;
-    --mono:"JetBrains Mono",ui-monospace,monospace; --scroll:rgba(255,255,255,0.14);
+    --radius:14px; --font:ui-sans-serif,system-ui,sans-serif;
+    --mono:ui-monospace,monospace; --scroll:rgba(255,255,255,0.14);
   }
   * { box-sizing:border-box; }
   html,body { height:100%; }
@@ -184,7 +179,7 @@ const state = {
   form:"hero", color:SIG_GRAD, theme:"", type:"waving", layout:"default", animation:"ambient",
   font:"sans", text:"Your name", desc:"A short line about what you build",
   height:HERO_H, width:HERO_W, credit:false,
-  pill:{label:"build", message:"passing", style:"flat"},
+  pill:{label:"build", message:"passing", style:"flat", labelColor:""},
   strip:{icons:["rust","ts","docker","kubernetes"], perline:12},
   deploy:{service:"app", style:"flat"}
 };
@@ -194,10 +189,15 @@ const PRESETS = [
   { name:"README footer", apply(){ Object.assign(state,{form:"hero",color:SIG_REV,theme:"",type:"waving",layout:"default",animation:"glow",font:"sans",text:"thanks for reading.",desc:"",height:120,width:880}); } },
   { name:"Typing lines", apply(){ Object.assign(state,{form:"hero",color:"4A90E2",theme:"",type:"transparent",layout:"signal",animation:"type",font:"mono",text:"First line\nSecond line\nThird line",desc:"",height:150,width:880}); } },
   { name:"Profile card", apply(){ Object.assign(state,{form:"profile",color:"",theme:"tokyonight",type:"",animation:"none",font:"sans",text:"Your name",desc:"What you build",width:640}); } },
-  { name:"Status pill", apply(){ Object.assign(state,{form:"pill",color:"brightgreen",theme:"",type:"",animation:"none",pill:{label:"build",message:"passing",style:"flat"}}); } },
+  { name:"Status pill", apply(){ Object.assign(state,{form:"pill",color:"brightgreen",theme:"",type:"",animation:"none",pill:{label:"build",message:"passing",style:"flat",labelColor:""}}); } },
   { name:"Tech strip", apply(){ Object.assign(state,{form:"strip",color:"",theme:"dark",type:"",animation:"none",strip:{icons:["rust","ts","docker","kubernetes"],perline:12}}); } }
 ];
 
+function isThemePack(name){
+  if (!name) return false;
+  const n = String(name).toLowerCase();
+  return THEMES.some(t => t && String(t).toLowerCase() === n);
+}
 
 function parseForm(raw){
   const s = String(raw == null ? "" : raw).trim().toLowerCase();
@@ -303,7 +303,7 @@ function parsePublicMarkUrl(raw, depth){
   } else if (params.has("form")) {
     form = parseForm(params.get("form"));
   }
-  const known = ["form","type","theme","color","animation","font","text","desc","width","height","credit","layout","label","message","style","icons","perline","service"];
+  const known = ["form","type","theme","color","labelColor","animation","font","text","desc","width","height","credit","layout","label","message","style","icons","perline","service"];
   let has = !!form;
   params.forEach((_, k) => { if (known.indexOf(k) >= 0) has = true; });
   if (!has) return null;
@@ -314,7 +314,7 @@ function parsePublicMarkUrl(raw, depth){
     boot.pill = boot.pill || {};
     boot.pill.label = badge.label;
     boot.pill.message = badge.message;
-    if (!boot.theme && badge.color) boot.color = badge.color;
+    if (!isThemePack(boot.theme) && badge.color) boot.color = badge.color;
   }
   return boot;
 }
@@ -322,8 +322,12 @@ function parsePublicMarkUrl(raw, depth){
 function pairsToBoot(params, form){
   const boot = {};
   if (params.has("form")) boot.form = parseForm(params.get("form"));
-  if (params.get("theme")) boot.theme = params.get("theme");
-  if (!boot.theme && params.has("color")) boot.color = params.get("color");
+  if (params.get("theme") && isThemePack(params.get("theme"))) {
+    boot.theme = params.get("theme");
+    boot.color = "";
+  } else if (params.has("color")) {
+    boot.color = params.get("color");
+  }
   if (params.has("type")) boot.type = params.get("type");
   if (params.has("layout")) boot.layout = params.get("layout");
   if (params.has("animation")) boot.animation = params.get("animation");
@@ -339,6 +343,8 @@ function pairsToBoot(params, form){
     if (params.has("label")) boot.pill.label = params.get("label");
     if (params.has("message")) boot.pill.message = params.get("message");
     if (params.has("style")) boot.pill.style = params.get("style");
+    if (isThemePack(boot.theme)) boot.pill.labelColor = "";
+    else if (params.has("labelColor")) boot.pill.labelColor = params.get("labelColor");
   } else if (f === "strip") {
     boot.strip = {};
     if (params.has("icons")) boot.strip.icons = params.get("icons").split(",").map(s => s.trim()).filter(Boolean);
@@ -365,7 +371,7 @@ function blankState(form){
     height: HERO_H,
     width: form === "profile" ? 640 : HERO_W,
     credit: false,
-    pill: {label:"", message:"ok", style:"flat"},
+    pill: {label:"", message:"ok", style:"flat", labelColor:""},
     strip: {icons:[], perline:12},
     deploy: {service:"", style:"flat"}
   };
@@ -376,7 +382,7 @@ function applyBoot(boot){
   const form = parseForm(boot.form);
   const next = blankState(form);
   if (boot.color != null) next.color = String(boot.color);
-  if (boot.theme != null) next.theme = String(boot.theme);
+  if (boot.theme != null) next.theme = isThemePack(boot.theme) ? String(boot.theme) : "";
   if (boot.type != null) next.type = String(boot.type);
   if (boot.layout != null) next.layout = String(boot.layout);
   if (boot.animation != null) next.animation = String(boot.animation);
@@ -386,11 +392,11 @@ function applyBoot(boot){
   if (boot.width != null && Number(boot.width)) next.width = Number(boot.width);
   if (boot.height != null && Number(boot.height)) next.height = Number(boot.height);
   if (typeof boot.credit === "boolean") next.credit = boot.credit;
-  if (boot.theme) next.color = "";
   if (boot.pill && typeof boot.pill === "object") {
     if (boot.pill.label != null) next.pill.label = String(boot.pill.label);
     if (boot.pill.message != null) next.pill.message = String(boot.pill.message);
     if (boot.pill.style != null) next.pill.style = String(boot.pill.style);
+    if (boot.pill.labelColor != null) next.pill.labelColor = String(boot.pill.labelColor);
   }
   if (boot.strip && typeof boot.strip === "object") {
     if (Array.isArray(boot.strip.icons)) next.strip.icons = boot.strip.icons.map(String);
@@ -400,6 +406,10 @@ function applyBoot(boot){
   if (boot.deploy && typeof boot.deploy === "object") {
     if (boot.deploy.service != null) next.deploy.service = String(boot.deploy.service);
     if (boot.deploy.style != null) next.deploy.style = String(boot.deploy.style);
+  }
+  if (isThemePack(next.theme)) {
+    next.color = "";
+    next.pill.labelColor = "";
   }
   Object.assign(state, next);
   state.pill = next.pill;
@@ -444,6 +454,7 @@ function grammarParams(){
     if (s.pill.label) q.set("label", s.pill.label);
     q.set("message", s.pill.message || "ok");
     if (s.pill.style !== "flat") q.set("style", s.pill.style);
+    if (!isThemePack(s.theme) && s.pill.labelColor) q.set("labelColor", s.pill.labelColor);
   } else if (s.form === "strip") {
     q.set("icons", s.strip.icons.join(","));
     if (s.strip.perline !== 12) q.set("perline", String(s.strip.perline));
@@ -606,6 +617,8 @@ function renderControls(){
     <div class="field"><label>Custom color (used when no theme)</label>
       <div class="row"><input type="text" id="colorInput" placeholder="gradient | auto | hex | 0:EEFF00,100:a82da8" value="${esc(s.color)}" />
       <button type="button" class="chip" id="surpriseBtn">Surprise</button></div></div>
+    ${s.form === "pill" ? `<div class="field"><label>Label color (used when no theme)</label>
+      <input type="text" id="pillLabelColor" placeholder="gray | hex | red" value="${esc(s.pill.labelColor || "")}" /></div>` : ""}
   </div>`;
 
   if (s.form === "hero" || s.form === "profile") {
@@ -649,6 +662,7 @@ function renderControls(){
   bind("perlineInput", e => { state.strip.perline = Number(e.target.value) || 12; refresh(); });
   bind("serviceInput", e => { state.deploy.service = e.target.value; refresh(); });
   bind("colorInput", e => { state.color = e.target.value.trim(); if (state.color) state.theme = ""; refresh(); });
+  bind("pillLabelColor", e => { state.pill.labelColor = e.target.value.trim(); if (state.pill.labelColor) state.theme = ""; refresh(); });
   const cb = document.getElementById("creditCb"); if (cb) cb.addEventListener("change", e => { state.credit = e.target.checked; refresh(); });
   const sb = document.getElementById("surpriseBtn"); if (sb) sb.addEventListener("click", surprise);
   const wireChips = (id, fn) => {
@@ -685,7 +699,7 @@ function renderControls(){
   // wire theme chips (they carry data-v but need special handling)
   c.querySelectorAll(".theme").forEach(el => el.addEventListener("click", () => {
     state.theme = el.dataset.v;
-    if (state.theme) state.color = "";
+    if (state.theme) { state.color = ""; state.pill.labelColor = ""; }
     refresh();
   }));
 }

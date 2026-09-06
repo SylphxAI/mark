@@ -88,6 +88,14 @@ async fn catalog_publishes_the_one_vocabulary() {
     assert_eq!(limits["pill_message"], 120);
     assert_eq!(limits["strip_icons"], 60);
     assert_eq!(limits["deploy_service"], 40);
+    assert_eq!(
+        v["notes"]["grammar"].as_str().expect("notes.grammar"),
+        "mark = form × art (type) × paint (theme/color, pill labelColor) × content (text/desc/font) × geometry (width/height, hero layout) × motion (animation)"
+    );
+    assert_eq!(
+        v["notes"]["themes"].as_str().expect("notes.themes"),
+        "neutral design themes — no personal or company names"
+    );
 }
 
 #[tokio::test]

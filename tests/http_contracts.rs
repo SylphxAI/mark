@@ -303,6 +303,48 @@ async fn studio_binds_to_the_catalog() {
 }
 
 #[tokio::test]
+async fn studio_page_has_no_webfont_origin() {
+    let (status, _, body) = get("/").await;
+    assert_eq!(status, StatusCode::OK);
+    for host in ["fonts.googleapis.com", "fonts.gstatic.com"] {
+        assert!(
+            !body.contains(host),
+            "studio must not load webfont origin {host}"
+        );
+    }
+    assert!(
+        body.contains("--font:ui-sans-serif,system-ui,sans-serif"),
+        "studio page must use a system sans stack"
+    );
+    assert!(
+        body.contains("--mono:ui-monospace,monospace"),
+        "studio page must use a system mono stack"
+    );
+}
+
+#[tokio::test]
+async fn studio_boots_pill_label_color_when_no_theme_pack() {
+    let (_, _, body) = get("/?form=pill&label=build&message=passing&labelColor=red").await;
+    let boot = studio_boot(&body);
+    assert_eq!(boot["form"], "pill");
+    assert_eq!(boot["pill"]["label"], "build");
+    assert_eq!(boot["pill"]["message"], "passing");
+    assert_eq!(boot["pill"]["labelColor"], "red");
+}
+
+#[tokio::test]
+async fn studio_theme_pack_drops_pill_label_color() {
+    let (_, _, body) =
+        get("/?form=pill&label=build&message=passing&theme=github&labelColor=red").await;
+    let boot = studio_boot(&body);
+    assert_eq!(boot["theme"], "github");
+    assert!(
+        boot["pill"]["labelColor"].is_null(),
+        "theme pack is dest paint; labelColor must not recover"
+    );
+}
+
+#[tokio::test]
 async fn catalog_exposes_the_one_vocabulary() {
     let (status, _, body) = get("/api/v1/catalog").await;
     assert_eq!(status, StatusCode::OK);
