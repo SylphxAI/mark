@@ -144,9 +144,7 @@ GitHub already runs on third-party image hosts (capsule-render, readme-stats, sk
 
 ## Architecture
 
-One capability, one grammar: see
-[`docs/adr/ADR-0003-one-grammar-end-state.md`](docs/adr/ADR-0003-one-grammar-end-state.md)
-(and the lineage in ADR-0001 / ADR-0002).
+One capability, one grammar: see [`docs/adr/`](docs/adr/).
 
 - `src/capabilities/mark/*` — the whole product: domain (spec, catalog, kernel, art, motion) · application (pure renderers) · interfaces (HTTP)
 - `src/interfaces/http` — HTTP composition root
