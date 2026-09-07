@@ -6,7 +6,6 @@ Mark is the dependable image language for software identity: a maintainer expres
 - Preview: `none` — this repository has no current honest preview URL. GitHub Pages and deployments are absent. `https://mark-web-prod.sylphx.app` is a stale platform auto host (404), not a preview.
 - Vision: [`docs/vision.md`](docs/vision.md)
 - Capabilities: [`docs/capabilities.md`](docs/capabilities.md)
-- Decisions: [`docs/adr/`](docs/adr/)
 
 Embeddable **SVG** marks — hero banners, status pills, tech strips, profile cards, and “deployed on Sylphx” conversion marks — from **one grammar** and **one URL**, rendered deterministically. Built in **Rust** (`axum`). Stateless. No clock, no upstream, no account. CDN-friendly.
 
@@ -144,7 +143,7 @@ GitHub already runs on third-party image hosts (capsule-render, readme-stats, sk
 
 ## Architecture
 
-One capability, one grammar: see [`docs/adr/`](docs/adr/).
+One capability, one grammar.
 
 - `src/capabilities/mark/*` — the whole product: domain (spec, catalog, kernel, art, motion) · application (pure renderers) · interfaces (HTTP)
 - `src/interfaces/http` — HTTP composition root
