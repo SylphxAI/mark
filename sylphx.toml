@@ -18,7 +18,6 @@ graceful_shutdown = 15
 
 [[services]]
 name = "web"
-type = "web"
 port = 8787
 # Serverless-first: dens STZ after public /health 200.
 instance_type = "micro"
