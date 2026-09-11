@@ -3,7 +3,7 @@
 //! CSS `@keyframes` often do nothing for external SVG images; SMIL (`<animate*>`) does.
 
 /// Catalog exported to API / studio (order = UI order).
-pub const ANIMATIONS: &[&str] = &[
+pub(crate) const ANIMATIONS: &[&str] = &[
     "none", "ambient", "fade", "rise", "scale", "float", "glow", "breathe", "slide", "cascade",
     "shimmer", "glitch", "wave", "orbit", "neon", "bounce", "type",
 ];

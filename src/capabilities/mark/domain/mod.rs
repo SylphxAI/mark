@@ -20,8 +20,9 @@ pub(crate) use catalog::{
 };
 pub(crate) use pill::{named_color, PillStyle};
 pub(crate) use recovery::split_badge_path;
-pub(crate) use svg::{cap_text, normalize_hex_token};
+pub use svg::cap_text;
+pub(crate) use svg::normalize_hex_token;
 
-// Kernel surface consumed by the contract tests (see tests/*.rs).
-pub use recovery::{parse_public_mark_url, readme_markdown_embed, StudioBoot};
+// Kernel surface consumed by the contract tests (see tests/*.rs). Recovery and
+// studio types are reached through `domain::recovery` directly.
 pub use spec::{DeploySpec, HeroSpec, MarkForm, MarkSpec, PillSpec, StripSpec};

@@ -15,7 +15,7 @@ pub(crate) fn get(name: &str) -> Option<&'static Theme> {
         .map(|t| &t.1)
 }
 
-pub fn list_names() -> Vec<&'static str> {
+pub(crate) fn list_names() -> Vec<&'static str> {
     THEMES.iter().map(|t| t.0).collect()
 }
 

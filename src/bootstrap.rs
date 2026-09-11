@@ -123,7 +123,7 @@ async fn shutdown_signal() {
 }
 
 /// Process/build revision for liveness metadata (not product capability proof).
-pub fn build_revision() -> &'static str {
+pub(crate) fn build_revision() -> &'static str {
     static REV: OnceLock<String> = OnceLock::new();
     REV.get_or_init(|| {
         // Runtime env wins (platform may inject after image build).

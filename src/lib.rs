@@ -5,7 +5,8 @@
 //! never failing. No clock, no upstream, no state.
 //!
 //! Public surface: [`capabilities::mark`] (kernel + `render`), the HTTP entry
-//! [`app`], and [`AppState`]. Everything else is crate-internal.
+//! [`app`], [`AppState`], and the [`bootstrap`] shell the `mark` binary needs.
+//! Everything else is crate-internal.
 
 pub mod bootstrap;
 pub mod capabilities;

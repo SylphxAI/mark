@@ -106,12 +106,6 @@ pub fn parse_public_mark_url(raw: &str) -> Option<StudioBoot> {
     parse_at(raw, 0)
 }
 
-/// README image embed for a public mark URL: `![alt](url)`.
-pub fn readme_markdown_embed(alt: &str, url: &str) -> String {
-    let alt = alt.replace('\\', "\\\\").replace(']', "\\]");
-    format!("![{alt}]({url})")
-}
-
 /// Shields path tokens: `/badge/{label}-{message}-{color}`.
 ///
 /// `--` is the explicit separator (labels may contain `-`). Otherwise the
