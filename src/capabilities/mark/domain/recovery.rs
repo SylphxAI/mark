@@ -106,17 +106,11 @@ pub fn parse_public_mark_url(raw: &str) -> Option<StudioBoot> {
     parse_at(raw, 0)
 }
 
-/// README image embed for a public mark URL: `![alt](url)`.
-pub fn readme_markdown_embed(alt: &str, url: &str) -> String {
-    let alt = alt.replace('\\', "\\\\").replace(']', "\\]");
-    format!("![{alt}]({url})")
-}
-
 /// Shields path tokens: `/badge/{label}-{message}-{color}`.
 ///
 /// `--` is the explicit separator (labels may contain `-`). Otherwise the
 /// last two `-` splits are message and color. Underscores become spaces.
-pub fn split_badge_path(tail: &str) -> (String, String, Option<String>) {
+pub(crate) fn split_badge_path(tail: &str) -> (String, String, Option<String>) {
     if tail.contains("--") {
         let parts: Vec<&str> = tail.split("--").collect();
         (
@@ -269,6 +263,8 @@ fn apply_pairs(boot: &mut StudioBoot, mut form: MarkForm, pairs: &HashMap<String
     if let Some(v) = pairs.get("desc") {
         boot.desc = Some(decode_text_value(v));
     }
+    // Recovery is best-effort composer state: a malformed number stays at the
+    // studio default instead of failing the whole boot payload.
     if let Some(v) = pairs.get("width").and_then(|s| s.parse().ok()) {
         boot.width = Some(v);
     }

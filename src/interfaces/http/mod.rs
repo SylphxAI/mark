@@ -4,7 +4,7 @@
 
 mod catalog;
 mod health;
-pub mod response;
+pub(crate) mod response;
 mod studio;
 
 use axum::routing::get;

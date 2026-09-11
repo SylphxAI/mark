@@ -6,7 +6,7 @@ use serde_json::json;
 
 use crate::bootstrap::build_revision;
 
-pub async fn health() -> impl IntoResponse {
+pub(crate) async fn health() -> impl IntoResponse {
     Json(json!({
         "ok": true,
         "service": "mark",

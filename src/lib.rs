@@ -3,29 +3,14 @@
 //! One concept, one grammar (ADR-0003): form × art × paint × geometry × text ×
 //! motion. Every mark is a pure function of its URL — deterministic, immutable,
 //! never failing. No clock, no upstream, no state.
+//!
+//! Public surface: [`capabilities::mark`] (kernel + `render`), the HTTP entry
+//! [`app`], [`AppState`], and the [`bootstrap`] shell the `mark` binary needs.
+//! Everything else is crate-internal.
 
 pub mod bootstrap;
 pub mod capabilities;
 pub mod interfaces;
 
-// Single capability-rooted public surface for tests and internal callers.
-pub mod mark {
-    pub use crate::capabilities::mark::*;
-}
-
-// Kernel re-exports used by integration tests (single authority: mark domain).
-pub mod color {
-    pub use crate::capabilities::mark::domain::color::*;
-}
-pub mod themes {
-    pub use crate::capabilities::mark::domain::theme::*;
-}
-pub mod svg {
-    pub use crate::capabilities::mark::domain::svg::*;
-}
-
 pub use bootstrap::AppState;
-pub use capabilities::mark::domain::recovery::{
-    parse_public_mark_url, readme_markdown_embed, StudioBoot,
-};
 pub use interfaces::http::app;

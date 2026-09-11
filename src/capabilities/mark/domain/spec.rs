@@ -24,7 +24,7 @@ pub enum MarkForm {
 }
 
 impl MarkForm {
-    pub const ALL: [&'static str; 5] = ["hero", "pill", "strip", "profile", "deploy"];
+    pub(crate) const ALL: [&'static str; 5] = ["hero", "pill", "strip", "profile", "deploy"];
 
     pub fn name(&self) -> &'static str {
         match self {

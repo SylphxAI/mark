@@ -3,14 +3,21 @@
 use axum::http::{header, HeaderMap, HeaderValue, StatusCode};
 use axum::response::{IntoResponse, Response};
 
-pub fn parse_bool(v: Option<&str>, default: bool) -> bool {
+use crate::capabilities::mark::domain::svg::{SVG_CACHE, SVG_EDGE_CACHE};
+
+/// Cache directives are compile-time constants: an invalid header token fails
+/// the build instead of panicking on a request path.
+const CACHE_CONTROL: HeaderValue = HeaderValue::from_static(SVG_CACHE);
+const EDGE_CACHE_CONTROL: HeaderValue = HeaderValue::from_static(SVG_EDGE_CACHE);
+
+pub(crate) fn parse_bool(v: Option<&str>, default: bool) -> bool {
     match v {
         None => default,
         Some(s) => matches!(s.to_ascii_lowercase().as_str(), "1" | "true" | "yes" | "on"),
     }
 }
 
-pub fn decode_text(s: String) -> String {
+pub(crate) fn decode_text(s: String) -> String {
     let decoded = urlencoding::decode(&s).map(|c| c.into_owned()).unwrap_or(s);
     decoded.replace("-nl-", "\n")
 }
@@ -20,7 +27,10 @@ pub fn decode_text(s: String) -> String {
 /// inline FNV-1a/64 — deterministic across processes and deploys for identical
 /// bytes, with no new dependency. The tag changes iff the bytes change, which
 /// is exactly the immutable-by-URL contract (query-pinned content).
-pub fn etag_for(svg: &str) -> String {
+///
+/// The emitted tag is always `"` + 16 lowercase hex digits + `"`, so the header
+/// conversion below cannot fail for any input.
+pub(crate) fn etag_header(svg: &str) -> HeaderValue {
     const FNV_OFFSET: u64 = 0xcbf29ce484222325;
     const FNV_PRIME: u64 = 0x100000001b3;
     let mut h = FNV_OFFSET;
@@ -28,11 +38,12 @@ pub fn etag_for(svg: &str) -> String {
         h ^= *b as u64;
         h = h.wrapping_mul(FNV_PRIME);
     }
-    format!("\"{h:016x}\"")
+    let tag = format!("\"{h:016x}\"");
+    HeaderValue::from_str(&tag).expect("hex digest tag is a valid header value")
 }
 
-fn cache_headers(headers: &mut HeaderMap, cache: &str, etag: &str) {
-    headers.insert(header::CACHE_CONTROL, HeaderValue::from_str(cache).unwrap());
+fn cache_headers(headers: &mut HeaderMap, etag: &HeaderValue) {
+    headers.insert(header::CACHE_CONTROL, CACHE_CONTROL.clone());
     // Explicit edge TTL: Cloudflare honors Cloudflare-CDN-Cache-Control >
     // CDN-Cache-Control > Cache-Control for edge. Origin headers are this
     // product's write; they cannot flip cf-cache-status on dest extensionless
@@ -41,13 +52,13 @@ fn cache_headers(headers: &mut HeaderMap, cache: &str, etag: &str) {
     // directive must be present so that rule has TTL to honor.
     headers.insert(
         header::HeaderName::from_static("cdn-cache-control"),
-        HeaderValue::from_str(crate::capabilities::mark::domain::svg::SVG_EDGE_CACHE).unwrap(),
+        EDGE_CACHE_CONTROL.clone(),
     );
     headers.insert(
         header::HeaderName::from_static("cloudflare-cdn-cache-control"),
-        HeaderValue::from_str(crate::capabilities::mark::domain::svg::SVG_EDGE_CACHE).unwrap(),
+        EDGE_CACHE_CONTROL.clone(),
     );
-    headers.insert(header::ETAG, HeaderValue::from_str(etag).unwrap());
+    headers.insert(header::ETAG, etag.clone());
 }
 
 fn security_headers(headers: &mut HeaderMap) {
@@ -75,12 +86,13 @@ fn security_headers(headers: &mut HeaderMap) {
 }
 
 /// Returns true when `If-None-Match` matches `etag` (exact, weak, or `*`).
-fn etag_matches(if_none_match: Option<&str>, etag: &str) -> bool {
+fn etag_matches(if_none_match: Option<&str>, etag: &HeaderValue) -> bool {
     fn norm(s: &str) -> &str {
         let s = s.trim();
         let s = s.strip_prefix("W/").unwrap_or(s);
         s.trim().trim_matches('"')
     }
+    let etag = etag.to_str().unwrap_or_default();
     match if_none_match {
         None => false,
         Some(v) => {
@@ -101,11 +113,14 @@ fn etag_matches(if_none_match: Option<&str>, etag: &str) -> bool {
 /// no body (HIT-equivalent verifiable without a CDN); otherwise `200` with
 /// identical bytes. Security headers (CSP/nosniff/CORP) are preserved on 200;
 /// 304 carries cache + ETag per RFC 7232 (no body, no content-type).
-pub fn svg_response_conditional(svg: &str, cache: &str, if_none_match: Option<&str>) -> Response {
-    let etag = etag_for(svg);
+///
+/// Every SVG body is immutable by URL contract (`MARK-CDN`), so the cache
+/// policy lives here, beside the header write, instead of being threaded in.
+pub(crate) fn svg_response_conditional(svg: &str, if_none_match: Option<&str>) -> Response {
+    let etag = etag_header(svg);
     if etag_matches(if_none_match, &etag) {
         let mut headers = HeaderMap::new();
-        cache_headers(&mut headers, cache, &etag);
+        cache_headers(&mut headers, &etag);
         return (StatusCode::NOT_MODIFIED, headers).into_response();
     }
     let mut headers = HeaderMap::new();
@@ -113,10 +128,48 @@ pub fn svg_response_conditional(svg: &str, cache: &str, if_none_match: Option<&s
         header::CONTENT_TYPE,
         HeaderValue::from_static("image/svg+xml; charset=utf-8"),
     );
-    cache_headers(&mut headers, cache, &etag);
+    cache_headers(&mut headers, &etag);
     security_headers(&mut headers);
     (headers, svg.to_string()).into_response()
 }
 
 // Render is total by construction (ADR-0003): every spec normalizes, nothing
 // fails, so there is no error-SVG path and no clock sampling.
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn etag_header_is_a_quoted_hex_digest() {
+        let tag = etag_header("<svg/>");
+        let s = tag.to_str().expect("etag is ASCII by construction");
+        assert!(s.starts_with('"') && s.ends_with('"'), "quoted: {s}");
+        let hex = &s[1..s.len() - 1];
+        assert_eq!(hex.len(), 16, "FNV-1a/64 is 16 hex digits: {s}");
+        assert!(
+            hex.chars()
+                .all(|c| c.is_ascii_hexdigit() && !c.is_ascii_uppercase()),
+            "lowercase hex only: {s}"
+        );
+        assert_eq!(tag, etag_header("<svg/>"), "same bytes, same tag");
+        assert_ne!(
+            tag,
+            etag_header("<svg />"),
+            "different bytes, different tag"
+        );
+    }
+
+    #[test]
+    fn etag_matches_exact_weak_and_star() {
+        let tag = etag_header("<svg/>");
+        let strong = tag.to_str().unwrap().to_string();
+        let weak = format!("W/{}", strong);
+        assert!(etag_matches(Some(&strong), &tag));
+        assert!(etag_matches(Some(&weak), &tag));
+        assert!(etag_matches(Some("*"), &tag));
+        assert!(etag_matches(Some(&format!("{}, {}", weak, strong)), &tag));
+        assert!(!etag_matches(Some("\"deadbeefdeadbeef\""), &tag));
+        assert!(!etag_matches(None, &tag));
+    }
+}

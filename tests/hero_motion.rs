@@ -1,7 +1,8 @@
 //! Gating tests: background SMIL + credit defaults for the hero mark.
 
-use mark::mark::{render, MarkForm, MarkSpec};
-use mark::svg::credit_mark;
+use mark::capabilities::mark::domain::svg::credit_mark;
+use mark::capabilities::mark::domain::{MarkForm, MarkSpec};
+use mark::capabilities::mark::render;
 
 fn hero(ty: &str, text: &str) -> MarkSpec {
     MarkSpec {
@@ -85,7 +86,10 @@ fn wave_and_waving_have_multi_layer_path_smil() {
             path_anims >= 3,
             "{ty} should morph multiple wave layers; path_anims={path_anims}"
         );
-        assert!(bg.contains("stroke"), "{ty} should include foam crest stroke");
+        assert!(
+            bg.contains("stroke"),
+            "{ty} should include foam crest stroke"
+        );
     }
 }
 
@@ -109,7 +113,10 @@ fn rise_animates_text_and_keeps_background_motion() {
     spec.animation = Some("rise".into());
     let svg = render(&spec);
     let bg = strip_text_elements(&svg);
-    assert!(count_smil(&bg) >= 1, "rise must keep ambient background motion");
+    assert!(
+        count_smil(&bg) >= 1,
+        "rise must keep ambient background motion"
+    );
     assert!(
         svg.contains("animateTransform") && svg.contains("opacity"),
         "rise text motion missing"

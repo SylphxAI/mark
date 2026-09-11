@@ -29,7 +29,9 @@ jobs:
         run: bash scripts/check-owned-runner-profiles.sh
       - uses: dtolnay/rust-toolchain@stable
         with:
-          components: clippy
+          components: clippy, rustfmt
+      - name: Format
+        run: cargo fmt --all -- --check
       - name: Test
         # test-profile only — Platform owns production packaging (build once).
         run: cargo test --locked

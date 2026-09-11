@@ -48,9 +48,7 @@ pub fn render(spec: &MarkSpec) -> String {
 
     let anim = normalize_animation(spec.animation.as_deref());
     let (open, close) = group_wrap(anim, 0, w, h);
-    let mut body = format!(
-        "<rect width=\"{w}\" height=\"{h}\" rx=\"12\" fill=\"{bg}\"/>{open}"
-    );
+    let mut body = format!("<rect width=\"{w}\" height=\"{h}\" rx=\"12\" fill=\"{bg}\"/>{open}");
     let fallback = "<rect x=\"6\" y=\"6\" width=\"20\" height=\"20\" rx=\"4\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"/><text x=\"16\" y=\"20\" text-anchor=\"middle\" font-size=\"8\" fill=\"currentColor\">?</text>";
     for (i, id) in ids.iter().enumerate() {
         let col = (i as u32) % per;

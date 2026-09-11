@@ -9,7 +9,7 @@ use crate::capabilities::mark::domain::theme::{self, Theme};
 
 /// Resolved paint kit consumed by banner shapes + chrome.
 #[derive(Clone, Debug)]
-pub struct FillPlan {
+pub(crate) struct FillPlan {
     /// SVG gradient/solid defs to inject under `<defs>`.
     pub defs: String,
     /// Main field paint (`url(#…)` or `#hex`).
@@ -18,8 +18,6 @@ pub struct FillPlan {
     pub fg: String,
     /// Deep base (dark end of field).
     pub base: String,
-    /// Mid field tone.
-    pub mid: String,
     /// Hero accent (orbs, plate tile, rules).
     pub accent: String,
     /// Cool secondary (meshes, secondary blobs).
@@ -28,13 +26,11 @@ pub struct FillPlan {
     pub warm: String,
     /// Soft specular tint (never pure white).
     pub glow: String,
-    /// Muted supporting tone.
-    pub muted: String,
 }
 
 impl FillPlan {
     /// `#rrggbb` form of ink for SVG fill attributes.
-    pub fn fg_hash(&self) -> String {
+    pub(crate) fn fg_hash(&self) -> String {
         ensure_hash(&self.fg)
     }
 }
@@ -42,7 +38,7 @@ impl FillPlan {
 /// Resolve the chromatic paint kit for a mark. Pure and deterministic:
 /// the same inputs always produce the same kit — the clock is never sampled
 /// (ADR-0003: every mark is a pure function of its URL).
-pub fn resolve_fill(
+pub(crate) fn resolve_fill(
     color: Option<&str>,
     theme: Option<&str>,
     seed: &str,
@@ -85,7 +81,6 @@ fn theme_fill(t: &Theme, gid: &str) -> FillPlan {
     // Keep warm chromatic — mix accent toward amber, not white.
     let warm = ensure_hash(&mix_hex(t.accent, "FEE140", 0.42));
     let glow = ensure_hash(&mix_hex(t.bg2, "FFFFFF", 0.42));
-    let muted = ensure_hash(t.muted);
     let fg = ensure_hash(t.fg);
 
     kit(
@@ -96,7 +91,6 @@ fn theme_fill(t: &Theme, gid: &str) -> FillPlan {
         &accent,
         &warm,
         &glow,
-        &muted,
         strip_hash(&fg),
     )
 }
@@ -109,12 +103,9 @@ fn solid_kit(gid: &str, hex: &str) -> FillPlan {
     let accent2 = ensure_hash(&mix_hex(h, "4FACFE", 0.48));
     let warm = ensure_hash(&mix_hex(h, "FEE140", 0.5));
     let glow = ensure_hash(&mix_hex(h, "FFFFFF", 0.48));
-    let muted = ensure_hash(&mix_hex(h, "94A3B8", 0.45));
     let fg = contrasting_fg(h);
 
-    kit(
-        gid, &base, &mid, &accent2, &accent, &warm, &glow, &muted, &fg,
-    )
+    kit(gid, &base, &mid, &accent2, &accent, &warm, &glow, &fg)
 }
 
 fn gradient_kit(gid: &str, a: &str, b: &str) -> FillPlan {
@@ -125,11 +116,7 @@ fn gradient_kit(gid: &str, a: &str, b: &str) -> FillPlan {
     let accent = ensure_hash(&lighten(b, 0.08));
     let warm = ensure_hash(&mix_hex(b, "FEE140", 0.38));
     let glow = ensure_hash(&mix_hex(b, "FFFFFF", 0.4));
-    let muted = ensure_hash(&mix_hex(a, "A8B3C7", 0.4));
-
-    kit(
-        gid, &base, &mid, &accent2, &accent, &warm, &glow, &muted, "FFFFFF",
-    )
+    kit(gid, &base, &mid, &accent2, &accent, &warm, &glow, "FFFFFF")
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -141,7 +128,6 @@ fn kit(
     accent: &str,
     warm: &str,
     glow: &str,
-    muted: &str,
     fg: &str,
 ) -> FillPlan {
     FillPlan {
@@ -149,12 +135,10 @@ fn kit(
         fill: format!("url(#{gid})"),
         fg: strip_hash(fg).to_string(),
         base: base.to_string(),
-        mid: mid.to_string(),
         accent: accent.to_string(),
         accent2: accent2.to_string(),
         warm: warm.to_string(),
         glow: glow.to_string(),
-        muted: muted.to_string(),
     }
 }
 
@@ -227,7 +211,11 @@ fn chromatic_defs(
 
 fn parse_custom_gradient(spec: &str, gid: &str) -> Option<FillPlan> {
     // Formats: "0:EEFF00,100:a82da8" or "FF6B6B,C44569,F8B500"
-    let parts: Vec<&str> = spec.split(',').map(str::trim).filter(|s| !s.is_empty()).collect();
+    let parts: Vec<&str> = spec
+        .split(',')
+        .map(str::trim)
+        .filter(|s| !s.is_empty())
+        .collect();
     if parts.is_empty() {
         return None;
     }
@@ -274,26 +262,12 @@ fn parse_custom_gradient(spec: &str, gid: &str) -> Option<FillPlan> {
     let accent2 = b.clone();
     let warm = ensure_hash(&mix_hex(strip_hash(&b), "FEE140", 0.35));
     let glow = ensure_hash(&mix_hex(strip_hash(&b), "FFFFFF", 0.4));
-    let muted = ensure_hash(&mix_hex(strip_hash(&a), "A8B3C7", 0.4));
-
-    let mut plan = kit(
-        gid,
-        &base,
-        &mid,
-        &accent2,
-        &accent,
-        &warm,
-        &glow,
-        &muted,
-        "FFFFFF",
-    );
+    let mut plan = kit(gid, &base, &mid, &accent2, &accent, &warm, &glow, "FFFFFF");
 
     // Rebuild primary field gradient with exact user stop positions.
     let mut stop_svg = String::new();
     for (o, c) in &stops {
-        stop_svg.push_str(&format!(
-            "<stop offset=\"{o}%\" stop-color=\"{c}\"/>"
-        ));
+        stop_svg.push_str(&format!("<stop offset=\"{o}%\" stop-color=\"{c}\"/>"));
     }
     let field = format!(
         "<linearGradient id=\"{gid}\" x1=\"0%\" y1=\"0%\" x2=\"100%\" y2=\"100%\">{stop_svg}</linearGradient>"
@@ -319,7 +293,7 @@ pub(crate) fn ink_canvas(base: &str) -> String {
     }
 }
 
-pub fn contrasting_fg(hex: &str) -> String {
+pub(crate) fn contrasting_fg(hex: &str) -> String {
     let h = strip_hash(hex);
     if h.len() != 6 {
         return "FFFFFF".into();
@@ -388,7 +362,9 @@ mod tests {
     #[test]
     fn custom_stops_parse() {
         let p = resolve_fill(Some("0:FF6B6B,100:C44569"), None, "x", "mg");
-        assert!(p.defs.contains("#FF6B6B") || p.defs.contains("#ff6b6b") || p.defs.contains("FF6B6B"));
+        assert!(
+            p.defs.contains("#FF6B6B") || p.defs.contains("#ff6b6b") || p.defs.contains("FF6B6B")
+        );
     }
 
     #[test]

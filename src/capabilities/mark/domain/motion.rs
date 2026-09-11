@@ -3,13 +3,13 @@
 //! CSS `@keyframes` often do nothing for external SVG images; SMIL (`<animate*>`) does.
 
 /// Catalog exported to API / studio (order = UI order).
-pub const ANIMATIONS: &[&str] = &[
+pub(crate) const ANIMATIONS: &[&str] = &[
     "none", "ambient", "fade", "rise", "scale", "float", "glow", "breathe", "slide", "cascade",
     "shimmer", "glitch", "wave", "orbit", "neon", "bounce", "type",
 ];
 
 /// Legacy aliases accepted for compatibility.
-pub fn normalize_animation(raw: Option<&str>) -> &'static str {
+pub(crate) fn normalize_animation(raw: Option<&str>) -> &'static str {
     match raw.map(|s| s.trim()).filter(|s| !s.is_empty()) {
         None => "ambient",
         Some(s) => match s.to_ascii_lowercase().as_str() {
@@ -36,7 +36,7 @@ pub fn normalize_animation(raw: Option<&str>) -> &'static str {
 }
 
 /// Background motion intensity 0.0–1.0 (none freezes decorative layers).
-pub fn ambient_gain(anim: &str) -> f32 {
+pub(crate) fn ambient_gain(anim: &str) -> f32 {
     match anim {
         "none" => 0.0,
         "ambient" => 0.9,
@@ -47,7 +47,7 @@ pub fn ambient_gain(anim: &str) -> f32 {
 }
 
 /// Extra opening attributes (no trailing `>`) for a text node.
-pub fn text_open_attrs(anim: &str, line_index: usize, width: u32, height: u32) -> String {
+pub(crate) fn text_open_attrs(anim: &str, line_index: usize, width: u32, height: u32) -> String {
     let delay = line_index as f32 * 0.12;
     match anim {
         "fade" => " opacity=\"0\"".into(),
@@ -83,7 +83,7 @@ pub fn text_open_attrs(anim: &str, line_index: usize, width: u32, height: u32) -
 }
 
 /// SMIL children placed inside a text element.
-pub fn text_children(anim: &str, line_index: usize, width: u32, height: u32) -> String {
+pub(crate) fn text_children(anim: &str, line_index: usize, width: u32, height: u32) -> String {
     let delay = line_index as f32 * 0.12;
     match anim {
         "none" | "ambient" => String::new(),
@@ -229,7 +229,7 @@ pub fn text_children(anim: &str, line_index: usize, width: u32, height: u32) -> 
 
 /// Wrap a row/group (strip icons) with the same text-level SMIL contract.
 /// Empty pair means the animation is static at this scale (`none` / `ambient`).
-pub fn group_wrap(anim: &str, index: usize, width: u32, height: u32) -> (String, String) {
+pub(crate) fn group_wrap(anim: &str, index: usize, width: u32, height: u32) -> (String, String) {
     let attrs = text_open_attrs(anim, index, width, height);
     let children = text_children(anim, index, width, height);
     if attrs.is_empty() && children.is_empty() {

@@ -1,9 +1,9 @@
 //! Clean-break contract tests (ADR-0003): strict SVG attribute grammar,
 //! escaping, bounded inputs, determinism — no legacy, no clock, no upstream.
 
-use mark::capabilities::mark::domain::{MarkSpec, PillSpec, StripSpec};
-use mark::mark::{render, MarkForm};
-use mark::svg::cap_text;
+use mark::capabilities::mark::domain::svg::cap_text;
+use mark::capabilities::mark::domain::{MarkForm, MarkSpec, PillSpec, StripSpec};
+use mark::capabilities::mark::render;
 
 fn hero(ty: &str, text: &str) -> MarkSpec {
     MarkSpec {
@@ -60,7 +60,10 @@ fn hero_accepts_valid_hex_tokens() {
     spec.animation = Some("none".into());
     let svg = render(&spec);
     assert!(svg.contains("#ff0000"), "3-digit shorthand must expand");
-    assert!(svg.contains("stroke=\"#00ff00\""), "valid stroke token kept");
+    assert!(
+        svg.contains("stroke=\"#00ff00\""),
+        "valid stroke token kept"
+    );
 }
 
 #[test]
@@ -77,7 +80,10 @@ fn nonfinite_geometry_never_reaches_svg() {
 
     let svg = render(&spec);
     for invalid in ["NaN", "inf", "-inf"] {
-        assert!(!svg.contains(invalid), "non-finite geometry escaped: {invalid}");
+        assert!(
+            !svg.contains(invalid),
+            "non-finite geometry escaped: {invalid}"
+        );
     }
     assert!(svg.contains("stroke=\"#00ff00\""));
 }

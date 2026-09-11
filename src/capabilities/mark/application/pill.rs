@@ -37,7 +37,9 @@ fn measure(text: &str, style: PillStyle) -> u32 {
     };
     let n = text.chars().count() as f32;
     let extra = if n > 1.0 { tracking * (n - 1.0) } else { 0.0 };
-    (line_advance(text, font_size) + extra + pad).ceil().max(1.0) as u32
+    (line_advance(text, font_size) + extra + pad)
+        .ceil()
+        .max(1.0) as u32
 }
 
 /// Render a pill from resolved parts (shared by the deploy mark).
@@ -68,7 +70,7 @@ pub(crate) fn render_pill(
                 "FFFFFF"
             } else {
                 "555555"
-            }
+            },
         )
     };
 

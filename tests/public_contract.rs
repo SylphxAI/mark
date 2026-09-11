@@ -7,7 +7,8 @@
 use axum::body::Body;
 use axum::http::{Request, StatusCode};
 use http_body_util::BodyExt;
-use mark::mark::{render, MarkForm, MarkSpec};
+use mark::capabilities::mark::domain::{MarkForm, MarkSpec};
+use mark::capabilities::mark::render;
 use mark::{app, AppState};
 use tower::ServiceExt;
 
@@ -28,10 +29,7 @@ async fn get_with(path: &str, headers: &[(&str, &str)]) -> (StatusCode, String, 
     for (name, value) in headers {
         req = req.header(*name, *value);
     }
-    let res = app
-        .oneshot(req.body(Body::empty()).unwrap())
-        .await
-        .unwrap();
+    let res = app.oneshot(req.body(Body::empty()).unwrap()).await.unwrap();
     let status = res.status();
     let ctype = res
         .headers()
@@ -137,7 +135,10 @@ async fn catalog_art_types_render() {
         let path = format!("/api/v1/mark/hero?type={ty}&text=T&animation=none");
         let (status, _, body) = get(&path).await;
         assert_eq!(status, StatusCode::OK, "art {ty}");
-        assert!(body.starts_with("<?xml") && body.contains("</svg>"), "art {ty}");
+        assert!(
+            body.starts_with("<?xml") && body.contains("</svg>"),
+            "art {ty}"
+        );
     }
 }
 
@@ -210,14 +211,18 @@ async fn staff_headers_do_not_change_the_mark() {
         "staff/first-party headers must not skip the public mark"
     );
 
-    let inject = "/api/v1/mark/hero?type=soft&text=probe&animation=none&fontColor=%22%20onload=%22alert(7)";
+    let inject =
+        "/api/v1/mark/hero?type=soft&text=probe&animation=none&fontColor=%22%20onload=%22alert(7)";
     let (status, _, body) = get_with(
         inject,
         &[("authorization", "Bearer staff"), ("x-staff", "1")],
     )
     .await;
     assert_eq!(status, StatusCode::OK);
-    assert!(!body.contains("onload="), "staff header must not skip paint grammar");
+    assert!(
+        !body.contains("onload="),
+        "staff header must not skip paint grammar"
+    );
 }
 
 #[tokio::test]
@@ -248,8 +253,7 @@ async fn public_http_matches_the_render_writer() {
 
 #[tokio::test]
 async fn unknown_form_still_renders_svg() {
-    let (status, ctype, body) =
-        get("/api/v1/mark/not-a-form?text=Hi&animation=none").await;
+    let (status, ctype, body) = get("/api/v1/mark/not-a-form?text=Hi&animation=none").await;
     assert_eq!(status, StatusCode::OK);
     assert!(ctype.contains("svg"));
     assert!(body.contains("<svg"));

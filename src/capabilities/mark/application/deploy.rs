@@ -96,16 +96,27 @@ pub fn render(spec: &MarkSpec) -> String {
     let mark_cy = h as f32 / 2.0;
     let mark_r = inner * 0.22;
 
-    let family = match spec.font.as_deref().map(|f| f.to_ascii_lowercase()).as_deref() {
+    let family = match spec
+        .font
+        .as_deref()
+        .map(|f| f.to_ascii_lowercase())
+        .as_deref()
+    {
         Some("mono") => "ui-monospace,SFMono-Regular,Menlo,Consolas,monospace",
         _ => "ui-sans-serif,system-ui,-apple-system,Segoe UI,Helvetica,sans-serif",
     };
     let font = if style == PillStyle::ForTheBadge {
-        format!("font-family=\"{family}\" font-size=\"11\" font-weight=\"700\" letter-spacing=\"0.5\"")
+        format!(
+            "font-family=\"{family}\" font-size=\"11\" font-weight=\"700\" letter-spacing=\"0.5\""
+        )
     } else {
         format!("font-family=\"{family}\" font-size=\"11\" font-weight=\"500\"")
     };
-    let ty = if style == PillStyle::ForTheBadge { 18 } else { 14 };
+    let ty = if style == PillStyle::ForTheBadge {
+        18
+    } else {
+        14
+    };
 
     let label_fg = ensure_hash(&contrasting_fg(&lbl_color));
     let msg_fg = ensure_hash(&contrasting_fg(&msg_color));

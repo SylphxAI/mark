@@ -1,8 +1,8 @@
 //! Studio recovery oracles: a public mark URL reconstitutes composer state.
 
-use mark::{parse_public_mark_url, readme_markdown_embed};
+use mark::capabilities::mark::domain::recovery::parse_public_mark_url;
 
-fn form(boot: &mark::StudioBoot) -> &str {
+fn form(boot: &mark::capabilities::mark::domain::recovery::StudioBoot) -> &str {
     boot.form.as_deref().unwrap_or("")
 }
 
@@ -185,16 +185,21 @@ fn unknown_theme_is_not_a_theme_pack_in_recovery() {
 }
 
 #[test]
-fn readme_embed_is_the_markdown_image() {
-    assert_eq!(
-        readme_markdown_embed(
-            "Ada Lovelace",
-            "http://test.local/api/v1/mark/profile?text=Ada+Lovelace"
-        ),
-        "![Ada Lovelace](http://test.local/api/v1/mark/profile?text=Ada+Lovelace)"
+fn studio_page_ships_the_markdown_embed_control() {
+    // The README embed is built in the studio page (the browser owns that
+    // string; there is no server-side embed writer). This asserts the shipped
+    // page still offers the control and the `![alt](url)` shape.
+    let html = std::fs::read_to_string("static/index.html").expect("studio page");
+    assert!(
+        html.contains("Copy markdown"),
+        "studio offers the embed control"
     );
-    assert_eq!(
-        readme_markdown_embed("a]b", "http://x"),
-        "![a\\]b](http://x)"
+    assert!(
+        html.contains("buildMarkdown"),
+        "studio builds the markdown embed"
+    );
+    assert!(
+        html.contains("![") && html.contains("]("),
+        "embed is ![alt](url)"
     );
 }

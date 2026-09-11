@@ -1,7 +1,7 @@
 //! Pill vocabulary — the atomic mark's style and named colors.
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
-pub enum PillStyle {
+pub(crate) enum PillStyle {
     #[default]
     Flat,
     Plastic,
@@ -23,7 +23,7 @@ impl PillStyle {
 }
 
 /// Shields-compatible named colors + fleet brand colors.
-pub fn named_color(c: &str) -> Option<&'static str> {
+pub(crate) fn named_color(c: &str) -> Option<&'static str> {
     Some(match c.to_ascii_lowercase().as_str() {
         "brightgreen" => "4C1",
         "green" => "97CA00",
