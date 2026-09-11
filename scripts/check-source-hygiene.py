@@ -15,6 +15,12 @@ Scanned scope: `src/**`, `tests/**`, and `build.rs` (product sources, contract
 tests, and the build-identity generator). Comments are stripped before pattern
 matching, so prose about a banned pattern is not a finding.
 
+Rule scopes: the clock rules cover product sources and the build script only —
+a test may legitimately wait on a timeout. The dead-code/dbg rules cover every
+scanned file. Known limit: the comment stripper understands `//`, `/* */`, and
+ordinary string literals; exotic raw-string/comment interleavings are out of
+scope for a hygiene aid.
+
 Run: `python3 scripts/check-source-hygiene.py`
 """
 
@@ -45,15 +51,21 @@ SINGLE_AUTHORITY = {
     "badge path split": "split_badge_path",
 }
 
+# Patterns applied to every scanned file.
 FORBIDDEN_PATTERNS = {
-    r"#\[allow\([^\]]*dead_code[^\]]*\)\]": "dead code must be deleted, not allowed",
+    r"allow\([^)]*dead_code": "dead code must be deleted, not allowed",
+    r"\bdbg!\s*\(": "debug macro left in source",
+    r"\btodo!\s*\(": "unfinished code left in source",
+    r"\bunimplemented!\s*\(": "unfinished code left in source",
+}
+
+# Patterns applied to product sources and the build script only: a contract test
+# may legitimately wait on a timeout, but a mark must never read a clock.
+CLOCK_PATTERNS = {
     r"\bSystemTime\b": "no clock on the render path (MARK-STATS is dead)",
     r"\bInstant::now\b": "no clock on the render path (MARK-STATS is dead)",
     r"\bstd::time\b": "no clock on the render path (MARK-STATS is dead)",
     r"\btokio::time\b": "no clock on the render path (MARK-STATS is dead)",
-    r"\bdbg!\s*\(": "debug macro left in source",
-    r"\btodo!\s*\(": "unfinished code left in source",
-    r"\bunimplemented!\s*\(": "unfinished code left in source",
 }
 
 
@@ -124,6 +136,17 @@ def failures() -> list[str]:
                 line = text[: match.start()].count("\n") + 1
                 found.append(f"{f.relative_to(ROOT)}:{line}: {reason}")
 
+    clock_scope = dict(src_texts)
+    build_script = ROOT / "build.rs"
+    if build_script in texts:
+        clock_scope[build_script] = texts[build_script]
+    for pattern, reason in CLOCK_PATTERNS.items():
+        regex = re.compile(pattern)
+        for f, text in clock_scope.items():
+            for match in regex.finditer(text):
+                line = text[: match.start()].count("\n") + 1
+                found.append(f"{f.relative_to(ROOT)}:{line}: {reason}")
+
     if not files:
         found.append("no Rust sources found — wrong root?")
     return found
@@ -138,7 +161,8 @@ def main() -> int:
         return 1
     print(
         f"OK: {len(SINGLE_AUTHORITY)} single-authority concepts, "
-        f"{len(FORBIDDEN_PATTERNS)} forbidden patterns, 0 findings"
+        f"{len(FORBIDDEN_PATTERNS)} forbidden patterns, "
+        f"{len(CLOCK_PATTERNS)} clock patterns (src + build.rs), 0 findings"
     )
     return 0
 

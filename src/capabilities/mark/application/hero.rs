@@ -275,6 +275,14 @@ pub fn render(spec: &MarkSpec) -> String {
         anchor,
         stroke_attr: &stroke_attr,
     };
+    // The description paints without the title's stroke (base behaviour: only the
+    // headline run carried `stroke`/`paint-order`).
+    let desc_style = TextStyle {
+        font_color: &font_color,
+        font_family,
+        anchor,
+        stroke_attr: "",
+    };
 
     for (i, line) in lines.iter().enumerate() {
         let dy = (i as f32 - (n - 1.0) / 2.0) * font_size as f32 * 1.15;
@@ -335,7 +343,7 @@ pub fn render(spec: &MarkSpec) -> String {
         );
         if use_typewriter {
             let base = lines.len() as f32 * 0.55 + 0.2;
-            style.typewriter_line(&desc, dx, dy, desc_size, base, 0.04)
+            desc_style.typewriter_line(&desc, dx, dy, desc_size, base, 0.04)
         } else {
             let open_extra = text_open_attrs(anim, lines.len().max(1), width, height);
             let children = text_children(anim, lines.len().max(1), width, height);

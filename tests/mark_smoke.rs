@@ -147,6 +147,30 @@ fn pill_width_follows_glyph_advance() {
     );
 }
 
+#[test]
+fn deploy_width_follows_glyph_advance() {
+    let wide = render(&MarkSpec {
+        form: MarkForm::Deploy,
+        deploy: mark::capabilities::mark::domain::DeploySpec {
+            service: Some("WWWWWW".into()),
+        },
+        ..Default::default()
+    });
+    let narrow = render(&MarkSpec {
+        form: MarkForm::Deploy,
+        deploy: mark::capabilities::mark::domain::DeploySpec {
+            service: Some("iiiiii".into()),
+        },
+        ..Default::default()
+    });
+    assert!(
+        svg_width(&wide) > svg_width(&narrow),
+        "the deploy pill measures glyphs, not characters: WWWWWW={} iiiiii={}",
+        svg_width(&wide),
+        svg_width(&narrow)
+    );
+}
+
 fn strip_groups_are_balanced(svg: &str) {
     assert_eq!(
         svg.matches("<g").count(),
