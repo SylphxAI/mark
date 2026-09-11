@@ -244,6 +244,12 @@ pub fn render(spec: &MarkSpec) -> String {
         0.0,
         24.0,
     );
+    // Constant for the whole render: glyph runs and whole lines share it.
+    let stroke_attr = if let Some(ref s) = stroke {
+        format!(" stroke=\"{s}\" stroke-width=\"{stroke_width}\" paint-order=\"stroke\"")
+    } else {
+        String::new()
+    };
 
     // Plate lifts title below monogram row
     let title_y_bias = if layout == "plate" && height >= 280 {
@@ -267,7 +273,7 @@ pub fn render(spec: &MarkSpec) -> String {
         font_color: &font_color,
         font_family,
         anchor,
-        stroke_attr: "",
+        stroke_attr: &stroke_attr,
     };
 
     for (i, line) in lines.iter().enumerate() {
@@ -287,12 +293,6 @@ pub fn render(spec: &MarkSpec) -> String {
                 font_size as f32 * 1.15
             ));
         }
-        let stroke_attr = if let Some(ref s) = stroke {
-            format!(" stroke=\"{s}\" stroke-width=\"{stroke_width}\" paint-order=\"stroke\"")
-        } else {
-            String::new()
-        };
-
         if use_typewriter {
             let base = i as f32 * 0.55;
             text_nodes.push_str(&style.typewriter_line(line, x, y, font_size, base, 0.055));

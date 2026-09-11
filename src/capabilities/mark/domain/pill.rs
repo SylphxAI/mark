@@ -1,4 +1,7 @@
-//! Pill vocabulary — the atomic mark's style and named colors.
+//! Pill vocabulary — style, geometry, and text attributes for pill-shaped marks.
+//!
+//! Named colors are paint tokens and live in `color`; this module owns the
+//! shields-style geometry shared by `pill` and `deploy`.
 
 use crate::capabilities::mark::domain::text::{line_advance, Metric};
 

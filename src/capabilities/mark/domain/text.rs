@@ -1,7 +1,9 @@
 //! Text shaping — the single authority for display text.
 //!
-//! Every mark measures and crops text with the same two metrics and the same
-//! ellipsis rule, so a form cannot silently invent its own width model.
+//! Metrics and the ellipsis crop rule live here, so a form cannot invent its own
+//! width model. Hero and profile crop painted lines to the canvas with
+//! [`fit_line`]; every form measures with the same [`Metric`] table, and pill
+//! width comes from [`crate::capabilities::mark::domain::pill::measure`].
 
 /// Which painted metric the text is measured with.
 ///

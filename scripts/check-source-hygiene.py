@@ -11,6 +11,10 @@ These are static properties of the source (not runtime behaviour proofs):
    of its URL, so time sources are forbidden in `src/`.
 4. No `dbg!`/`todo!`/`unimplemented!` left in `src/`.
 
+Scanned scope: `src/**`, `tests/**`, and `build.rs` (product sources, contract
+tests, and the build-identity generator). Comments are stripped before pattern
+matching, so prose about a banned pattern is not a finding.
+
 Run: `python3 scripts/check-source-hygiene.py`
 """
 
@@ -42,7 +46,7 @@ SINGLE_AUTHORITY = {
 }
 
 FORBIDDEN_PATTERNS = {
-    r"#\[allow\(dead_code\)\]": "dead code must be deleted, not allowed",
+    r"#\[allow\([^\]]*dead_code[^\]]*\)\]": "dead code must be deleted, not allowed",
     r"\bSystemTime\b": "no clock on the render path (MARK-STATS is dead)",
     r"\bInstant::now\b": "no clock on the render path (MARK-STATS is dead)",
     r"\bstd::time\b": "no clock on the render path (MARK-STATS is dead)",
@@ -54,12 +58,52 @@ FORBIDDEN_PATTERNS = {
 
 
 def rust_files() -> list[Path]:
-    return sorted(SRC.rglob("*.rs"))
+    files = sorted(SRC.rglob("*.rs"))
+    files += sorted((ROOT / "tests").glob("*.rs"))
+    if (ROOT / "build.rs").exists():
+        files.append(ROOT / "build.rs")
+    return files
+
+
+def strip_comments(text: str) -> str:
+    """Remove `//` and `/* */` comments, leaving string literals intact."""
+    out: list[str] = []
+    index = 0
+    length = len(text)
+    while index < length:
+        ch = text[index]
+        if ch == '"':
+            out.append(ch)
+            index += 1
+            while index < length:
+                out.append(text[index])
+                if text[index] == "\\":
+                    index += 1
+                    if index < length:
+                        out.append(text[index])
+                elif text[index] == '"':
+                    index += 1
+                    break
+                index += 1
+            continue
+        if ch == "/" and index + 1 < length and text[index + 1] == "/":
+            while index < length and text[index] != "\n":
+                index += 1
+            continue
+        if ch == "/" and index + 1 < length and text[index + 1] == "*":
+            end = text.find("*/", index + 2)
+            index = length if end == -1 else end + 2
+            continue
+        out.append(ch)
+        index += 1
+    return "".join(out)
 
 
 def failures() -> list[str]:
     files = rust_files()
-    texts = {f: f.read_text() for f in files}
+    sources = {f: f.read_text() for f in files}
+    texts = {f: strip_comments(text) for f, text in sources.items()}
+    src_texts = {f: text for f, text in texts.items() if SRC in f.parents}
     found: list[str] = []
 
     for concept, symbol in SINGLE_AUTHORITY.items():
@@ -86,7 +130,7 @@ def failures() -> list[str]:
 
 
 def main() -> int:
-    found = failures()
+    found = list(dict.fromkeys(failures()))
     if found:
         for item in found:
             print(f"FAIL {item}", file=sys.stderr)

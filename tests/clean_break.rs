@@ -52,6 +52,21 @@ fn hero_stroke_cannot_inject_attributes() {
 }
 
 #[test]
+fn hero_typewriter_keeps_the_stroke_paint() {
+    // Regression: the typewriter glyph path must carry the same stroke paint as
+    // the plain text path (reviewer F1 on the duplicate-collapse slice).
+    let mut spec = hero("soft", "Hi");
+    spec.hero.stroke = Some("#ff0000".into());
+    spec.hero.stroke_width = Some(3.0);
+    spec.animation = Some("type".into());
+    let svg = render(&spec);
+    assert!(
+        svg.contains("stroke=\"#ff0000\" stroke-width=\"3\" paint-order=\"stroke\""),
+        "typewriter glyphs must keep the stroke paint"
+    );
+}
+
+#[test]
 fn hero_accepts_valid_hex_tokens() {
     let mut spec = hero("soft", "Hi");
     spec.hero.font_color = Some("f00".into());
