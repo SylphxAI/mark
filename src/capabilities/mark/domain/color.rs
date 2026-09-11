@@ -76,105 +76,111 @@ pub(crate) fn resolve_fill(
 }
 
 fn theme_fill(t: &Theme, gid: &str) -> FillPlan {
-    let base = ensure_hash(t.bg);
-    let accent2 = ensure_hash(t.bg2);
-    let accent = ensure_hash(t.accent);
-    let mid = ensure_hash(&mix_hex(t.bg, t.bg2, 0.42));
-    // Keep warm chromatic — mix accent toward amber, not white.
-    let warm = ensure_hash(&mix_hex(t.accent, "FEE140", 0.42));
-    let glow = ensure_hash(&mix_hex(t.bg2, "FFFFFF", 0.42));
-    let fg = ensure_hash(t.fg);
-
-    kit(
-        gid,
-        Chroma {
-            base: &base,
-            mid: &mid,
-            end: &accent2,
-            edge: &accent,
-            warm: &warm,
-            glow: &glow,
-            fg: strip_hash(&fg),
-        },
-    )
+    kit(gid, Chroma::themed(t))
 }
 
 fn solid_kit(gid: &str, hex: &str) -> FillPlan {
-    let h = strip_hash(hex);
-    let base = ensure_hash(&darken(h, 0.42));
-    let mid = ensure_hash(h);
-    let accent = ensure_hash(&lighten(h, 0.22));
-    let accent2 = ensure_hash(&mix_hex(h, "4FACFE", 0.48));
-    let warm = ensure_hash(&mix_hex(h, "FEE140", 0.5));
-    let glow = ensure_hash(&mix_hex(h, "FFFFFF", 0.48));
-    let fg = contrasting_fg(h);
-
-    kit(
-        gid,
-        Chroma {
-            base: &base,
-            mid: &mid,
-            end: &accent2,
-            edge: &accent,
-            warm: &warm,
-            glow: &glow,
-            fg: &fg,
-        },
-    )
+    kit(gid, Chroma::solid(hex))
 }
 
 fn gradient_kit(gid: &str, a: &str, b: &str) -> FillPlan {
-    // Prefer saturated endpoints: darken A for depth, keep B chroma high.
-    let base = ensure_hash(&darken(a, 0.22));
-    let mid = ensure_hash(&mix_hex(a, b, 0.45));
-    let accent2 = ensure_hash(b);
-    let accent = ensure_hash(&lighten(b, 0.08));
-    let warm = ensure_hash(&mix_hex(b, "FEE140", 0.38));
-    let glow = ensure_hash(&mix_hex(b, "FFFFFF", 0.4));
-    kit(
-        gid,
-        Chroma {
-            base: &base,
-            mid: &mid,
-            end: &accent2,
-            edge: &accent,
-            warm: &warm,
-            glow: &glow,
-            fg: "FFFFFF",
-        },
-    )
+    kit(gid, Chroma::pair(a, b))
 }
 
 /// One field's chromatic roles.
 ///
-/// Passed as a value so the SVG gradient stops and the resolved `FillPlan`
-/// cannot drift apart through a positional argument list.
-struct Chroma<'a> {
-    base: &'a str,
-    mid: &'a str,
-    end: &'a str,
-    edge: &'a str,
-    warm: &'a str,
-    glow: &'a str,
-    fg: &'a str,
+/// Each colour source builds the roles in one place, so the SVG gradient stops
+/// and the resolved `FillPlan` cannot drift apart through positional arguments
+/// (and no call site repeats the literal).
+struct Chroma {
+    base: String,
+    mid: String,
+    end: String,
+    edge: String,
+    warm: String,
+    glow: String,
+    fg: String,
 }
 
-fn kit(gid: &str, c: Chroma<'_>) -> FillPlan {
+impl Chroma {
+    /// Theme pack: mix the pack's own tones.
+    fn themed(t: &Theme) -> Self {
+        Self {
+            base: ensure_hash(t.bg),
+            mid: ensure_hash(&mix_hex(t.bg, t.bg2, 0.42)),
+            end: ensure_hash(t.bg2),
+            edge: ensure_hash(t.accent),
+            // Keep warm chromatic — mix accent toward amber, not white.
+            warm: ensure_hash(&mix_hex(t.accent, "FEE140", 0.42)),
+            glow: ensure_hash(&mix_hex(t.bg2, "FFFFFF", 0.42)),
+            fg: strip_hash(&ensure_hash(t.fg)).to_string(),
+        }
+    }
+
+    /// Single hex base: derive the field and the supporting roles.
+    fn solid(hex: &str) -> Self {
+        let h = strip_hash(hex);
+        Self {
+            base: ensure_hash(&darken(h, 0.42)),
+            mid: ensure_hash(h),
+            end: ensure_hash(&mix_hex(h, "4FACFE", 0.48)),
+            edge: ensure_hash(&lighten(h, 0.22)),
+            warm: ensure_hash(&mix_hex(h, "FEE140", 0.5)),
+            glow: ensure_hash(&mix_hex(h, "FFFFFF", 0.48)),
+            fg: contrasting_fg(h),
+        }
+    }
+
+    /// Two gradient endpoints: darken A for depth, keep B chroma high.
+    fn pair(a: &str, b: &str) -> Self {
+        Self {
+            base: ensure_hash(&darken(a, 0.22)),
+            mid: ensure_hash(&mix_hex(a, b, 0.45)),
+            end: ensure_hash(b),
+            edge: ensure_hash(&lighten(b, 0.08)),
+            warm: ensure_hash(&mix_hex(b, "FEE140", 0.38)),
+            glow: ensure_hash(&mix_hex(b, "FFFFFF", 0.4)),
+            fg: "FFFFFF".into(),
+        }
+    }
+
+    /// Exact user stops: first stop, chosen midpoint, last stop.
+    fn stops(a: &str, mid: String, b: &str) -> Self {
+        Self {
+            base: ensure_hash(&darken(strip_hash(a), 0.18)),
+            mid,
+            end: b.to_string(),
+            edge: ensure_hash(&lighten(strip_hash(b), 0.06)),
+            warm: ensure_hash(&mix_hex(strip_hash(b), "FEE140", 0.35)),
+            glow: ensure_hash(&mix_hex(strip_hash(b), "FFFFFF", 0.4)),
+            fg: "FFFFFF".into(),
+        }
+    }
+}
+
+fn kit(gid: &str, c: Chroma) -> FillPlan {
     FillPlan {
         defs: chromatic_defs(gid, &c),
         fill: format!("url(#{gid})"),
-        fg: strip_hash(c.fg).to_string(),
-        base: c.base.to_string(),
-        accent: c.edge.to_string(),
-        accent2: c.end.to_string(),
-        warm: c.warm.to_string(),
-        glow: c.glow.to_string(),
+        fg: strip_hash(&c.fg).to_string(),
+        base: c.base.clone(),
+        accent: c.edge.clone(),
+        accent2: c.end.clone(),
+        warm: c.warm.clone(),
+        glow: c.glow.clone(),
     }
 }
 
 /// Field + chroma utilities referenced by shapes/motion.
-fn chromatic_defs(id: &str, c: &Chroma<'_>) -> String {
-    let (base, mid, end, edge, warm, glow) = (c.base, c.mid, c.end, c.edge, c.warm, c.glow);
+fn chromatic_defs(id: &str, c: &Chroma) -> String {
+    let (base, mid, end, edge, warm, glow) = (
+        c.base.as_str(),
+        c.mid.as_str(),
+        c.end.as_str(),
+        c.edge.as_str(),
+        c.warm.as_str(),
+        c.glow.as_str(),
+    );
     format!(
         r##"<linearGradient id="{id}" x1="0%" y1="0%" x2="100%" y2="100%">
           <stop offset="0%" stop-color="{base}"/>
@@ -280,23 +286,7 @@ fn parse_custom_gradient(spec: &str, gid: &str) -> Option<FillPlan> {
         ensure_hash(&mix_hex(strip_hash(&a), strip_hash(&b), 0.5))
     };
 
-    let base = ensure_hash(&darken(strip_hash(&a), 0.18));
-    let accent = ensure_hash(&lighten(strip_hash(&b), 0.06));
-    let accent2 = b.clone();
-    let warm = ensure_hash(&mix_hex(strip_hash(&b), "FEE140", 0.35));
-    let glow = ensure_hash(&mix_hex(strip_hash(&b), "FFFFFF", 0.4));
-    let mut plan = kit(
-        gid,
-        Chroma {
-            base: &base,
-            mid: &mid,
-            end: &accent2,
-            edge: &accent,
-            warm: &warm,
-            glow: &glow,
-            fg: "FFFFFF",
-        },
-    );
+    let mut plan = kit(gid, Chroma::stops(&a, mid, &b));
 
     // Rebuild primary field gradient with exact user stop positions.
     let mut stop_svg = String::new();

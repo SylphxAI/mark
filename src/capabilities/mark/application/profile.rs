@@ -9,7 +9,7 @@ use crate::capabilities::mark::domain::color::{contrasting_fg, resolve_fill};
 use crate::capabilities::mark::domain::motion::{text_children, text_open_attrs};
 use crate::capabilities::mark::domain::shapes::{normalize_art_type, shape_background, shape_defs};
 use crate::capabilities::mark::domain::svg::{credit_mark, ensure_hash, esc, svg_doc};
-use crate::capabilities::mark::domain::text::{fit_line, monogram, Metric};
+use crate::capabilities::mark::domain::text::{content_family, fit_line, monogram, Metric};
 use crate::capabilities::mark::domain::{
     cap_text, normalize_animation, MarkSpec, MAX_DESC_CHARS, MAX_TEXT_CHARS,
 };
@@ -50,15 +50,7 @@ pub fn render(spec: &MarkSpec) -> String {
     let name_y = if has_tag { hf * 0.44 } else { hf * 0.52 };
     let tag_y = hf * 0.64;
 
-    let font_family = match spec
-        .font
-        .as_deref()
-        .map(|f| f.to_ascii_lowercase())
-        .as_deref()
-    {
-        Some("mono") => "ui-monospace,SFMono-Regular,Menlo,Consolas,monospace",
-        _ => "ui-sans-serif,system-ui,-apple-system,Segoe UI,Helvetica,sans-serif",
-    };
+    let font_family = content_family(spec.font.as_deref());
 
     let anim = normalize_animation(spec.animation.as_deref());
     let anim = if anim == "ambient" { "none" } else { anim };

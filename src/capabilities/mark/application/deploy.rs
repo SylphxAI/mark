@@ -5,8 +5,9 @@
 
 use crate::capabilities::mark::domain::color::{contrasting_fg, resolve_paint};
 use crate::capabilities::mark::domain::motion::{text_children, text_open_attrs};
-use crate::capabilities::mark::domain::pill::measure;
+use crate::capabilities::mark::domain::pill::{measure, PillMetrics};
 use crate::capabilities::mark::domain::svg::{ensure_hash, esc, svg_doc};
+use crate::capabilities::mark::domain::text::content_family;
 use crate::capabilities::mark::domain::theme;
 use crate::capabilities::mark::domain::{
     cap_text, normalize_animation, MarkSpec, PillStyle, MAX_SERVICE_CHARS,
@@ -53,46 +54,21 @@ pub fn render(spec: &MarkSpec) -> String {
         message
     };
 
-    let h: u32 = match style {
-        PillStyle::ForTheBadge => 28,
-        _ => 20,
-    };
+    let metrics = PillMetrics::new(style, content_family(spec.font.as_deref()));
+    let h = metrics.height;
     let tile = h;
     let lw = measure(&label_text, style);
     let mw = measure(&message_text, style);
     let w = tile + lw + mw;
-    let radius = match style {
-        PillStyle::Pill | PillStyle::Social => h as f32 / 2.0,
-        PillStyle::ForTheBadge => 4.0,
-        _ => 3.0,
-    };
+    let radius = metrics.radius;
     let inset = (h as f32 * 0.18).clamp(3.0, 5.0);
     let inner = h as f32 - inset * 2.0;
     let mark_cx = tile as f32 / 2.0;
     let mark_cy = h as f32 / 2.0;
     let mark_r = inner * 0.22;
 
-    let family = match spec
-        .font
-        .as_deref()
-        .map(|f| f.to_ascii_lowercase())
-        .as_deref()
-    {
-        Some("mono") => "ui-monospace,SFMono-Regular,Menlo,Consolas,monospace",
-        _ => "ui-sans-serif,system-ui,-apple-system,Segoe UI,Helvetica,sans-serif",
-    };
-    let font = if style == PillStyle::ForTheBadge {
-        format!(
-            "font-family=\"{family}\" font-size=\"11\" font-weight=\"700\" letter-spacing=\"0.5\""
-        )
-    } else {
-        format!("font-family=\"{family}\" font-size=\"11\" font-weight=\"500\"")
-    };
-    let ty = if style == PillStyle::ForTheBadge {
-        18
-    } else {
-        14
-    };
+    let font = &metrics.text_attrs;
+    let ty = metrics.baseline;
 
     let label_fg = ensure_hash(&contrasting_fg(&lbl_color));
     let msg_fg = ensure_hash(&contrasting_fg(&msg_color));
