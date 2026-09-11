@@ -1,6 +1,6 @@
 //! Render smoke: every form of the one grammar renders.
 
-use mark::capabilities::mark::domain::shapes::ART_TYPES;
+use mark::capabilities::mark::domain::art::Art;
 use mark::capabilities::mark::domain::{MarkForm, MarkSpec};
 use mark::capabilities::mark::render;
 
@@ -15,10 +15,10 @@ fn hero(art: &str, text: &str) -> MarkSpec {
 
 #[test]
 fn hero_all_art_types_render() {
-    for ty in ART_TYPES {
-        let svg = render(&hero(ty, "T"));
-        assert!(svg.starts_with("<?xml"), "type {ty}");
-        assert!(svg.contains("</svg>"), "type {ty}");
+    for art in Art::ALL {
+        let svg = render(&hero(art.id(), "T"));
+        assert!(svg.starts_with("<?xml"), "type {}", art.id());
+        assert!(svg.contains("</svg>"), "type {}", art.id());
     }
 }
 

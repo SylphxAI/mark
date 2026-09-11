@@ -5,9 +5,10 @@
 //! form ids parse here. Optional art background, any palette, text-level
 //! motion, native width × height.
 
+use crate::capabilities::mark::domain::art::Art;
 use crate::capabilities::mark::domain::color::{contrasting_fg, resolve_fill};
 use crate::capabilities::mark::domain::motion::{text_children, text_open_attrs};
-use crate::capabilities::mark::domain::shapes::{normalize_art_type, shape_background, shape_defs};
+use crate::capabilities::mark::domain::shapes::{shape_background, shape_defs};
 use crate::capabilities::mark::domain::svg::{credit_mark, ensure_hash, esc, svg_doc};
 use crate::capabilities::mark::domain::text::{content_family, fit_line, monogram, Metric};
 use crate::capabilities::mark::domain::{
@@ -35,7 +36,7 @@ pub fn render(spec: &MarkSpec) -> String {
         .as_deref()
         .map(str::trim)
         .filter(|s| !s.is_empty() && !s.eq_ignore_ascii_case("none"))
-        .map(normalize_art_type);
+        .map(Art::parse);
 
     let radius = (hf * 0.08).clamp(12.0, 20.0);
     let tile = (hf * 0.56).clamp(56.0, 96.0);
