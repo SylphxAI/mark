@@ -2,102 +2,26 @@
 //!
 //! One function per art type; `super::shape_background` dispatches exhaustively.
 
-use super::{blob, Blob};
-use super::{field_stack, sheen, vignette};
+use super::{Canvas, Rng};
 use crate::capabilities::mark::domain::art::Art;
-use crate::capabilities::mark::domain::color::FillPlan;
-pub(super) fn plasma(_art: Art, w: u32, h: u32, plan: &FillPlan, gain: f32) -> String {
-    let _fill = plan.fill.as_str();
-    let accent = plan.accent.as_str();
-    let accent2 = plan.accent2.as_str();
-    let warm = plan.warm.as_str();
-    let glow = plan.glow.as_str();
-    let wf = w as f32;
-    let hf = h as f32;
-    let g = gain;
+pub(super) fn plasma(art: Art, c: &Canvas) -> String {
+    let (w, h, g) = (c.w, c.h, c.gain);
+    let blobs = c.cloud(art);
     let layers = format!(
-        "{a}{b}{c}{d}{e}",
-        a = blob(
-            Blob {
-                center: (wf * 0.15, hf * 0.4),
-                size: (wf * 0.34, hf * 0.7),
-                color: accent,
-                opacity: 0.36,
-                drift: (wf * 0.1, hf * 0.12),
-                dur: 8.0,
-                phase: 0.0,
-            },
-            g,
-        ),
-        b = blob(
-            Blob {
-                center: (wf * 0.55, hf * 0.2),
-                size: (wf * 0.4, hf * 0.55),
-                color: accent2,
-                opacity: 0.38,
-                drift: (-wf * 0.08, hf * 0.1),
-                dur: 9.5,
-                phase: 0.4,
-            },
-            g,
-        ),
-        c = blob(
-            Blob {
-                center: (wf * 0.85, hf * 0.55),
-                size: (wf * 0.32, hf * 0.6),
-                color: warm,
-                opacity: 0.32,
-                drift: (-wf * 0.06, -hf * 0.1),
-                dur: 7.5,
-                phase: 0.9,
-            },
-            g,
-        ),
-        d = blob(
-            Blob {
-                center: (wf * 0.4, hf * 0.85),
-                size: (wf * 0.28, hf * 0.4),
-                color: glow,
-                opacity: 0.24,
-                drift: (wf * 0.05, -hf * 0.08),
-                dur: 10.0,
-                phase: 1.2,
-            },
-            g,
-        ),
-        e = blob(
-            Blob {
-                center: (wf * 0.72, hf * 0.18),
-                size: (wf * 0.24, hf * 0.36),
-                color: accent,
-                opacity: 0.18,
-                drift: (-wf * 0.04, hf * 0.06),
-                dur: 6.5,
-                phase: 0.2,
-            },
-            g,
-        ),
-    );
-    format!(
-                "{base}{layers}                 <rect width=\"{w}\" height=\"{h}\" fill=\"url(#mgHolo)\" opacity=\"0.58\">                   {sweep}                 </rect>                 {sheen}{vig}",
-                base = field_stack(w, h, plan),
+                "{blobs}                 <rect width=\"{w}\" height=\"{h}\" fill=\"url(#mgHolo)\" opacity=\"0.58\">                   {sweep}                 </rect>                 ",
                 sweep = if g > 0.01 {
                     "<animateTransform attributeName=\"transform\" type=\"translate\" values=\"-90 0; 90 0; -90 0\" dur=\"7s\" repeatCount=\"indefinite\"/>"
                 } else {
                     ""
                 },
-                sheen = sheen(w, h, g, plan),
-                vig = vignette(w, h, plan),
-            )
+            );
+    c.finish(c.stack(), &layers)
 }
-pub(super) fn holo(_art: Art, w: u32, h: u32, plan: &FillPlan, gain: f32) -> String {
-    let _fill = plan.fill.as_str();
-    let accent = plan.accent.as_str();
-    let warm = plan.warm.as_str();
-    let glow = plan.glow.as_str();
-    let wf = w as f32;
-    let hf = h as f32;
-    let g = gain;
+pub(super) fn holo(art: Art, c: &Canvas) -> String {
+    let (w, h, wf, hf, g) = (c.w, c.h, c.wf, c.hf, c.gain);
+    let accent = c.plan.accent.as_str();
+    let warm = c.plan.warm.as_str();
+    let glow = c.plan.glow.as_str();
     let bars: String = (0..8)
                 .map(|i| {
                     let x = wf * (0.05 + i as f32 * 0.12);
@@ -123,9 +47,8 @@ pub(super) fn holo(_art: Art, w: u32, h: u32, plan: &FillPlan, gain: f32) -> Str
                     )
                 })
                 .collect();
-    format!(
-                "{base}                 <rect width=\"{w}\" height=\"{h}\" fill=\"url(#mgHolo)\" opacity=\"0.85\">                   {holo_anim}                 </rect>                 {bars}                 {glow_blob}                 {sheen}{vig}",
-                base = field_stack(w, h, plan),
+    let layers = format!(
+                "                 <rect width=\"{w}\" height=\"{h}\" fill=\"url(#mgHolo)\" opacity=\"0.85\">                   {holo_anim}                 </rect>                 {bars}                 {glow_blob}                 ",
                 holo_anim = if g > 0.01 {
                     format!(
                         "<animateTransform attributeName=\"transform\" type=\"translate\" values=\"0 0; {dx} {dy}; 0 0\" dur=\"6s\" repeatCount=\"indefinite\"/>",
@@ -135,27 +58,13 @@ pub(super) fn holo(_art: Art, w: u32, h: u32, plan: &FillPlan, gain: f32) -> Str
                 } else {
                     String::new()
                 },
-                glow_blob = blob(
-            Blob {
-                center: (wf * 0.7, hf * 0.35),
-                size: (wf * 0.28, hf * 0.45),
-                color: accent,
-                opacity: 0.2,
-                drift: (-wf * 0.05, hf * 0.04),
-                dur: 8.0,
-                phase: 0.3,
-            },
-            g,
-        ),
-                sheen = sheen(w, h, g, plan),
-                vig = vignette(w, h, plan),
-            )
+                glow_blob = c.cloud(art),
+            );
+    c.finish(c.stack(), &layers)
 }
-pub(super) fn neon(_art: Art, w: u32, h: u32, plan: &FillPlan, gain: f32) -> String {
-    let _fill = plan.fill.as_str();
-    let wf = w as f32;
-    let hf = h as f32;
-    let g = gain;
+pub(super) fn neon(art: Art, c: &Canvas) -> String {
+    let (w, h) = (c.w, c.h);
+    let g = c.gain;
     let frame = if g > 0.01 {
         format!(
                     "<rect x=\"10\" y=\"10\" width=\"{iw}\" height=\"{ih}\" rx=\"14\" fill=\"none\" stroke=\"#00f5d4\" stroke-width=\"2\" filter=\"url(#neonGlow)\">\
@@ -176,30 +85,12 @@ pub(super) fn neon(_art: Art, w: u32, h: u32, plan: &FillPlan, gain: f32) -> Str
                     ih = h.saturating_sub(20),
                 )
     };
-    format!(
-        "{base}{blob}{frame}{sheen}{vig}",
-        base = field_stack(w, h, plan),
-        blob = blob(
-            Blob {
-                center: (wf * 0.75, hf * 0.35),
-                size: (wf * 0.2, hf * 0.4),
-                color: "#00f5d4",
-                opacity: 0.12,
-                drift: (-wf * 0.04, hf * 0.05),
-                dur: 7.0,
-                phase: 0.0,
-            },
-            g,
-        ),
-        sheen = sheen(w, h, g, plan),
-        vig = vignette(w, h, plan),
-    )
+    let layers = format!("{blob}{frame}", blob = c.cloud(art));
+    c.finish(c.stack(), &layers)
 }
-pub(super) fn meteor(_art: Art, w: u32, h: u32, plan: &FillPlan, gain: f32) -> String {
-    let accent2 = plan.accent2.as_str();
-    let wf = w as f32;
-    let hf = h as f32;
-    let g = gain;
+pub(super) fn meteor(art: Art, c: &Canvas) -> String {
+    let (wf, hf) = (c.wf, c.hf);
+    let g = c.gain;
     let mut streaks = String::new();
     for i in 0..6 {
         let y = hf * (0.12 + i as f32 * 0.14);
@@ -230,32 +121,11 @@ pub(super) fn meteor(_art: Art, w: u32, h: u32, plan: &FillPlan, gain: f32) -> S
                     ));
         }
     }
-    format!(
-        "{}{}{}{}{}",
-        field_stack(w, h, plan),
-        blob(
-            Blob {
-                center: (wf * 0.2, hf * 0.3),
-                size: (wf * 0.25, hf * 0.4),
-                color: accent2,
-                opacity: 0.14,
-                drift: (wf * 0.04, hf * 0.05),
-                dur: 9.0,
-                phase: 0.0,
-            },
-            g,
-        ),
-        streaks,
-        sheen(w, h, g, plan),
-        vignette(w, h, plan)
-    )
+    let layers = format!("{blobs}{streaks}", blobs = c.cloud(art));
+    c.finish(c.stack(), &layers)
 }
-pub(super) fn liquid(_art: Art, w: u32, h: u32, plan: &FillPlan, gain: f32) -> String {
-    let _fill = plan.fill.as_str();
-    let warm = plan.warm.as_str();
-    let wf = w as f32;
-    let hf = h as f32;
-    let g = gain;
+pub(super) fn liquid(art: Art, c: &Canvas) -> String {
+    let (w, h, wf, hf, g) = (c.w, c.h, c.wf, c.hf, c.gain);
     let path_anim = if g > 0.01 {
         format!(
             "<animate attributeName=\"d\" dur=\"6s\" repeatCount=\"indefinite\" values=\"\
@@ -276,12 +146,10 @@ M0,{a} C{c1},{a1} {c2},{a2} {w},{a3} L{w},{h} L0,{h} Z\"/>",
     } else {
         String::new()
     };
-    format!(
-                "{base}\
-                 <path d=\"M0,{y} C{c1},{y1} {c2},{y2} {w},{y3} L{w},{h} L0,{h} Z\" fill=\"#ffffff\" fill-opacity=\"0.1\" filter=\"url(#softBloom)\">{path_anim}</path>\
+    let layers = format!(
+                "<path d=\"M0,{y} C{c1},{y1} {c2},{y2} {w},{y3} L{w},{h} L0,{h} Z\" fill=\"#ffffff\" fill-opacity=\"0.1\" filter=\"url(#softBloom)\">{path_anim}</path>\
                  <path d=\"M0,{y4} C{c3},{y5} {c4},{y6} {w},{y7} L{w},{h} L0,{h} Z\" fill=\"#a5b4fc\" fill-opacity=\"0.12\">{path_anim2}</path>\
-                 {blob}{sheen}{vig}",
-                base = field_stack(w, h, plan),
+                 {blob}",
                 y = hf * 0.45,
                 c1 = wf * 0.28,
                 y1 = hf * 0.25,
@@ -312,29 +180,14 @@ M0,{y4} C{c3},{y5} {c4},{y6} {w},{y7} L{w},{h} L0,{h} Z\"/>",
                 } else {
                     String::new()
                 },
-                blob = blob(
-            Blob {
-                center: (wf * 0.7, hf * 0.3),
-                size: (wf * 0.25, hf * 0.4),
-                color: warm,
-                opacity: 0.16,
-                drift: (-wf * 0.05, hf * 0.06),
-                dur: 8.0,
-                phase: 0.3,
-            },
-            g,
-        ),
-                sheen = sheen(w, h, g, plan),
-                vig = vignette(w, h, plan),
-            )
+                blob = c.cloud(art),
+            );
+    c.finish(c.stack(), &layers)
 }
-pub(super) fn prism(_art: Art, w: u32, h: u32, plan: &FillPlan, gain: f32) -> String {
-    let _fill = plan.fill.as_str();
-    let warm = plan.warm.as_str();
-    let glow = plan.glow.as_str();
-    let wf = w as f32;
-    let hf = h as f32;
-    let g = gain;
+pub(super) fn prism(art: Art, c: &Canvas) -> String {
+    let (h, wf) = (c.h, c.wf);
+    let g = c.gain;
+    let warm = c.plan.warm.as_str();
     let beams: String = (0..5)
                 .map(|i| {
                     let x = wf * (0.15 + i as f32 * 0.15);
@@ -357,39 +210,17 @@ pub(super) fn prism(_art: Art, w: u32, h: u32, plan: &FillPlan, gain: f32) -> St
                     )
                 })
                 .collect();
-    format!(
-        "{}{}{}{}{}",
-        field_stack(w, h, plan),
-        beams,
-        blob(
-            Blob {
-                center: (wf * 0.5, hf * 0.2),
-                size: (wf * 0.3, hf * 0.3),
-                color: glow,
-                opacity: 0.16,
-                drift: (0.0, hf * 0.05),
-                dur: 7.0,
-                phase: 0.0,
-            },
-            g,
-        ),
-        sheen(w, h, g, plan),
-        vignette(w, h, plan)
-    )
+    let layers = format!("{beams}{blobs}", blobs = c.cloud(art));
+    c.finish(c.stack(), &layers)
 }
-pub(super) fn void(_art: Art, w: u32, h: u32, plan: &FillPlan, gain: f32) -> String {
-    let _fill = plan.fill.as_str();
-    let wf = w as f32;
-    let hf = h as f32;
-    let g = gain;
+// duplicate-exception: void/firefly are two emitters over the one deterministic scatter walk (Rng::points + per-point pulse); scripts/check-module-budget.py notices regression — the read budget forces extraction if either emitter grows.
+pub(super) fn void(art: Art, c: &Canvas) -> String {
+    let (w, h, g) = (c.w, c.h, c.gain);
     let mut stars = String::new();
-    let mut s: u32 = 91;
-    for i in 0..40 {
-        s = s.wrapping_mul(1664525).wrapping_add(1013904223);
-        let x = 20 + s % w.saturating_sub(40).max(1);
-        s = s.wrapping_mul(1664525).wrapping_add(1013904223);
-        let y = 12 + s % h.saturating_sub(24).max(1);
-        let r = 0.8 + (s % 3) as f32 * 0.5;
+    let pts = Rng::lcg(91).points(40, w, h, (40, 24), (20, 12));
+    for (i, p) in pts.iter().enumerate() {
+        let (x, y) = (p.x, p.y);
+        let r = 0.8 + (p.draw % 3) as f32 * 0.5;
         if g > 0.01 && i % 2 == 0 {
             stars.push_str(&format!(
                         "<circle cx=\"{x}\" cy=\"{y}\" r=\"{r}\" fill=\"#ffffff\" fill-opacity=\"0.75\">\
@@ -404,50 +235,15 @@ pub(super) fn void(_art: Art, w: u32, h: u32, plan: &FillPlan, gain: f32) -> Str
             ));
         }
     }
-    format!(
-        "{}{}{}{}{}{}",
-        field_stack(w, h, plan),
-        blob(
-            Blob {
-                center: (wf * 0.25, hf * 0.55),
-                size: (wf * 0.3, hf * 0.45),
-                color: "#4c1d95",
-                opacity: 0.35,
-                drift: (wf * 0.05, -hf * 0.04),
-                dur: 11.0,
-                phase: 0.0,
-            },
-            g,
-        ),
-        blob(
-            Blob {
-                center: (wf * 0.75, hf * 0.35),
-                size: (wf * 0.28, hf * 0.4),
-                color: "#1e3a8a",
-                opacity: 0.28,
-                drift: (-wf * 0.05, hf * 0.05),
-                dur: 10.0,
-                phase: 0.6,
-            },
-            g,
-        ),
-        stars,
-        sheen(w, h, g, plan),
-        vignette(w, h, plan)
-    )
+    let layers = format!("{blobs}{stars}", blobs = c.cloud(art));
+    c.finish(c.stack(), &layers)
 }
-pub(super) fn firefly(_art: Art, w: u32, h: u32, plan: &FillPlan, gain: f32) -> String {
-    let _fill = plan.fill.as_str();
-    let wf = w as f32;
-    let hf = h as f32;
-    let g = gain;
+pub(super) fn firefly(art: Art, c: &Canvas) -> String {
+    let (w, h, g) = (c.w, c.h, c.gain);
     let mut dots = String::new();
-    let mut s: u32 = 17;
-    for i in 0..28 {
-        s = s.wrapping_mul(1103515245).wrapping_add(12345);
-        let x = 30 + s % w.saturating_sub(60).max(1);
-        s = s.wrapping_mul(1103515245).wrapping_add(12345);
-        let y = 20 + s % h.saturating_sub(40).max(1);
+    let pts = Rng::scatter(17).points(28, w, h, (60, 40), (30, 20));
+    for (i, p) in pts.iter().enumerate() {
+        let (x, y) = (p.x, p.y);
         if g > 0.01 {
             let dx = 12.0 + (i % 5) as f32 * 4.0;
             let dy = 8.0 + (i % 4) as f32 * 3.0;
@@ -472,31 +268,11 @@ pub(super) fn firefly(_art: Art, w: u32, h: u32, plan: &FillPlan, gain: f32) -> 
             ));
         }
     }
-    format!(
-        "{}{}{}{}{}",
-        field_stack(w, h, plan),
-        blob(
-            Blob {
-                center: (wf * 0.5, hf * 0.7),
-                size: (wf * 0.4, hf * 0.35),
-                color: "#78350f",
-                opacity: 0.2,
-                drift: (0.0, -hf * 0.03),
-                dur: 9.0,
-                phase: 0.0,
-            },
-            g,
-        ),
-        dots,
-        sheen(w, h, g, plan),
-        vignette(w, h, plan)
-    )
+    let layers = format!("{blobs}{dots}", blobs = c.cloud(art));
+    c.finish(c.stack(), &layers)
 }
-pub(super) fn silk(_art: Art, w: u32, h: u32, plan: &FillPlan, gain: f32) -> String {
-    let _fill = plan.fill.as_str();
-    let wf = w as f32;
-    let hf = h as f32;
-    let g = gain;
+pub(super) fn silk(art: Art, c: &Canvas) -> String {
+    let (w, wf, hf, g) = (c.w, c.wf, c.hf, c.gain);
     let mut waves = String::new();
     for i in 0..4 {
         let y = hf * (0.25 + i as f32 * 0.16);
@@ -525,32 +301,12 @@ M0,{y} Q{q1},{y1} {m},{y} T{w},{y}\"/>",
                     o = 0.1 + i as f32 * 0.04,
                 ));
     }
-    format!(
-        "{}{}{}{}{}",
-        field_stack(w, h, plan),
-        blob(
-            Blob {
-                center: (wf * 0.3, hf * 0.4),
-                size: (wf * 0.3, hf * 0.5),
-                color: "#e9d5ff",
-                opacity: 0.14,
-                drift: (wf * 0.05, hf * 0.04),
-                dur: 10.0,
-                phase: 0.0,
-            },
-            g,
-        ),
-        waves,
-        sheen(w, h, g, plan),
-        vignette(w, h, plan)
-    )
+    let layers = format!("{blobs}{waves}", blobs = c.cloud(art));
+    c.finish(c.stack(), &layers)
 }
-pub(super) fn iridescent(_art: Art, w: u32, h: u32, plan: &FillPlan, gain: f32) -> String {
-    let _fill = plan.fill.as_str();
-    let warm = plan.warm.as_str();
-    let wf = w as f32;
-    let hf = h as f32;
-    let g = gain;
+pub(super) fn iridescent(art: Art, c: &Canvas) -> String {
+    let (w, h, wf) = (c.w, c.h, c.wf);
+    let g = c.gain;
     let sweep = if g > 0.01 {
         format!(
                     "<rect width=\"{w}\" height=\"{h}\" fill=\"url(#holoSweep)\" opacity=\"0.55\">\
@@ -562,35 +318,6 @@ pub(super) fn iridescent(_art: Art, w: u32, h: u32, plan: &FillPlan, gain: f32) 
     } else {
         format!("<rect width=\"{w}\" height=\"{h}\" fill=\"url(#holoSweep)\" opacity=\"0.4\"/>")
     };
-    format!(
-        "{}{}{}{}{}{}",
-        field_stack(w, h, plan),
-        blob(
-            Blob {
-                center: (wf * 0.2, hf * 0.3),
-                size: (wf * 0.28, hf * 0.45),
-                color: "#f0abfc",
-                opacity: 0.22,
-                drift: (wf * 0.06, hf * 0.05),
-                dur: 8.0,
-                phase: 0.0,
-            },
-            g,
-        ),
-        blob(
-            Blob {
-                center: (wf * 0.8, hf * 0.65),
-                size: (wf * 0.3, hf * 0.4),
-                color: warm,
-                opacity: 0.2,
-                drift: (-wf * 0.05, -hf * 0.05),
-                dur: 9.0,
-                phase: 0.5,
-            },
-            g,
-        ),
-        sweep,
-        sheen(w, h, g, plan),
-        vignette(w, h, plan)
-    )
+    let layers = format!("{blobs}{sweep}", blobs = c.cloud(art));
+    c.finish(c.stack(), &layers)
 }

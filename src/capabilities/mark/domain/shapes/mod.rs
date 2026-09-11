@@ -4,65 +4,139 @@
 //! The published vocabulary lives in [`super::art::Art`]; every family module
 //! paints exactly the art types it owns, so adding an art type without an
 //! implementation fails the build instead of silently rendering the default.
-
-//! Banner backgrounds with ambient SMIL motion (works in SVG-as-`<img>`).
-//!
-//! `gain` (0..1) scales motion intensity; 0 freezes decorative layers.
+//! Ambient motion is SMIL so it works in SVG-as-`<img>`.
 
 use crate::capabilities::mark::domain::art::Art;
 use crate::capabilities::mark::domain::color::FillPlan;
 
-pub const ART_TYPES: &[&str] = &[
-    // SOTA showcase first
-    "plasma",
-    "holo",
-    "neon",
-    "meteor",
-    "liquid",
-    "prism",
-    "void",
-    "firefly",
-    "silk",
-    "iridescent",
-    // Core polished set
-    "aurora",
-    "mesh",
-    "glass",
-    "soft",
-    "horizon",
-    "dusk",
-    "orbit",
-    "beam",
-    "wave",
-    "waving",
-    "terminal",
-    "constellation",
-    "grid",
-    "blur",
-    "ring",
-    "circuit",
-    "hud",
-    "pulse",
-    "noise",
-    "rounded",
-    "rect",
-    "slice",
-    "cylinder",
-    "checkered",
-    "egg",
-    "shark",
-    "venom",
-    "speech",
-    "product",
-    "oss",
-    "org",
-    "transparent",
-];
-
 mod canvas;
+mod cloud;
 mod geometry;
+mod pane;
 mod patterns;
 mod showcase;
+
+/// The resolved canvas every art function paints on.
+///
+/// One authority for the axes, the ambient gain, and the paint plan, so the
+/// per-art preamble (`wf`/`hf`/`g`, role strings) exists once instead of once
+/// per family function.
+pub(super) struct Canvas<'a> {
+    pub w: u32,
+    pub h: u32,
+    pub wf: f32,
+    pub hf: f32,
+    pub gain: f32,
+    pub plan: &'a FillPlan,
+}
+
+impl<'a> Canvas<'a> {
+    pub(super) fn new(w: u32, h: u32, plan: &'a FillPlan, gain: f32) -> Self {
+        Self {
+            w,
+            h,
+            wf: w as f32,
+            hf: h as f32,
+            gain,
+            plan,
+        }
+    }
+
+    /// The field stack every family paints its own layers on.
+    pub(super) fn stack(&self) -> String {
+        field_stack(self.w, self.h, self.plan)
+    }
+
+    /// The shared composition tail: base, family layers, sheen, vignette.
+    pub(super) fn finish(&self, base: String, layers: &str) -> String {
+        let mut out = base;
+        out.push_str(layers);
+        out.push_str(&sheen(self.w, self.h, self.gain, self.plan));
+        out.push_str(&vignette(self.w, self.h, self.plan));
+        out
+    }
+
+    /// Accent gloss without a vignette: the terminal pane keeps full contrast.
+    pub(super) fn gloss(&self) -> String {
+        sheen(self.w, self.h, self.gain, self.plan)
+    }
+
+    /// The art's drifting ambient cloud: one table, one renderer.
+    pub(super) fn cloud(&self, art: Art) -> String {
+        cloud::render(self, art)
+    }
+}
+
+/// Deterministic scatter stream: decorative positions must stay a pure
+/// function of the URL, so no clock or OS entropy is ever consulted.
+pub(super) struct Rng {
+    state: u32,
+    mul: u32,
+    add: u32,
+}
+
+/// One scattered canvas point, plus the draw that produced `y`: callers may
+/// fold a radius or size out of the same draw, so the stream stays identical
+/// to the historic inline walk.
+pub(super) struct Point {
+    pub x: u32,
+    pub y: u32,
+    pub draw: u32,
+}
+
+impl Rng {
+    /// The canvas LCG (star fields, constellation walks).
+    pub(super) fn lcg(seed: u32) -> Self {
+        Self {
+            state: seed,
+            mul: 1_664_525,
+            add: 1_013_904_223,
+        }
+    }
+
+    /// The finer noise-field LCG (dot scatter).
+    pub(super) fn scatter(seed: u32) -> Self {
+        Self {
+            state: seed,
+            mul: 1_103_515_245,
+            add: 12_345,
+        }
+    }
+
+    pub(super) fn next(&mut self) -> u32 {
+        self.state = self.state.wrapping_mul(self.mul).wrapping_add(self.add);
+        self.state
+    }
+
+    /// The current draw without advancing: callers that fold two fields out of
+    /// one draw (a star's radius shares its y draw).
+    pub(super) fn current(&self) -> u32 {
+        self.state
+    }
+
+    /// `count` deterministic points inside an inset box: one authority for the
+    /// scatter loops every family used to spell out inline.
+    pub(super) fn points(
+        &mut self,
+        count: u32,
+        w: u32,
+        h: u32,
+        inset: (u32, u32),
+        base: (u32, u32),
+    ) -> Vec<Point> {
+        let mut out = Vec::new();
+        for _ in 0..count {
+            let x = base.0 + self.next() % w.saturating_sub(inset.0).max(1);
+            let y = base.1 + self.next() % h.saturating_sub(inset.1).max(1);
+            out.push(Point {
+                x,
+                y,
+                draw: self.current(),
+            });
+        }
+        out
+    }
+}
 
 pub(crate) fn shape_defs(art: Art, gain: f32, plan: &FillPlan) -> String {
     // Filters only — chromatic gradients live on FillPlan (mgSheen/mgHolo/mgDrift…).
@@ -165,111 +239,55 @@ fn vignette(w: u32, h: u32, _plan: &FillPlan) -> String {
     format!("<rect width=\"{w}\" height=\"{h}\" fill=\"url(#mgVig)\"/>")
 }
 
-/// Soft blob that drifts when gain > 0.
-///
-/// Motion is applied on a parent `<g>` via `animateTransform` (more reliable than
-/// animating `cx`/`cy` on filtered ellipses inside SVG-as-`<img>`).
-/// Typed geometry for one drifting blob.
-pub(super) struct Blob<'a> {
-    pub center: (f32, f32),
-    pub size: (f32, f32),
-    pub color: &'a str,
-    pub opacity: f32,
-    pub drift: (f32, f32),
-    pub dur: f32,
-    pub phase: f32,
-}
-
-pub(super) fn blob(b: Blob<'_>, gain: f32) -> String {
-    let Blob {
-        center: (cx, cy),
-        size: (rx, ry),
-        color,
-        opacity,
-        drift: (dx, dy),
-        dur,
-        phase,
-    } = b;
-    // Amplify motion so ambient drift is obvious at README sizes.
-    let adx = (dx.abs().max(28.0) * gain.max(0.01)).copysign(if dx == 0.0 { 1.0 } else { dx });
-    let ady = (dy.abs().max(18.0) * gain.max(0.01)).copysign(if dy == 0.0 { -1.0 } else { dy });
-    let o2 = (opacity * 1.55).min(0.48);
-    let o3 = (opacity * 0.55).max(0.04);
-    if gain < 0.01 {
-        return format!(
-            "<ellipse cx=\"{cx}\" cy=\"{cy}\" rx=\"{rx}\" ry=\"{ry}\" fill=\"{color}\" fill-opacity=\"{opacity}\" filter=\"url(#softGlow)\"/>"
-        );
-    }
-    // Slightly shorter cycles so motion is visible within a few seconds of loading.
-    let dur = (dur * 0.55).clamp(4.5, 9.0);
-    format!(
-        "<g>\
-           <animateTransform attributeName=\"transform\" type=\"translate\" \
-             values=\"0 0; {adx} {ady}; 0 0; {adx2} {ady2}; 0 0\" \
-             keyTimes=\"0;0.25;0.5;0.75;1\" dur=\"{dur}s\" begin=\"{phase}s\" repeatCount=\"indefinite\" \
-             calcMode=\"spline\" keySplines=\"0.45 0 0.55 1;0.45 0 0.55 1;0.45 0 0.55 1;0.45 0 0.55 1\"/>\
-           <ellipse cx=\"{cx}\" cy=\"{cy}\" rx=\"{rx}\" ry=\"{ry}\" fill=\"{color}\" fill-opacity=\"{opacity}\" filter=\"url(#softGlow)\">\
-             <animate attributeName=\"fill-opacity\" values=\"{opacity};{o2};{opacity};{o3};{opacity}\" \
-               keyTimes=\"0;0.25;0.5;0.75;1\" dur=\"{dur}s\" begin=\"{phase}s\" repeatCount=\"indefinite\"/>\
-             <animate attributeName=\"rx\" values=\"{rx};{rx2};{rx};{rx3};{rx}\" \
-               keyTimes=\"0;0.25;0.5;0.75;1\" dur=\"{dur}s\" begin=\"{phase}s\" repeatCount=\"indefinite\"/>\
-           </ellipse>\
-         </g>",
-        adx2 = -adx * 0.75,
-        ady2 = ady * 0.55,
-        rx2 = rx * 1.12,
-        rx3 = rx * 0.92,
-    )
-}
-
 /// Paint the background for one art type.
 ///
 /// `gain` scales ambient motion (0 freezes decorative layers). The match is
 /// exhaustive over [`Art`]; an unknown `type=` already normalized to
 /// [`Art::Waving`], so there is no catch-all to hide a missing family.
 pub(crate) fn shape_background(art: Art, w: u32, h: u32, plan: &FillPlan, gain: f32) -> String {
+    let canvas = Canvas::new(w, h, plan, gain);
     match art {
-        Art::Transparent => geometry::transparent(art, w, h, plan, gain),
-        Art::Plasma => showcase::plasma(art, w, h, plan, gain),
-        Art::Holo => showcase::holo(art, w, h, plan, gain),
-        Art::Neon => showcase::neon(art, w, h, plan, gain),
-        Art::Meteor => showcase::meteor(art, w, h, plan, gain),
-        Art::Liquid => showcase::liquid(art, w, h, plan, gain),
-        Art::Prism => showcase::prism(art, w, h, plan, gain),
-        Art::Void => showcase::void(art, w, h, plan, gain),
-        Art::Firefly => showcase::firefly(art, w, h, plan, gain),
-        Art::Silk => showcase::silk(art, w, h, plan, gain),
-        Art::Iridescent => showcase::iridescent(art, w, h, plan, gain),
-        Art::Rect => geometry::rect(art, w, h, plan, gain),
-        Art::Soft => canvas::soft(art, w, h, plan, gain),
-        Art::Rounded => canvas::soft(art, w, h, plan, gain),
-        Art::Aurora => canvas::aurora(art, w, h, plan, gain),
-        Art::Mesh => canvas::mesh(art, w, h, plan, gain),
-        Art::Glass => canvas::glass(art, w, h, plan, gain),
-        Art::Horizon => canvas::horizon(art, w, h, plan, gain),
-        Art::Dusk => canvas::horizon(art, w, h, plan, gain),
-        Art::Wave => canvas::wave(art, w, h, plan, gain),
-        Art::Waving => canvas::wave(art, w, h, plan, gain),
-        Art::Orbit => canvas::orbit(art, w, h, plan, gain),
-        Art::Ring => canvas::ring(art, w, h, plan, gain),
-        Art::Beam => canvas::beam(art, w, h, plan, gain),
-        Art::Terminal => canvas::terminal(art, w, h, plan, gain),
-        Art::Constellation => canvas::constellation(art, w, h, plan, gain),
-        Art::Blur => geometry::blur(art, w, h, plan, gain),
-        Art::Grid => patterns::grid(art, w, h, plan, gain),
-        Art::Circuit => patterns::circuit(art, w, h, plan, gain),
-        Art::Hud => patterns::hud(art, w, h, plan, gain),
-        Art::Pulse => patterns::pulse(art, w, h, plan, gain),
-        Art::Noise => patterns::noise(art, w, h, plan, gain),
-        Art::Cylinder => geometry::cylinder(art, w, h, plan, gain),
-        Art::Slice => geometry::slice(art, w, h, plan, gain),
-        Art::Egg => geometry::egg(art, w, h, plan, gain),
-        Art::Shark => geometry::shark(art, w, h, plan, gain),
-        Art::Venom => geometry::shark(art, w, h, plan, gain),
-        Art::Speech => geometry::speech(art, w, h, plan, gain),
-        Art::Checkered => geometry::checkered(art, w, h, plan, gain),
-        Art::Product => geometry::product(art, w, h, plan, gain),
-        Art::Oss => geometry::product(art, w, h, plan, gain),
-        Art::Org => geometry::product(art, w, h, plan, gain),
+        Art::Transparent => geometry::transparent(art, &canvas),
+        Art::Plasma => showcase::plasma(art, &canvas),
+        Art::Holo => showcase::holo(art, &canvas),
+        Art::Neon => showcase::neon(art, &canvas),
+        Art::Meteor => showcase::meteor(art, &canvas),
+        Art::Liquid => showcase::liquid(art, &canvas),
+        Art::Prism => showcase::prism(art, &canvas),
+        Art::Void => showcase::void(art, &canvas),
+        Art::Firefly => showcase::firefly(art, &canvas),
+        Art::Silk => showcase::silk(art, &canvas),
+        Art::Iridescent => showcase::iridescent(art, &canvas),
+        Art::Rect => geometry::rect(art, &canvas),
+        Art::Soft => canvas::soft(art, &canvas),
+        Art::Rounded => canvas::soft(art, &canvas),
+        Art::Aurora => canvas::aurora(art, &canvas),
+        Art::Mesh => canvas::mesh(art, &canvas),
+        Art::Glass => canvas::glass(art, &canvas),
+        Art::Horizon => canvas::horizon(art, &canvas),
+        Art::Dusk => canvas::horizon(art, &canvas),
+        Art::Wave => canvas::wave(art, &canvas),
+        Art::Waving => canvas::wave(art, &canvas),
+        Art::Orbit => canvas::orbit(art, &canvas),
+        Art::Ring => canvas::ring(art, &canvas),
+        Art::Beam => canvas::beam(art, &canvas),
+        Art::Terminal => canvas::terminal(art, &canvas),
+        Art::Constellation => canvas::constellation(art, &canvas),
+        Art::Blur => geometry::blur(art, &canvas),
+        Art::Grid => patterns::grid(art, &canvas),
+        Art::Circuit => patterns::circuit(art, &canvas),
+        Art::Hud => patterns::hud(art, &canvas),
+        Art::Pulse => patterns::pulse(art, &canvas),
+        Art::Noise => patterns::noise(art, &canvas),
+        Art::Cylinder => geometry::cylinder(art, &canvas),
+        Art::Slice => geometry::slice(art, &canvas),
+        Art::Egg => geometry::egg(art, &canvas),
+        Art::Shark => geometry::shark(art, &canvas),
+        Art::Venom => geometry::shark(art, &canvas),
+        Art::Speech => geometry::speech(art, &canvas),
+        Art::Checkered => geometry::checkered(art, &canvas),
+        Art::Product => geometry::product(art, &canvas),
+        Art::Oss => geometry::product(art, &canvas),
+        Art::Org => geometry::product(art, &canvas),
     }
 }

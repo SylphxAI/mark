@@ -2,13 +2,12 @@
 //!
 //! One function per art type; `super::shape_background` dispatches exhaustively.
 
-use super::{blob, Blob};
-use super::{field_stack, sheen, vignette};
+use super::{Canvas, Rng};
 use crate::capabilities::mark::domain::art::Art;
-use crate::capabilities::mark::domain::color::{ink_canvas, FillPlan};
-pub(super) fn soft(art: Art, w: u32, h: u32, plan: &FillPlan, gain: f32) -> String {
-    let fill = plan.fill.as_str();
-    let g = gain;
+use crate::capabilities::mark::domain::color::ink_canvas;
+pub(super) fn soft(art: Art, c: &Canvas) -> String {
+    let (w, h) = (c.w, c.h);
+    let fill = c.plan.fill.as_str();
     let rx = if art == Art::Soft {
         (h / 2).min(48)
     } else {
@@ -20,7 +19,7 @@ pub(super) fn soft(art: Art, w: u32, h: u32, plan: &FillPlan, gain: f32) -> Stri
                 h.saturating_sub(2),
                 rx.saturating_sub(1),
             );
-    let pulse = if g > 0.01 {
+    let pulse = if c.gain > 0.01 {
         format!(
                     "<rect width=\"{w}\" height=\"{h}\" rx=\"{rx}\" fill=\"#ffffff\" fill-opacity=\"0.04\">\
                        <animate attributeName=\"fill-opacity\" values=\"0.02;0.07;0.02\" dur=\"4.5s\" repeatCount=\"indefinite\"/>\
@@ -30,21 +29,13 @@ pub(super) fn soft(art: Art, w: u32, h: u32, plan: &FillPlan, gain: f32) -> Stri
         String::new()
     };
     let shine = format!("<rect width=\"{w}\" height=\"{h}\" rx=\"{rx}\" fill=\"url(#shine)\"/>");
-    format!(
-        "<rect width=\"{w}\" height=\"{h}\" rx=\"{rx}\" fill=\"{fill}\"/>\
-                 {pulse}{shine}{border}{sheen}{vignette}",
-        sheen = sheen(w, h, g, plan),
-        vignette = vignette(w, h, plan),
-    )
+    let base = format!("<rect width=\"{w}\" height=\"{h}\" rx=\"{rx}\" fill=\"{fill}\"/>");
+    c.finish(base, &format!("{pulse}{shine}{border}"))
 }
-pub(super) fn aurora(_art: Art, w: u32, h: u32, plan: &FillPlan, gain: f32) -> String {
-    let _fill = plan.fill.as_str();
-    let accent = plan.accent.as_str();
-    let accent2 = plan.accent2.as_str();
-    let warm = plan.warm.as_str();
-    let wf = w as f32;
-    let hf = h as f32;
-    let g = gain;
+pub(super) fn aurora(art: Art, c: &Canvas) -> String {
+    let (w, h, wf, hf, g) = (c.w, c.h, c.wf, c.hf, c.gain);
+    let accent = c.plan.accent.as_str();
+    let warm = c.plan.warm.as_str();
     let y1 = hf * 0.55;
     let w1 = wf * 0.25;
     let y2 = hf * 0.25;
@@ -79,178 +70,23 @@ pub(super) fn aurora(_art: Art, w: u32, h: u32, plan: &FillPlan, gain: f32) -> S
     } else {
         String::new()
     };
-    format!(
-                "{base}{b1}{b2}{b3}                 <path d=\"M0,{y1} C{w1},{y2} {w2},{y3} {w},{y4} L{w},{h} L0,{h} Z\" fill=\"{accent}\" fill-opacity=\"0.22\">{wave}</path>                 <path d=\"M0,{y5} C{w3},{y6} {w4},{y7} {w},{y8} L{w},{h} L0,{h} Z\" fill=\"{warm}\" fill-opacity=\"0.18\">{wave2}</path>                 <path d=\"M0,{y1} C{w1},{y2} {w2},{y3} {w},{y4} L{w},{h} L0,{h} Z\" fill=\"url(#mgWaveA)\" fill-opacity=\"0.28\"/>                 {sheen}{vig}",
-                base = field_stack(w, h, plan),
-                b1 = blob(
-            Blob {
-                center: (wf * 0.25, hf * 0.35),
-                size: (wf * 0.3, hf * 0.5),
-                color: accent,
-                opacity: 0.22,
-                drift: (wf * 0.05, -hf * 0.04),
-                dur: 9.0,
-                phase: 0.0,
-            },
-            g,
-        ),
-                b2 = blob(
-            Blob {
-                center: (wf * 0.7, hf * 0.45),
-                size: (wf * 0.32, hf * 0.48),
-                color: accent2,
-                opacity: 0.24,
-                drift: (-wf * 0.06, hf * 0.05),
-                dur: 10.0,
-                phase: 0.5,
-            },
-            g,
-        ),
-                b3 = blob(
-            Blob {
-                center: (wf * 0.5, hf * 0.2),
-                size: (wf * 0.22, hf * 0.3),
-                color: warm,
-                opacity: 0.16,
-                drift: (wf * 0.03, hf * 0.04),
-                dur: 8.0,
-                phase: 1.0,
-            },
-            g,
-        ),
-                sheen = sheen(w, h, g, plan),
-                vig = vignette(w, h, plan),
-            )
+    let layers = format!(
+                "{blobs}                 <path d=\"M0,{y1} C{w1},{y2} {w2},{y3} {w},{y4} L{w},{h} L0,{h} Z\" fill=\"{accent}\" fill-opacity=\"0.22\">{wave}</path>                 <path d=\"M0,{y5} C{w3},{y6} {w4},{y7} {w},{y8} L{w},{h} L0,{h} Z\" fill=\"{warm}\" fill-opacity=\"0.18\">{wave2}</path>                 <path d=\"M0,{y1} C{w1},{y2} {w2},{y3} {w},{y4} L{w},{h} L0,{h} Z\" fill=\"url(#mgWaveA)\" fill-opacity=\"0.28\"/>                 ",
+                blobs = c.cloud(art),
+            );
+    c.finish(c.stack(), &layers)
 }
-pub(super) fn mesh(_art: Art, w: u32, h: u32, plan: &FillPlan, gain: f32) -> String {
-    let accent = plan.accent.as_str();
-    let accent2 = plan.accent2.as_str();
-    let warm = plan.warm.as_str();
-    let glow = plan.glow.as_str();
-    let wf = w as f32;
-    let hf = h as f32;
-    let g = gain;
-    format!(
-        "{base}{a}{b}{c}{d}{sheen}{vig}",
-        base = field_stack(w, h, plan),
-        a = blob(
-            Blob {
-                center: (wf * 0.2, hf * 0.35),
-                size: (wf * 0.36, hf * 0.55),
-                color: accent,
-                opacity: 0.3,
-                drift: (wf * 0.07, hf * 0.05),
-                dur: 8.5,
-                phase: 0.0,
-            },
-            g,
-        ),
-        b = blob(
-            Blob {
-                center: (wf * 0.7, hf * 0.3),
-                size: (wf * 0.38, hf * 0.52),
-                color: accent2,
-                opacity: 0.32,
-                drift: (-wf * 0.06, hf * 0.06),
-                dur: 9.5,
-                phase: 0.4,
-            },
-            g,
-        ),
-        c = blob(
-            Blob {
-                center: (wf * 0.5, hf * 0.75),
-                size: (wf * 0.34, hf * 0.42),
-                color: warm,
-                opacity: 0.24,
-                drift: (wf * 0.04, -hf * 0.05),
-                dur: 10.5,
-                phase: 0.9,
-            },
-            g,
-        ),
-        d = blob(
-            Blob {
-                center: (wf * 0.85, hf * 0.65),
-                size: (wf * 0.26, hf * 0.36),
-                color: glow,
-                opacity: 0.18,
-                drift: (-wf * 0.04, -hf * 0.04),
-                dur: 7.5,
-                phase: 1.3,
-            },
-            g,
-        ),
-        sheen = sheen(w, h, g, plan),
-        vig = vignette(w, h, plan),
-    )
+pub(super) fn mesh(art: Art, c: &Canvas) -> String {
+    c.finish(c.stack(), &c.cloud(art))
 }
-pub(super) fn glass(_art: Art, w: u32, h: u32, plan: &FillPlan, gain: f32) -> String {
-    let _fill = plan.fill.as_str();
-    let glow = plan.glow.as_str();
-    let wf = w as f32;
-    let hf = h as f32;
-    let g = gain;
-    let panel = if g > 0.01 {
+pub(super) fn glass(_art: Art, c: &Canvas) -> String {
+    super::pane::glass(c)
+}
+pub(super) fn horizon(art: Art, c: &Canvas) -> String {
+    let (w, h, wf, hf, g) = (c.w, c.h, c.wf, c.hf, c.gain);
+    let mid = if art == Art::Horizon { 0.58 } else { 0.52 };
+    let sun = if g > 0.01 {
         format!(
-                    "<g>\
-                       <animateTransform attributeName=\"transform\" type=\"translate\" values=\"0 0; 0 -3; 0 0; 0 2; 0 0\" dur=\"7s\" repeatCount=\"indefinite\"/>\
-                       <rect x=\"{x}\" y=\"{y}\" width=\"{rw}\" height=\"{rh}\" rx=\"22\" fill=\"#ffffff\" fill-opacity=\"0.08\" stroke=\"url(#glassEdge)\" stroke-width=\"1.2\"/>\
-                       <rect x=\"{x2}\" y=\"{y2}\" width=\"{rw2}\" height=\"{rh2}\" rx=\"18\" fill=\"{glow}\" fill-opacity=\"0.1\">\
-                         <animate attributeName=\"fill-opacity\" values=\"0.03;0.08;0.03\" dur=\"4s\" repeatCount=\"indefinite\"/>\
-                       </rect>\
-                     </g>",
-                    x = wf * 0.06,
-                    y = hf * 0.14,
-                    rw = wf * 0.88,
-                    rh = hf * 0.72,
-                    x2 = wf * 0.1,
-                    y2 = hf * 0.2,
-                    rw2 = wf * 0.4,
-                    rh2 = hf * 0.2,
-                )
-    } else {
-        format!(
-                    "<rect x=\"{x}\" y=\"{y}\" width=\"{rw}\" height=\"{rh}\" rx=\"22\" fill=\"#ffffff\" fill-opacity=\"0.08\" stroke=\"url(#glassEdge)\" stroke-width=\"1.2\"/>\
-                     <rect x=\"{x2}\" y=\"{y2}\" width=\"{rw2}\" height=\"{rh2}\" rx=\"18\" fill=\"#ffffff\" fill-opacity=\"0.04\"/>",
-                    x = wf * 0.06,
-                    y = hf * 0.14,
-                    rw = wf * 0.88,
-                    rh = hf * 0.72,
-                    x2 = wf * 0.1,
-                    y2 = hf * 0.2,
-                    rw2 = wf * 0.4,
-                    rh2 = hf * 0.2,
-                )
-    };
-    format!(
-        "{base}{blob}{panel}{sheen}{vig}",
-        base = field_stack(w, h, plan),
-        blob = blob(
-            Blob {
-                center: (wf * 0.75, hf * 0.3),
-                size: (wf * 0.25, hf * 0.45),
-                color: glow,
-                opacity: 0.14,
-                drift: (-wf * 0.04, hf * 0.05),
-                dur: 9.0,
-                phase: 0.0,
-            },
-            g,
-        ),
-        sheen = sheen(w, h, g, plan),
-        vig = vignette(w, h, plan),
-    )
-}
-pub(super) fn horizon(art: Art, w: u32, h: u32, plan: &FillPlan, gain: f32) -> String {
-    let _fill = plan.fill.as_str();
-    let wf = w as f32;
-    let hf = h as f32;
-    let g = gain;
-    {
-        let mid = if art == Art::Horizon { 0.58 } else { 0.52 };
-        let sun = if g > 0.01 {
-            format!(
                     "<ellipse cx=\"{sun}\" cy=\"{horizon}\" rx=\"{sr}\" ry=\"{sry}\" fill=\"#ffffff\" fill-opacity=\"0.22\" filter=\"url(#softGlow)\">\
                        <animate attributeName=\"ry\" values=\"{sry};{sry2};{sry}\" dur=\"6s\" repeatCount=\"indefinite\"/>\
                        <animate attributeName=\"fill-opacity\" values=\"0.18;0.32;0.18\" dur=\"6s\" repeatCount=\"indefinite\"/>\
@@ -261,17 +97,17 @@ pub(super) fn horizon(art: Art, w: u32, h: u32, plan: &FillPlan, gain: f32) -> S
                     sry = hf * 0.12,
                     sry2 = hf * 0.16,
                 )
-        } else {
-            format!(
+    } else {
+        format!(
                     "<ellipse cx=\"{sun}\" cy=\"{horizon}\" rx=\"{sr}\" ry=\"{sry}\" fill=\"#ffffff\" fill-opacity=\"0.22\" filter=\"url(#softGlow)\"/>",
                     sun = wf * 0.72,
                     horizon = hf * mid,
                     sr = hf * 0.22,
                     sry = hf * 0.12,
                 )
-        };
-        let ground = if g > 0.01 {
-            format!(
+    };
+    let ground = if g > 0.01 {
+        format!(
                     "<path fill=\"#000000\" fill-opacity=\"0.22\" d=\"M0,{hy} Q{w1},{hy2} {w2},{hy} T{w},{hy} L{w},{h} L0,{h} Z\">\
                        <animate attributeName=\"d\" dur=\"7s\" repeatCount=\"indefinite\" values=\"\
 M0,{hy} Q{w1},{hy2} {w2},{hy} T{w},{hy} L{w},{h} L0,{h} Z;\
@@ -284,34 +120,26 @@ M0,{hy} Q{w1},{hy2} {w2},{hy} T{w},{hy} L{w},{h} L0,{h} Z\"/>\
                     hy3 = hf * (mid + 0.02),
                     w2 = wf * 0.5,
                 )
-        } else {
-            format!(
+    } else {
+        format!(
                     "<path d=\"M0,{hy} Q{w1},{hy2} {w2},{hy} T{w},{hy} L{w},{h} L0,{h} Z\" fill=\"#000000\" fill-opacity=\"0.22\"/>",
                     hy = hf * mid,
                     w1 = wf * 0.25,
                     hy2 = hf * (mid + 0.08),
                     w2 = wf * 0.5,
                 )
-        };
-        format!(
-                "{base}{sun}\
+    };
+    let layers = format!(
+                "{sun}\
                  <rect y=\"{band}\" width=\"{w}\" height=\"{bh}\" fill=\"#000000\" fill-opacity=\"0.18\"/>\
-                 {ground}{sheen}{vig}",
-                base = field_stack(w, h, plan),
+                 {ground}",
                 band = hf * (mid - 0.02),
                 bh = hf * 0.04,
-                sheen = sheen(w, h, g, plan),
-                vig = vignette(w, h, plan),
-            )
-    }
-
-    // Signature liquid-banner waves (multi-layer SMIL morph — readable at README size).
+            );
+    c.finish(c.stack(), &layers)
 }
-pub(super) fn wave(art: Art, w: u32, h: u32, plan: &FillPlan, gain: f32) -> String {
-    let _fill = plan.fill.as_str();
-    let wf = w as f32;
-    let hf = h as f32;
-    let g = gain;
+pub(super) fn wave(art: Art, c: &Canvas) -> String {
+    let (w, h, wf, hf, g) = (c.w, c.h, c.wf, c.hf, c.gain);
     // Capsule-class restrained waves (ADR-0004): the canvas is the
     // theme's deep base — never a full-color wash; color lives only in
     // the layered gradient waves along the bottom (header) / top
@@ -321,7 +149,7 @@ pub(super) fn wave(art: Art, w: u32, h: u32, plan: &FillPlan, gain: f32) -> Stri
     let gain = if g < 0.01 { 0.0 } else { g.max(0.25) };
     let mut body = format!(
         "<rect width=\"{w}\" height=\"{h}\" fill=\"{canvas}\"/>",
-        canvas = ink_canvas(&plan.base)
+        canvas = ink_canvas(&c.plan.base)
     );
     // mid_y_ratio, amp_ratio, opacity, dur, paint
     let layers: [(f32, f32, f32, f32, &str); 3] = if wild {
@@ -377,7 +205,7 @@ pub(super) fn wave(art: Art, w: u32, h: u32, plan: &FillPlan, gain: f32) -> Stri
                     a = wf * 0.22,
                     b = wf * 0.45,
                     c = wf * 0.6,
-                    stroke = plan.glow,
+                    stroke = c.plan.glow,
                 )
     } else {
         format!(
@@ -385,17 +213,14 @@ pub(super) fn wave(art: Art, w: u32, h: u32, plan: &FillPlan, gain: f32) -> Stri
                     a = wf * 0.22,
                     b = wf * 0.45,
                     c = wf * 0.6,
-                    stroke = plan.glow,
+                    stroke = c.plan.glow,
                 )
     };
     body.push_str(&foam);
     body
 }
-pub(super) fn orbit(_art: Art, w: u32, h: u32, plan: &FillPlan, gain: f32) -> String {
-    let _fill = plan.fill.as_str();
-    let wf = w as f32;
-    let hf = h as f32;
-    let g = gain;
+pub(super) fn orbit(_art: Art, c: &Canvas) -> String {
+    let (wf, hf, g) = (c.wf, c.hf, c.gain);
     let cx = wf * 0.78;
     let cy = hf * 0.5;
     let rx = hf * 0.38;
@@ -440,11 +265,10 @@ pub(super) fn orbit(_art: Art, w: u32, h: u32, plan: &FillPlan, gain: f32) -> St
                     ry2 = hf * 0.16,
                 )
     };
-    format!(
-                "{base}{rings}\
+    let layers = format!(
+                "{rings}\
                  <circle cx=\"{cx}\" cy=\"{cy}\" r=\"{core}\" fill=\"#ffffff\" fill-opacity=\"0.2\" filter=\"url(#softGlow)\">{core_anim}</circle>\
-                 {planet}{sheen}{vig}",
-                base = field_stack(w, h, plan),
+                 {planet}",
                 core = hf * 0.07,
                 core_anim = if g > 0.01 {
                     format!(
@@ -455,15 +279,11 @@ pub(super) fn orbit(_art: Art, w: u32, h: u32, plan: &FillPlan, gain: f32) -> St
                 } else {
                     String::new()
                 },
-                sheen = sheen(w, h, g, plan),
-                vig = vignette(w, h, plan),
-            )
+            );
+    c.finish(c.stack(), &layers)
 }
-pub(super) fn ring(_art: Art, w: u32, h: u32, plan: &FillPlan, gain: f32) -> String {
-    let _fill = plan.fill.as_str();
-    let wf = w as f32;
-    let hf = h as f32;
-    let g = gain;
+pub(super) fn ring(_art: Art, c: &Canvas) -> String {
+    let (wf, hf, g) = (c.wf, c.hf, c.gain);
     let cx = wf * 0.82;
     let cy = hf * 0.5;
     let r = hf * 0.32;
@@ -484,22 +304,17 @@ pub(super) fn ring(_art: Art, w: u32, h: u32, plan: &FillPlan, gain: f32) -> Str
                     r2 = hf * 0.22,
                 )
     };
-    format!(
-                "{base}{spin}\
+    let layers = format!(
+                "{spin}\
                  <circle cx=\"{cx}\" cy=\"{cy}\" r=\"{r3}\" fill=\"#ffffff\" fill-opacity=\"0.08\"/>\
-                 {sheen}{vig}",
-                base = field_stack(w, h, plan),
+                 ",
                 r3 = hf * 0.12,
-                sheen = sheen(w, h, g, plan),
-                vig = vignette(w, h, plan),
-            )
+            );
+    c.finish(c.stack(), &layers)
 }
-pub(super) fn beam(_art: Art, w: u32, h: u32, plan: &FillPlan, gain: f32) -> String {
-    let _fill = plan.fill.as_str();
-    let glow = plan.glow.as_str();
-    let wf = w as f32;
-    let hf = h as f32;
-    let g = gain;
+pub(super) fn beam(_art: Art, c: &Canvas) -> String {
+    let (w, h, wf, hf, g) = (c.w, c.h, c.wf, c.hf, c.gain);
+    let glow = c.plan.glow.as_str();
     let p1 = format!("0,{h} {} ,0 {} ,0 {w},{h}", wf * 0.42, wf * 0.58);
     let p2 = format!(
         "{},{} {} ,{} {} ,{} {},{}",
@@ -545,18 +360,10 @@ pub(super) fn beam(_art: Art, w: u32, h: u32, plan: &FillPlan, gain: f32) -> Str
             p3 = p3,
         )
     };
-    format!(
-        "{base}{beams}{sheen}{vig}",
-        base = field_stack(w, h, plan),
-        sheen = sheen(w, h, g, plan),
-        vig = vignette(w, h, plan),
-    )
+    c.finish(c.stack(), &beams)
 }
-pub(super) fn terminal(_art: Art, w: u32, h: u32, plan: &FillPlan, gain: f32) -> String {
-    let _fill = plan.fill.as_str();
-    let wf = w as f32;
-    let hf = h as f32;
-    let g = gain;
+pub(super) fn terminal(_art: Art, c: &Canvas) -> String {
+    let (wf, hf, g) = (c.wf, c.hf, c.gain);
     let cursor = if g > 0.01 {
         format!(
                     "<rect x=\"{cx}\" y=\"{cy}\" width=\"10\" height=\"{ch}\" rx=\"2\" fill=\"#ffffff\" fill-opacity=\"0.75\">\
@@ -569,13 +376,11 @@ pub(super) fn terminal(_art: Art, w: u32, h: u32, plan: &FillPlan, gain: f32) ->
     } else {
         String::new()
     };
-    format!(
-                "{base}\
-                 <rect x=\"{x}\" y=\"{y}\" width=\"{rw}\" height=\"{rh}\" rx=\"14\" fill=\"#000000\" fill-opacity=\"0.28\" stroke=\"#ffffff\" stroke-opacity=\"0.1\"/>\
+    let layers = format!(
+                "<rect x=\"{x}\" y=\"{y}\" width=\"{rw}\" height=\"{rh}\" rx=\"14\" fill=\"#000000\" fill-opacity=\"0.28\" stroke=\"#ffffff\" stroke-opacity=\"0.1\"/>\
                  <circle cx=\"{d1}\" cy=\"{dy}\" r=\"5\" fill=\"#FF5F56\"/><circle cx=\"{d2}\" cy=\"{dy}\" r=\"5\" fill=\"#FFBD2E\"/><circle cx=\"{d3}\" cy=\"{dy}\" r=\"5\" fill=\"#27C93F\"/>\
                  <rect x=\"{ix}\" y=\"{iy}\" width=\"{iw}\" height=\"{ih}\" rx=\"8\" fill=\"#000000\" fill-opacity=\"0.22\"/>\
-                 {cursor}{sheen}",
-                base = field_stack(w, h, plan),
+                 {cursor}",
                 x = wf * 0.04,
                 y = hf * 0.1,
                 rw = wf * 0.92,
@@ -588,28 +393,22 @@ pub(super) fn terminal(_art: Art, w: u32, h: u32, plan: &FillPlan, gain: f32) ->
                 iy = hf * 0.32,
                 iw = wf * 0.86,
                 ih = hf * 0.5,
-                sheen = sheen(w, h, g, plan),
-            )
+            );
+    let mut out = c.stack();
+    out.push_str(&layers);
+    out.push_str(&c.gloss());
+    out
 }
-pub(super) fn constellation(_art: Art, w: u32, h: u32, plan: &FillPlan, gain: f32) -> String {
-    let _fill = plan.fill.as_str();
-    let g = gain;
-    let mut pts = Vec::new();
-    let mut s: u32 = 42;
-    for _ in 0..16 {
-        s = s.wrapping_mul(1664525).wrapping_add(1013904223);
-        let x = 50 + s % w.saturating_sub(100).max(1);
-        s = s.wrapping_mul(1664525).wrapping_add(1013904223);
-        let y = 30 + s % h.saturating_sub(60).max(1);
-        pts.push((x, y));
-    }
+pub(super) fn constellation(_art: Art, c: &Canvas) -> String {
+    let (w, h, g) = (c.w, c.h, c.gain);
+    let pts = Rng::lcg(42).points(16, w, h, (100, 60), (50, 30));
     let mut edges = String::new();
     for i in 0..pts.len().saturating_sub(1) {
         if i % 2 == 0 {
             continue;
         }
-        let (x1, y1) = pts[i];
-        let (x2, y2) = pts[(i + 3) % pts.len()];
+        let (x1, y1) = (pts[i].x, pts[i].y);
+        let (x2, y2) = (pts[(i + 3) % pts.len()].x, pts[(i + 3) % pts.len()].y);
         let edge = if g > 0.01 {
             format!(
                         "<line x1=\"{x1}\" y1=\"{y1}\" x2=\"{x2}\" y2=\"{y2}\" stroke=\"#ffffff\" stroke-opacity=\"0.14\" stroke-width=\"1\">\
@@ -628,7 +427,8 @@ pub(super) fn constellation(_art: Art, w: u32, h: u32, plan: &FillPlan, gain: f3
     let stars: String = pts
                 .iter()
                 .enumerate()
-                .map(|(i, (x, y))| {
+                .map(|(i, p)| {
+                    let (x, y) = (p.x, p.y);
                     if g > 0.01 {
                         format!(
                             "<circle cx=\"{x}\" cy=\"{y}\" r=\"2\" fill=\"#ffffff\" fill-opacity=\"0.85\">\
@@ -647,12 +447,5 @@ pub(super) fn constellation(_art: Art, w: u32, h: u32, plan: &FillPlan, gain: f3
                     }
                 })
                 .collect();
-    format!(
-        "{}{}{}{}{}",
-        field_stack(w, h, plan),
-        edges,
-        stars,
-        sheen(w, h, g, plan),
-        vignette(w, h, plan)
-    )
+    c.finish(c.stack(), &format!("{edges}{stars}"))
 }
