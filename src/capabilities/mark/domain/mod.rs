@@ -20,7 +20,7 @@ pub(crate) use catalog::{
 };
 pub(crate) use pill::{named_color, PillStyle};
 pub(crate) use recovery::split_badge_path;
-pub use svg::cap_text;
+pub(crate) use svg::cap_text;
 pub(crate) use svg::normalize_hex_token;
 
 // Kernel surface consumed by the contract tests (see tests/*.rs). Recovery and
