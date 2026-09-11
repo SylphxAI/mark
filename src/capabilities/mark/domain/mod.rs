@@ -3,6 +3,7 @@
 //! Everything here is pure and deterministic (ADR-0003): no clock, no network,
 //! no process env. The kernel lives with its capability.
 
+pub mod art;
 pub mod catalog;
 pub mod color;
 pub mod hash;

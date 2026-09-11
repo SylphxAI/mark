@@ -3,9 +3,10 @@
 //! Pure and deterministic (ADR-0003): the same spec renders the same SVG
 //! forever — no clock, no upstream, no state.
 
+use crate::capabilities::mark::domain::art::Art;
 use crate::capabilities::mark::domain::color::{resolve_fill, FillPlan};
 use crate::capabilities::mark::domain::motion::{ambient_gain, text_children, text_open_attrs};
-use crate::capabilities::mark::domain::shapes::{normalize_art_type, shape_background, shape_defs};
+use crate::capabilities::mark::domain::shapes::{shape_background, shape_defs};
 use crate::capabilities::mark::domain::svg::{credit_mark, ensure_hash, esc, svg_doc};
 use crate::capabilities::mark::domain::text::{
     content_family, fit_line, line_advance, monogram, Metric,
@@ -114,14 +115,14 @@ fn plate_chrome(width: u32, height: u32, mono: &str, plan: &FillPlan, ink: &str)
 }
 
 pub fn render(spec: &MarkSpec) -> String {
-    let ty = normalize_art_type(spec.art.as_deref().unwrap_or("waving"));
+    let art = Art::parse(spec.art.as_deref().unwrap_or("waving"));
     // Cards need taller canvases (e.g. 768); strips stay ~200–320.
     let height = spec.height.unwrap_or(220).clamp(40, 900);
     let width = spec.width.unwrap_or(880).clamp(200, 1600);
     let layout = normalize_layout(spec.hero.layout.as_deref());
     // product/oss/org types default into plate composition when layout omitted
     let layout = if layout == "default"
-        && matches!(ty, "product" | "oss" | "org")
+        && matches!(art, Art::Product | Art::Oss | Art::Org)
         && spec.hero.layout.is_none()
     {
         "plate"
@@ -132,7 +133,7 @@ pub fn render(spec: &MarkSpec) -> String {
     let anim = normalize_animation(spec.animation.as_deref());
     let gain = ambient_gain(anim);
 
-    let seed = format!("{ty}-{}", spec.text.as_deref().unwrap_or(""));
+    let seed = format!("{art}-{}", spec.text.as_deref().unwrap_or(""));
     let fill = resolve_fill(spec.color.as_deref(), spec.theme.as_deref(), &seed, "mg");
 
     // Strict color grammar: ink is derived from the resolved palette, so only
@@ -280,8 +281,8 @@ pub fn render(spec: &MarkSpec) -> String {
     let body = format!(
         "<defs>{}{}</defs>{}{}{}{}{}{}",
         fill.defs,
-        shape_defs(ty, gain, &fill),
-        shape_background(ty, width, height, &fill, gain),
+        shape_defs(art, gain, &fill),
+        shape_background(art, width, height, &fill, gain),
         plate,
         terminal_rule,
         text_nodes,

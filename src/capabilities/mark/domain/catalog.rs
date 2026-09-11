@@ -1,8 +1,8 @@
 //! The Mark vocabulary — one catalog, one contract.
 
+use crate::capabilities::mark::domain::art::{art_ids, featured_art_ids};
 use crate::capabilities::mark::domain::icons;
 use crate::capabilities::mark::domain::motion::ANIMATIONS;
-use crate::capabilities::mark::domain::shapes::{ART_TYPES, FEATURED_ART_TYPES};
 use crate::capabilities::mark::domain::spec::MarkForm;
 
 /// Layout families (hero composition, not background recipe).
@@ -46,8 +46,8 @@ pub(crate) fn normalize_layout(raw: Option<&str>) -> &'static str {
 pub(crate) fn vocabulary() -> serde_json::Value {
     serde_json::json!({
         "forms": MarkForm::ALL,
-        "art_types": ART_TYPES,
-        "featured_art_types": FEATURED_ART_TYPES,
+        "art_types": art_ids(),
+        "featured_art_types": featured_art_ids(),
         "layouts": LAYOUTS,
         "themes": super::theme::list_names(),
         "icons": icons::available(),
