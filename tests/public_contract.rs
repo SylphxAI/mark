@@ -212,7 +212,7 @@ async fn staff_headers_do_not_change_the_mark() {
     );
 
     let inject =
-        "/api/v1/mark/hero?type=soft&text=probe&animation=none&fontColor=%22%20onload=%22alert(7)";
+        "/api/v1/mark/hero?type=soft&text=probe&animation=none&color=%22%20onload=%22alert(7)";
     let (status, _, body) = get_with(
         inject,
         &[("authorization", "Bearer staff"), ("x-staff", "1")],

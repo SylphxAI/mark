@@ -53,6 +53,10 @@ One endpoint: `GET /api/v1/mark/{form}` — plus the shields-style pill shorthan
 | `deploy` | “deployed on Sylphx” conversion pill | `service` `style` |
 
 Shared params on every form: `theme` · `color` · `animation` · `credit` · `font` (`sans` | `mono`).
+Anything outside this grammar is unknown input, never a second vocabulary: the
+retired predecessor knobs (`fontSize`, `descSize`, `fontColor`, align/rotate/
+`stroke`/`strokeWidth`, `textBg`, `section`, `reversal`) and retired ids/aliases
+(`badge`, `icons`, `card`, `deploymark`, layout aliases) are ignored.
 A theme pack defines the full palette; an explicit `color` is used when there is no theme pack. An unknown theme name is not a theme pack.
 Themes are **neutral design themes** — no personal or company names anywhere in the product.
 
@@ -118,7 +122,7 @@ The profile card is text-driven: the URL supplies the name (`text`) and tagline 
 ## The contract
 
 - **Determinism:** same URL, same mark, forever. No clock-sampled fills, no upstream, no state, no secrets. (Retired: `timeAuto`/`timeGradient`, GitHub stats/org/repo cards, all legacy capability routes.)
-- **Totality:** rendering never fails. Unknown form → hero, unknown art → `aurora`, invalid colors → fallback paint.
+- **Totality:** rendering never fails. Unknown form → hero, unknown art → `waving` (the shipped default), invalid colors → fallback paint, unknown theme/layout/animation → the documented default.
 - **CSP + escaping:** SVG responses carry `Content-Security-Policy: script-src 'none'` + `X-Content-Type-Options: nosniff`; every user string is escaped; color-bearing attributes accept only validated hex/named tokens.
 - **Cache:** every mark URL pins its bytes (pure function of the URL, including SMIL-animated variants) and caches long as immutable (`max-age=31536000, s-maxage=31536000, immutable` + `ETag` + `CDN-Cache-Control`/`Cloudflare-CDN-Cache-Control`); conditional `If-None-Match` returns `304`. Origin headers are this product's write. Live edge `HIT` on dest extensionless `/api/v1/mark*` + `/badge/*` is Apps (Cloudflare for SaaS Custom Hostname + grey CNAME to `cname.sylphx.com`, plus Cache Everything / eligible-for-cache keyed on the full query string). Hands is generic kube origin only.
 

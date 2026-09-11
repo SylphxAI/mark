@@ -30,28 +30,6 @@ pub(crate) struct MarkQuery {
     pub desc: Option<String>,
     // hero
     pub layout: Option<String>,
-    pub section: Option<String>,
-    pub reversal: Option<String>,
-    #[serde(rename = "fontSize")]
-    pub font_size: Option<u32>,
-    #[serde(rename = "descSize")]
-    pub desc_size: Option<u32>,
-    #[serde(rename = "fontColor")]
-    pub font_color: Option<String>,
-    #[serde(rename = "fontAlign")]
-    pub font_align: Option<f32>,
-    #[serde(rename = "fontAlignY")]
-    pub font_align_y: Option<f32>,
-    #[serde(rename = "descAlign")]
-    pub desc_align: Option<f32>,
-    #[serde(rename = "descAlignY")]
-    pub desc_align_y: Option<f32>,
-    pub rotate: Option<f32>,
-    pub stroke: Option<String>,
-    #[serde(rename = "strokeWidth")]
-    pub stroke_width: Option<f32>,
-    #[serde(rename = "textBg")]
-    pub text_bg: Option<String>,
     // pill / deploy
     pub label: Option<String>,
     pub message: Option<String>,
@@ -121,19 +99,6 @@ impl MarkQuery {
             font: self.font.clone(),
             hero: crate::capabilities::mark::domain::HeroSpec {
                 layout: self.layout.clone(),
-                section: self.section.clone(),
-                reversal: parse_bool(self.reversal.as_deref(), false),
-                font_size: self.font_size,
-                desc_size: self.desc_size,
-                font_color: self.font_color.clone(),
-                font_align: self.font_align,
-                font_align_y: self.font_align_y,
-                desc_align: self.desc_align,
-                desc_align_y: self.desc_align_y,
-                rotate: self.rotate,
-                stroke: self.stroke.clone(),
-                stroke_width: self.stroke_width,
-                text_bg: parse_bool(self.text_bg.as_deref(), false),
             },
             pill: crate::capabilities::mark::domain::PillSpec {
                 label: self.label.clone(),

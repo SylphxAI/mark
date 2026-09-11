@@ -200,11 +200,13 @@ function isThemePack(name){
 }
 
 function parseForm(raw){
+  // Same vocabulary as the server (domain/spec.rs::MarkForm::parse): unknown
+  // input is the hero, and the retired `identity` id is the profile card.
   const s = String(raw == null ? "" : raw).trim().toLowerCase();
-  if (s === "pill" || s === "badge") return "pill";
-  if (s === "strip" || s === "icons" || s === "iconsrow") return "strip";
-  if (s === "profile" || s === "card" || s === "identity") return "profile";
-  if (s === "deploy" || s === "deploymark") return "deploy";
+  if (s === "pill") return "pill";
+  if (s === "strip") return "strip";
+  if (s === "profile" || s === "identity") return "profile";
+  if (s === "deploy") return "deploy";
   return "hero";
 }
 

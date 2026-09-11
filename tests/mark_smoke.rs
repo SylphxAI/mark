@@ -35,7 +35,6 @@ fn hero_plate_has_monogram_and_left_anchor() {
         desc: Some("The PDF intelligence layer".into()),
         hero: mark::capabilities::mark::domain::HeroSpec {
             layout: Some("plate".into()),
-            ..Default::default()
         },
         ..Default::default()
     };
