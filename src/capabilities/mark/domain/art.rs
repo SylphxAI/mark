@@ -53,9 +53,9 @@ pub enum Art {
 }
 
 impl Art {
-    /// Catalogue order (published as `art_types`).
+    /// Catalogue order (published as `art_types`); this order is a
+    /// product contract, asserted by `catalogue_order_never_drifts`.
     pub const ALL: [Art; 42] = [
-        Art::Transparent,
         Art::Plasma,
         Art::Holo,
         Art::Neon,
@@ -66,37 +66,38 @@ impl Art {
         Art::Firefly,
         Art::Silk,
         Art::Iridescent,
-        Art::Rect,
-        Art::Soft,
-        Art::Rounded,
         Art::Aurora,
         Art::Mesh,
         Art::Glass,
+        Art::Soft,
         Art::Horizon,
         Art::Dusk,
+        Art::Orbit,
+        Art::Beam,
         Art::Wave,
         Art::Waving,
-        Art::Orbit,
-        Art::Ring,
-        Art::Beam,
         Art::Terminal,
         Art::Constellation,
-        Art::Blur,
         Art::Grid,
+        Art::Blur,
+        Art::Ring,
         Art::Circuit,
         Art::Hud,
         Art::Pulse,
         Art::Noise,
-        Art::Cylinder,
+        Art::Rounded,
+        Art::Rect,
         Art::Slice,
+        Art::Cylinder,
+        Art::Checkered,
         Art::Egg,
         Art::Shark,
         Art::Venom,
         Art::Speech,
-        Art::Checkered,
         Art::Product,
         Art::Oss,
         Art::Org,
+        Art::Transparent,
     ];
 
     /// Studio showcase order (published as `featured_art_types`).
@@ -253,6 +254,62 @@ mod tests {
         assert_eq!(Art::parse("not-a-type"), Art::Waving);
         assert_eq!(Art::parse("PLASMA"), Art::Plasma);
         assert_eq!(Art::parse("  neon "), Art::Neon);
+    }
+
+    #[test]
+    fn catalogue_order_never_drifts() {
+        // The published `art_types` order is product surface: adding or moving an
+        // art type must be a deliberate change to this frozen expectation.
+        let expected = [
+            "plasma",
+            "holo",
+            "neon",
+            "meteor",
+            "liquid",
+            "prism",
+            "void",
+            "firefly",
+            "silk",
+            "iridescent",
+            "aurora",
+            "mesh",
+            "glass",
+            "soft",
+            "horizon",
+            "dusk",
+            "orbit",
+            "beam",
+            "wave",
+            "waving",
+            "terminal",
+            "constellation",
+            "grid",
+            "blur",
+            "ring",
+            "circuit",
+            "hud",
+            "pulse",
+            "noise",
+            "rounded",
+            "rect",
+            "slice",
+            "cylinder",
+            "checkered",
+            "egg",
+            "shark",
+            "venom",
+            "speech",
+            "product",
+            "oss",
+            "org",
+            "transparent",
+        ];
+        assert_eq!(
+            Art::ALL.iter().map(|a| a.id()).collect::<Vec<_>>(),
+            expected.to_vec(),
+            "Art::ALL order is the published art_types order"
+        );
+        assert_eq!(super::art_ids(), expected.to_vec());
     }
 
     #[test]

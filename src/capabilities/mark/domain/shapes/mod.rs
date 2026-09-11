@@ -61,6 +61,7 @@ pub const ART_TYPES: &[&str] = &[
 
 mod canvas;
 mod geometry;
+mod patterns;
 mod showcase;
 
 pub(crate) fn shape_defs(art: Art, gain: f32, plan: &FillPlan) -> String {
@@ -221,7 +222,6 @@ pub(super) fn blob(b: Blob<'_>, gain: f32) -> String {
     )
 }
 
-#[allow(clippy::format_in_format_args)]
 /// Paint the background for one art type.
 ///
 /// `gain` scales ambient motion (0 freezes decorative layers). The match is
@@ -256,11 +256,11 @@ pub(crate) fn shape_background(art: Art, w: u32, h: u32, plan: &FillPlan, gain: 
         Art::Terminal => canvas::terminal(art, w, h, plan, gain),
         Art::Constellation => canvas::constellation(art, w, h, plan, gain),
         Art::Blur => geometry::blur(art, w, h, plan, gain),
-        Art::Grid => canvas::grid(art, w, h, plan, gain),
-        Art::Circuit => canvas::circuit(art, w, h, plan, gain),
-        Art::Hud => canvas::hud(art, w, h, plan, gain),
-        Art::Pulse => canvas::pulse(art, w, h, plan, gain),
-        Art::Noise => canvas::noise(art, w, h, plan, gain),
+        Art::Grid => patterns::grid(art, w, h, plan, gain),
+        Art::Circuit => patterns::circuit(art, w, h, plan, gain),
+        Art::Hud => patterns::hud(art, w, h, plan, gain),
+        Art::Pulse => patterns::pulse(art, w, h, plan, gain),
+        Art::Noise => patterns::noise(art, w, h, plan, gain),
         Art::Cylinder => geometry::cylinder(art, w, h, plan, gain),
         Art::Slice => geometry::slice(art, w, h, plan, gain),
         Art::Egg => geometry::egg(art, w, h, plan, gain),
