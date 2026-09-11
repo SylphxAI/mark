@@ -3,38 +3,14 @@
 //! Same grammar as the pill (style / theme / color / motion / font) with a
 //! left mark tile so the conversion surface is not a generic shields badge.
 
-use crate::capabilities::mark::domain::color::contrasting_fg;
+use crate::capabilities::mark::domain::color::{contrasting_fg, resolve_paint};
 use crate::capabilities::mark::domain::motion::{text_children, text_open_attrs};
+use crate::capabilities::mark::domain::pill::measure;
 use crate::capabilities::mark::domain::svg::{ensure_hash, esc, svg_doc};
 use crate::capabilities::mark::domain::theme;
 use crate::capabilities::mark::domain::{
-    cap_text, named_color, normalize_animation, normalize_hex_token, MarkSpec, PillStyle,
-    MAX_SERVICE_CHARS,
+    cap_text, normalize_animation, MarkSpec, PillStyle, MAX_SERVICE_CHARS,
 };
-
-fn resolve_color(c: Option<&str>, fallback: &str) -> String {
-    let Some(c) = c else {
-        return fallback.to_string();
-    };
-    if let Some(n) = named_color(c) {
-        return normalize_hex_token(n).unwrap_or_else(|| n.to_string());
-    }
-    normalize_hex_token(c).unwrap_or_else(|| fallback.to_string())
-}
-
-fn measure(text: &str, style: PillStyle) -> u32 {
-    let unit = if style == PillStyle::ForTheBadge {
-        7.2
-    } else {
-        6.5
-    };
-    let pad = if style == PillStyle::ForTheBadge {
-        20.0
-    } else {
-        14.0
-    };
-    (text.chars().count() as f32 * unit + pad).ceil() as u32
-}
 
 pub fn render(spec: &MarkSpec) -> String {
     let service = cap_text(
@@ -53,12 +29,12 @@ pub fn render(spec: &MarkSpec) -> String {
     let msg_color = if let Some(t) = theme {
         t.accent.to_string()
     } else {
-        resolve_color(spec.color.as_deref(), "D87000")
+        resolve_paint(spec.color.as_deref(), "D87000")
     };
     let lbl_color = if let Some(t) = theme {
         t.bg.to_string()
     } else {
-        resolve_color(Some("1A1A2E"), "1A1A2E")
+        resolve_paint(Some("1A1A2E"), "1A1A2E")
     };
 
     let anim = match normalize_animation(spec.animation.as_deref()) {

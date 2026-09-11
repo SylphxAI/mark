@@ -27,6 +27,8 @@ jobs:
       - uses: actions/checkout@v4
       - name: Verify static owned runner profiles
         run: bash scripts/check-owned-runner-profiles.sh
+      - name: Source hygiene
+        run: python3 scripts/check-source-hygiene.py
       - uses: dtolnay/rust-toolchain@stable
         with:
           components: clippy, rustfmt

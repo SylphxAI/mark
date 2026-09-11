@@ -1,4 +1,4 @@
-//! Theme packs — fleet brands + popular dev themes.
+//! Theme packs — neutral design themes.
 
 #[derive(Clone, Debug)]
 pub(crate) struct Theme {
@@ -18,6 +18,8 @@ pub(crate) fn get(name: &str) -> Option<&'static Theme> {
 pub(crate) fn list_names() -> Vec<&'static str> {
     THEMES.iter().map(|t| t.0).collect()
 }
+
+use crate::capabilities::mark::domain::hash;
 
 static THEMES: &[(&str, Theme)] = &[
     (
@@ -167,19 +169,10 @@ pub(crate) const GRADIENTS: &[(&str, &str)] = &[
     ("2D6A4F", "95D5B2"),
 ];
 
-pub(crate) fn hash_seed(s: &str) -> u32 {
-    let mut h: u32 = 2166136261;
-    for b in s.as_bytes() {
-        h ^= u32::from(*b);
-        h = h.wrapping_mul(16777619);
-    }
-    h
-}
-
 pub(crate) fn pick_auto(seed: &str) -> &'static str {
-    PALETTE[(hash_seed(seed) as usize) % PALETTE.len()]
+    PALETTE[(hash::fnv1a_32(seed.as_bytes()) as usize) % PALETTE.len()]
 }
 
 pub(crate) fn pick_gradient(seed: &str) -> (&'static str, &'static str) {
-    GRADIENTS[(hash_seed(seed) as usize) % GRADIENTS.len()]
+    GRADIENTS[(hash::fnv1a_32(seed.as_bytes()) as usize) % GRADIENTS.len()]
 }

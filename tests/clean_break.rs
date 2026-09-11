@@ -1,7 +1,7 @@
 //! Clean-break contract tests (ADR-0003): strict SVG attribute grammar,
 //! escaping, bounded inputs, determinism — no legacy, no clock, no upstream.
 
-use mark::capabilities::mark::domain::svg::cap_text;
+use mark::capabilities::mark::domain::text::cap_text;
 use mark::capabilities::mark::domain::{MarkForm, MarkSpec, PillSpec, StripSpec};
 use mark::capabilities::mark::render;
 

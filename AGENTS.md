@@ -10,8 +10,12 @@ This file is local commands/hazards only.
 ## Local commands
 
 ```bash
+cargo fmt --all -- --check
+cargo clippy --all-targets --locked -- -D warnings
 cargo test
 cargo test --test public_contract
+python3 scripts/check-source-hygiene.py
+python3 scripts/check-owned-runner-profiles.sh
 cargo run
 cargo build --release
 ```

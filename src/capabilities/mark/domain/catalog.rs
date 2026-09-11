@@ -5,8 +5,6 @@ use crate::capabilities::mark::domain::motion::ANIMATIONS;
 use crate::capabilities::mark::domain::shapes::{ART_TYPES, FEATURED_ART_TYPES};
 use crate::capabilities::mark::domain::spec::MarkForm;
 
-pub(crate) use crate::capabilities::mark::domain::motion::normalize_animation;
-
 /// Layout families (hero composition, not background recipe).
 pub(crate) const LAYOUTS: &[&str] = &["default", "plate", "signal", "terminal"];
 
