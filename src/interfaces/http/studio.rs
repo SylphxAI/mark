@@ -8,7 +8,7 @@ use serde::Serialize;
 use crate::bootstrap::AppState;
 use crate::capabilities::mark::domain::recovery::parse_public_mark_url;
 
-pub async fn index_page(State(st): State<AppState>, uri: Uri) -> Response {
+pub(crate) async fn index_page(State(st): State<AppState>, uri: Uri) -> Response {
     let locator = match uri.query() {
         Some(q) => format!("{}?{q}", uri.path()),
         None => uri.path().to_string(),

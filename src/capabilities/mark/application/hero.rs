@@ -8,8 +8,8 @@ use crate::capabilities::mark::domain::motion::{ambient_gain, text_children, tex
 use crate::capabilities::mark::domain::shapes::{normalize_art_type, shape_background, shape_defs};
 use crate::capabilities::mark::domain::svg::{credit_mark, ensure_hash, esc, monogram, svg_doc};
 use crate::capabilities::mark::domain::{
-    cap_text, normalize_animation, normalize_hex_token, normalize_layout, MarkSpec,
-    MAX_DESC_CHARS, MAX_LINES, MAX_TEXT_CHARS,
+    cap_text, normalize_animation, normalize_hex_token, normalize_layout, MarkSpec, MAX_DESC_CHARS,
+    MAX_LINES, MAX_TEXT_CHARS,
 };
 
 /// True typewriter: per-character opacity + optional cursor.
@@ -21,9 +21,8 @@ fn char_advance(ch: char, font_size: f32) -> f32 {
     let unit = match ch {
         ' ' => 0.30,
         '\u{00A0}' => 0.30,
-        'i' | 'l' | 'I' | 'j' | 't' | 'f' | 'r' | '|' | '\'' | '`' | '!' | '.' | ',' | ':' | ';' => {
-            0.34
-        }
+        'i' | 'l' | 'I' | 'j' | 't' | 'f' | 'r' | '|' | '\'' | '`' | '!' | '.' | ',' | ':'
+        | ';' => 0.34,
         'm' | 'w' | 'M' | 'W' | '@' | '%' => 0.78,
         '1' | '(' | ')' | '[' | ']' | '{' | '}' | '/' | '\\' => 0.40,
         c if c.is_ascii_uppercase() => 0.58,
@@ -139,7 +138,6 @@ fn typewriter_line(
     out
 }
 
-
 #[allow(clippy::too_many_arguments)]
 fn plate_chrome(
     width: u32,
@@ -203,7 +201,12 @@ pub fn render(spec: &MarkSpec) -> String {
         .as_deref()
         .and_then(normalize_hex_token)
         .unwrap_or_else(|| ensure_hash(&fill.fg));
-    let font_family = match spec.font.as_deref().map(|f| f.to_ascii_lowercase()).as_deref() {
+    let font_family = match spec
+        .font
+        .as_deref()
+        .map(|f| f.to_ascii_lowercase())
+        .as_deref()
+    {
         Some("mono") => "ui-monospace,SFMono-Regular,Menlo,Consolas,monospace",
         _ => "ui-sans-serif,system-ui,-apple-system,Segoe UI,Helvetica,sans-serif",
     };
@@ -212,9 +215,16 @@ pub fn render(spec: &MarkSpec) -> String {
     let desc = cap_text(spec.desc.as_deref().unwrap_or(""), MAX_DESC_CHARS);
 
     // Layout-driven defaults (explicit query params still win)
-    let (def_align, def_align_y, def_desc_align, def_desc_y, def_fs, def_ds, anchor) = match layout {
+    let (def_align, def_align_y, def_desc_align, def_desc_y, def_fs, def_ds, anchor) = match layout
+    {
         "plate" => {
-            let fs = if height >= 480 { 56 } else if height >= 320 { 48 } else { 42 };
+            let fs = if height >= 480 {
+                56
+            } else if height >= 320 {
+                48
+            } else {
+                42
+            };
             let ds = if height >= 480 { 20 } else { 16 };
             let ay = if desc.is_empty() { 58.0 } else { 52.0 };
             let dy = if height >= 480 { 66.0 } else { 72.0 };
@@ -222,7 +232,15 @@ pub fn render(spec: &MarkSpec) -> String {
         }
         "terminal" => {
             let fs = if height >= 400 { 44 } else { 36 };
-            (12.0, if desc.is_empty() { 50.0 } else { 46.0 }, 12.0, 68.0, fs, 15, "start")
+            (
+                12.0,
+                if desc.is_empty() { 50.0 } else { 46.0 },
+                12.0,
+                68.0,
+                fs,
+                15,
+                "start",
+            )
         }
         "signal" => (
             50.0,
@@ -345,7 +363,11 @@ pub fn render(spec: &MarkSpec) -> String {
     let desc_node = if !desc.is_empty() {
         let dx = width as f32 * desc_align / 100.0;
         let dy = height as f32 * desc_align_y / 100.0
-            + if layout == "plate" { title_y_bias * 0.35 } else { 0.0 };
+            + if layout == "plate" {
+                title_y_bias * 0.35
+            } else {
+                0.0
+            };
         let desc = fit_to_width(&desc, line_max_px(width, dx, anchor), desc_size as f32);
         if use_typewriter {
             let base = lines.len() as f32 * 0.55 + 0.2;

@@ -1,6 +1,6 @@
 //! Icon catalog and id normalization (pure domain).
 
-pub fn glyph(id: &str) -> Option<&'static str> {
+pub(crate) fn glyph(id: &str) -> Option<&'static str> {
     Some(match id {
         "rust" => "<path d=\"M16 4 L26 10 L26 22 L16 28 L6 22 L6 10 Z\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"/><circle cx=\"16\" cy=\"16\" r=\"3\" fill=\"currentColor\"/>",
         "go" | "golang" => "<ellipse cx=\"16\" cy=\"16\" rx=\"12\" ry=\"8\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"/><circle cx=\"12\" cy=\"14\" r=\"1.5\" fill=\"currentColor\"/><circle cx=\"20\" cy=\"14\" r=\"1.5\" fill=\"currentColor\"/>",
@@ -53,19 +53,60 @@ pub fn glyph(id: &str) -> Option<&'static str> {
     })
 }
 
-pub fn available() -> Vec<&'static str> {
+pub(crate) fn available() -> Vec<&'static str> {
     [
-        "rust", "go", "ts", "js", "python", "react", "node", "docker", "kubernetes", "linux",
-        "git", "github", "postgres", "redis", "aws", "gcp", "azure", "nextjs", "vue", "svelte",
-        "bun", "deno", "css", "html", "graphql", "tailwind", "prisma", "sqlite", "nginx",
-        "cloudflare", "vercel", "java", "kotlin", "csharp", "php", "ruby", "elixir", "zig",
-        "terraform", "helm", "mongodb", "mysql", "prometheus", "grafana", "flutter", "swift",
+        "rust",
+        "go",
+        "ts",
+        "js",
+        "python",
+        "react",
+        "node",
+        "docker",
+        "kubernetes",
+        "linux",
+        "git",
+        "github",
+        "postgres",
+        "redis",
+        "aws",
+        "gcp",
+        "azure",
+        "nextjs",
+        "vue",
+        "svelte",
+        "bun",
+        "deno",
+        "css",
+        "html",
+        "graphql",
+        "tailwind",
+        "prisma",
+        "sqlite",
+        "nginx",
+        "cloudflare",
+        "vercel",
+        "java",
+        "kotlin",
+        "csharp",
+        "php",
+        "ruby",
+        "elixir",
+        "zig",
+        "terraform",
+        "helm",
+        "mongodb",
+        "mysql",
+        "prometheus",
+        "grafana",
+        "flutter",
+        "swift",
         "ansible",
     ]
     .to_vec()
 }
 
-pub fn normalize_id(raw: &str) -> String {
+pub(crate) fn normalize_id(raw: &str) -> String {
     match raw.to_ascii_lowercase().as_str() {
         "typescript" => "ts".into(),
         "javascript" => "js".into(),

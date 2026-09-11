@@ -3,9 +3,10 @@
 //! Consumer outcome: URL parameters become a beautiful, deterministic, branded
 //! SVG mark — hero, pill, strip, profile, or deploy — from one grammar.
 
-pub mod application;
 pub mod domain;
-pub mod interfaces;
 
+pub(crate) mod application;
+pub(crate) mod interfaces;
+
+/// Render any mark: the capability's single use case.
 pub use application::render;
-pub use domain::{parse_public_mark_url, readme_markdown_embed, MarkForm, MarkSpec, StudioBoot};

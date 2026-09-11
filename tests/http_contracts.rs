@@ -71,7 +71,10 @@ async fn default_credit_applies_unless_query_overrides() {
         "/api/v1/mark/hero?text=Hi&animation=none&credit=0",
     )
     .await;
-    assert!(!off.contains(">mark</text>"), "credit=0 must win over default");
+    assert!(
+        !off.contains(">mark</text>"),
+        "credit=0 must win over default"
+    );
 
     let (_, _, unset) = get("/api/v1/mark/hero?text=Hi&animation=none").await;
     assert!(
@@ -262,7 +265,11 @@ async fn legacy_surfaces_are_removed() {
         "/api/v1/nope",
     ] {
         let (status, _, _) = get(path).await;
-        assert_eq!(status, StatusCode::NOT_FOUND, "legacy surface must 404: {path}");
+        assert_eq!(
+            status,
+            StatusCode::NOT_FOUND,
+            "legacy surface must 404: {path}"
+        );
     }
 }
 
@@ -283,7 +290,10 @@ async fn svg_responses_have_csp_and_nosniff() {
         .get("content-security-policy")
         .and_then(|v| v.to_str().ok())
         .unwrap_or("");
-    assert!(csp.contains("script-src 'none'"), "CSP must block scripts: {csp}");
+    assert!(
+        csp.contains("script-src 'none'"),
+        "CSP must block scripts: {csp}"
+    );
     assert_eq!(
         res.headers()
             .get("x-content-type-options")
@@ -382,7 +392,10 @@ async fn identity_form_matches_profile_over_http() {
     let query = "?text=Ada%20Lovelace&desc=First%20programmer&theme=tokyonight";
     let (_, _, identity) = get(&format!("/api/v1/mark/identity{query}")).await;
     let (_, _, profile) = get(&format!("/api/v1/mark/profile{query}")).await;
-    assert_eq!(identity, profile, "identity URLs must render the profile card");
+    assert_eq!(
+        identity, profile,
+        "identity URLs must render the profile card"
+    );
     assert!(identity.contains("Ada Lovelace"));
     assert!(identity.contains(">AL<"));
 }
@@ -395,7 +408,10 @@ async fn nonfinite_geometry_is_normalized_over_http() {
     .await;
     assert_eq!(status, StatusCode::OK);
     for invalid in ["NaN", "inf", "-inf"] {
-        assert!(!body.contains(invalid), "non-finite input escaped: {invalid}");
+        assert!(
+            !body.contains(invalid),
+            "non-finite input escaped: {invalid}"
+        );
     }
     assert!(body.contains("stroke=\"#00ff00\""));
 }

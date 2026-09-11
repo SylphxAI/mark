@@ -1,7 +1,8 @@
 //! Render smoke: every form of the one grammar renders.
 
 use mark::capabilities::mark::domain::shapes::ART_TYPES;
-use mark::mark::{render, MarkForm, MarkSpec};
+use mark::capabilities::mark::domain::{MarkForm, MarkSpec};
+use mark::capabilities::mark::render;
 
 fn hero(art: &str, text: &str) -> MarkSpec {
     MarkSpec {
@@ -218,7 +219,10 @@ fn strip_motion_wraps_the_icon_row() {
 
     let glow = render(&strip_spec("glow"));
     strip_groups_are_balanced(&glow);
-    assert!(glow.contains("<animate"), "glow must compose onto the strip");
+    assert!(
+        glow.contains("<animate"),
+        "glow must compose onto the strip"
+    );
 
     let none = render(&strip_spec("none"));
     strip_groups_are_balanced(&none);

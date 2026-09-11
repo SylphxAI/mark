@@ -3,9 +3,9 @@
 //! Binds stable ports to adapters and owns process lifecycle. Domain modules
 //! never locate dependencies through this module.
 
-use std::sync::OnceLock;
 use crate::interfaces::http::app;
 use std::net::SocketAddr;
+use std::sync::OnceLock;
 use tracing_subscriber::EnvFilter;
 
 /// Process-level shell state shared with HTTP handlers.
@@ -48,14 +48,14 @@ impl Config {
         }
     }
 
-    pub fn state(&self) -> AppState {
+    pub(crate) fn state(&self) -> AppState {
         AppState {
             default_credit: self.default_credit,
             public_base: self.public_base.clone(),
         }
     }
 
-    pub fn addr(&self) -> SocketAddr {
+    pub(crate) fn addr(&self) -> SocketAddr {
         format!("{}:{}", self.host, self.port)
             .parse()
             .expect("invalid HOST:PORT")
@@ -82,9 +82,10 @@ pub fn maybe_print_cli_and_exit() -> bool {
 }
 
 pub fn init_tracing() {
-    tracing_subscriber::fmt()
-        .with_env_filter(EnvFilter::from_default_env().add_directive("mark=info".parse().unwrap()))
-        .init();
+    // `RUST_LOG` wins when it is valid; otherwise fall back to the documented
+    // default (`mark=info`) instead of failing or ignoring an invalid filter.
+    let filter = EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new("mark=info"));
+    tracing_subscriber::fmt().with_env_filter(filter).init();
 }
 
 /// Bind and serve the HTTP composition root.

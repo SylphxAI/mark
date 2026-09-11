@@ -51,7 +51,7 @@ pub const ART_TYPES: &[&str] = &[
     "transparent",
 ];
 
-pub const FEATURED_ART_TYPES: &[&str] = &[
+pub(crate) const FEATURED_ART_TYPES: &[&str] = &[
     // Capsule-class classics + solid geometry first, then ethereal showcase
     "wave",
     "waving",
@@ -73,11 +73,7 @@ pub const FEATURED_ART_TYPES: &[&str] = &[
     "constellation",
 ];
 
-pub fn is_art_type(v: &str) -> bool {
-    ART_TYPES.iter().any(|t| t.eq_ignore_ascii_case(v))
-}
-
-pub fn normalize_art_type(v: &str) -> &'static str {
+pub(crate) fn normalize_art_type(v: &str) -> &'static str {
     ART_TYPES
         .iter()
         .find(|t| t.eq_ignore_ascii_case(v))
@@ -85,7 +81,7 @@ pub fn normalize_art_type(v: &str) -> &'static str {
         .unwrap_or("waving")
 }
 
-pub fn shape_defs(ty: &str, gain: f32, plan: &FillPlan) -> String {
+pub(crate) fn shape_defs(ty: &str, gain: f32, plan: &FillPlan) -> String {
     // Filters only — chromatic gradients live on FillPlan (mgSheen/mgHolo/mgDrift…).
     let mut d = String::from(
         r##"<filter id="softGlow" x="-30%" y="-30%" width="160%" height="160%">
@@ -152,7 +148,6 @@ pub fn shape_defs(ty: &str, gain: f32, plan: &FillPlan) -> String {
     }
     d
 }
-
 
 fn wrap(transforms: &[String], inner: String) -> String {
     if transforms.is_empty() {
@@ -246,7 +241,7 @@ fn blob(
 }
 
 #[allow(clippy::format_in_format_args)]
-pub fn shape_background(
+pub(crate) fn shape_background(
     ty: &str,
     w: u32,
     h: u32,
@@ -260,8 +255,6 @@ pub fn shape_background(
     let accent2 = plan.accent2.as_str();
     let warm = plan.warm.as_str();
     let glow = plan.glow.as_str();
-    let mid = plan.mid.as_str();
-    let _ = mid; // available for type arms that want mid-field paint
     let mut transforms = Vec::new();
     if reversal {
         transforms.push(format!("translate({w},0) scale(-1,1)"));
@@ -280,11 +273,71 @@ pub fn shape_background(
         "plasma" => {
             let layers = format!(
                 "{a}{b}{c}{d}{e}",
-                a = blob(wf * 0.15, hf * 0.4, wf * 0.34, hf * 0.7, accent, 0.36, g, wf * 0.1, hf * 0.12, 8.0, 0.0),
-                b = blob(wf * 0.55, hf * 0.2, wf * 0.4, hf * 0.55, accent2, 0.38, g, -wf * 0.08, hf * 0.1, 9.5, 0.4),
-                c = blob(wf * 0.85, hf * 0.55, wf * 0.32, hf * 0.6, warm, 0.32, g, -wf * 0.06, -hf * 0.1, 7.5, 0.9),
-                d = blob(wf * 0.4, hf * 0.85, wf * 0.28, hf * 0.4, glow, 0.24, g, wf * 0.05, -hf * 0.08, 10.0, 1.2),
-                e = blob(wf * 0.72, hf * 0.18, wf * 0.24, hf * 0.36, accent, 0.18, g, -wf * 0.04, hf * 0.06, 6.5, 0.2),
+                a = blob(
+                    wf * 0.15,
+                    hf * 0.4,
+                    wf * 0.34,
+                    hf * 0.7,
+                    accent,
+                    0.36,
+                    g,
+                    wf * 0.1,
+                    hf * 0.12,
+                    8.0,
+                    0.0
+                ),
+                b = blob(
+                    wf * 0.55,
+                    hf * 0.2,
+                    wf * 0.4,
+                    hf * 0.55,
+                    accent2,
+                    0.38,
+                    g,
+                    -wf * 0.08,
+                    hf * 0.1,
+                    9.5,
+                    0.4
+                ),
+                c = blob(
+                    wf * 0.85,
+                    hf * 0.55,
+                    wf * 0.32,
+                    hf * 0.6,
+                    warm,
+                    0.32,
+                    g,
+                    -wf * 0.06,
+                    -hf * 0.1,
+                    7.5,
+                    0.9
+                ),
+                d = blob(
+                    wf * 0.4,
+                    hf * 0.85,
+                    wf * 0.28,
+                    hf * 0.4,
+                    glow,
+                    0.24,
+                    g,
+                    wf * 0.05,
+                    -hf * 0.08,
+                    10.0,
+                    1.2
+                ),
+                e = blob(
+                    wf * 0.72,
+                    hf * 0.18,
+                    wf * 0.24,
+                    hf * 0.36,
+                    accent,
+                    0.18,
+                    g,
+                    -wf * 0.04,
+                    hf * 0.06,
+                    6.5,
+                    0.2
+                ),
             );
             format!(
                 "{base}{layers}                 <rect width=\"{w}\" height=\"{h}\" fill=\"url(#mgHolo)\" opacity=\"0.58\">                   {sweep}                 </rect>                 {sheen}{vig}",
@@ -299,7 +352,7 @@ pub fn shape_background(
             )
         }
 
-                "holo" => {
+        "holo" => {
             let bars: String = (0..8)
                 .map(|i| {
                     let x = wf * (0.05 + i as f32 * 0.12);
@@ -343,7 +396,7 @@ pub fn shape_background(
             )
         }
 
-                "neon" => {
+        "neon" => {
             let frame = if g > 0.01 {
                 format!(
                     "<rect x=\"10\" y=\"10\" width=\"{iw}\" height=\"{ih}\" rx=\"14\" fill=\"none\" stroke=\"#00f5d4\" stroke-width=\"2\" filter=\"url(#neonGlow)\">\
@@ -367,7 +420,19 @@ pub fn shape_background(
             format!(
                 "{base}{blob}{frame}{sheen}{vig}",
                 base = field_stack(w, h, plan),
-                blob = blob(wf * 0.75, hf * 0.35, wf * 0.2, hf * 0.4, "#00f5d4", 0.12, g, -wf * 0.04, hf * 0.05, 7.0, 0.0),
+                blob = blob(
+                    wf * 0.75,
+                    hf * 0.35,
+                    wf * 0.2,
+                    hf * 0.4,
+                    "#00f5d4",
+                    0.12,
+                    g,
+                    -wf * 0.04,
+                    hf * 0.05,
+                    7.0,
+                    0.0
+                ),
                 sheen = sheen(w, h, g, plan),
                 vig = vignette(w, h, plan),
             )
@@ -407,7 +472,19 @@ pub fn shape_background(
             format!(
                 "{}{}{}{}{}",
                 field_stack(w, h, plan),
-                blob(wf * 0.2, hf * 0.3, wf * 0.25, hf * 0.4, accent2, 0.14, g, wf * 0.04, hf * 0.05, 9.0, 0.0),
+                blob(
+                    wf * 0.2,
+                    hf * 0.3,
+                    wf * 0.25,
+                    hf * 0.4,
+                    accent2,
+                    0.14,
+                    g,
+                    wf * 0.04,
+                    hf * 0.05,
+                    9.0,
+                    0.0
+                ),
                 streaks,
                 sheen(w, h, g, plan),
                 vignette(w, h, plan)
@@ -504,7 +581,19 @@ M0,{y4} C{c3},{y5} {c4},{y6} {w},{y7} L{w},{h} L0,{h} Z\"/>",
                 "{}{}{}{}{}",
                 field_stack(w, h, plan),
                 beams,
-                blob(wf * 0.5, hf * 0.2, wf * 0.3, hf * 0.3, glow, 0.16, g, 0.0, hf * 0.05, 7.0, 0.0),
+                blob(
+                    wf * 0.5,
+                    hf * 0.2,
+                    wf * 0.3,
+                    hf * 0.3,
+                    glow,
+                    0.16,
+                    g,
+                    0.0,
+                    hf * 0.05,
+                    7.0,
+                    0.0
+                ),
                 sheen(w, h, g, plan),
                 vignette(w, h, plan)
             )
@@ -536,8 +625,32 @@ M0,{y4} C{c3},{y5} {c4},{y6} {w},{y7} L{w},{h} L0,{h} Z\"/>",
             format!(
                 "{}{}{}{}{}{}",
                 field_stack(w, h, plan),
-                blob(wf * 0.25, hf * 0.55, wf * 0.3, hf * 0.45, "#4c1d95", 0.35, g, wf * 0.05, -hf * 0.04, 11.0, 0.0),
-                blob(wf * 0.75, hf * 0.35, wf * 0.28, hf * 0.4, "#1e3a8a", 0.28, g, -wf * 0.05, hf * 0.05, 10.0, 0.6),
+                blob(
+                    wf * 0.25,
+                    hf * 0.55,
+                    wf * 0.3,
+                    hf * 0.45,
+                    "#4c1d95",
+                    0.35,
+                    g,
+                    wf * 0.05,
+                    -hf * 0.04,
+                    11.0,
+                    0.0
+                ),
+                blob(
+                    wf * 0.75,
+                    hf * 0.35,
+                    wf * 0.28,
+                    hf * 0.4,
+                    "#1e3a8a",
+                    0.28,
+                    g,
+                    -wf * 0.05,
+                    hf * 0.05,
+                    10.0,
+                    0.6
+                ),
                 stars,
                 sheen(w, h, g, plan),
                 vignette(w, h, plan)
@@ -579,7 +692,19 @@ M0,{y4} C{c3},{y5} {c4},{y6} {w},{y7} L{w},{h} L0,{h} Z\"/>",
             format!(
                 "{}{}{}{}{}",
                 field_stack(w, h, plan),
-                blob(wf * 0.5, hf * 0.7, wf * 0.4, hf * 0.35, "#78350f", 0.2, g, 0.0, -hf * 0.03, 9.0, 0.0),
+                blob(
+                    wf * 0.5,
+                    hf * 0.7,
+                    wf * 0.4,
+                    hf * 0.35,
+                    "#78350f",
+                    0.2,
+                    g,
+                    0.0,
+                    -hf * 0.03,
+                    9.0,
+                    0.0
+                ),
                 dots,
                 sheen(w, h, g, plan),
                 vignette(w, h, plan)
@@ -618,7 +743,19 @@ M0,{y} Q{q1},{y1} {m},{y} T{w},{y}\"/>",
             format!(
                 "{}{}{}{}{}",
                 field_stack(w, h, plan),
-                blob(wf * 0.3, hf * 0.4, wf * 0.3, hf * 0.5, "#e9d5ff", 0.14, g, wf * 0.05, hf * 0.04, 10.0, 0.0),
+                blob(
+                    wf * 0.3,
+                    hf * 0.4,
+                    wf * 0.3,
+                    hf * 0.5,
+                    "#e9d5ff",
+                    0.14,
+                    g,
+                    wf * 0.05,
+                    hf * 0.04,
+                    10.0,
+                    0.0
+                ),
                 waves,
                 sheen(w, h, g, plan),
                 vignette(w, h, plan)
@@ -635,13 +772,39 @@ M0,{y} Q{q1},{y1} {m},{y} T{w},{y}\"/>",
                     dx = wf * 0.2,
                 )
             } else {
-                format!("<rect width=\"{w}\" height=\"{h}\" fill=\"url(#holoSweep)\" opacity=\"0.4\"/>")
+                format!(
+                    "<rect width=\"{w}\" height=\"{h}\" fill=\"url(#holoSweep)\" opacity=\"0.4\"/>"
+                )
             };
             format!(
                 "{}{}{}{}{}{}",
                 field_stack(w, h, plan),
-                blob(wf * 0.2, hf * 0.3, wf * 0.28, hf * 0.45, "#f0abfc", 0.22, g, wf * 0.06, hf * 0.05, 8.0, 0.0),
-                blob(wf * 0.8, hf * 0.65, wf * 0.3, hf * 0.4, warm, 0.2, g, -wf * 0.05, -hf * 0.05, 9.0, 0.5),
+                blob(
+                    wf * 0.2,
+                    hf * 0.3,
+                    wf * 0.28,
+                    hf * 0.45,
+                    "#f0abfc",
+                    0.22,
+                    g,
+                    wf * 0.06,
+                    hf * 0.05,
+                    8.0,
+                    0.0
+                ),
+                blob(
+                    wf * 0.8,
+                    hf * 0.65,
+                    wf * 0.3,
+                    hf * 0.4,
+                    warm,
+                    0.2,
+                    g,
+                    -wf * 0.05,
+                    -hf * 0.05,
+                    9.0,
+                    0.5
+                ),
                 sweep,
                 sheen(w, h, g, plan),
                 vignette(w, h, plan)
@@ -732,18 +895,66 @@ M0,{y} Q{q1},{y1} {m},{y} T{w},{y}\"/>",
             )
         }
 
-                "mesh" => format!(
+        "mesh" => format!(
             "{base}{a}{b}{c}{d}{sheen}{vig}",
             base = field_stack(w, h, plan),
-            a = blob(wf * 0.2, hf * 0.35, wf * 0.36, hf * 0.55, accent, 0.3, g, wf * 0.07, hf * 0.05, 8.5, 0.0),
-            b = blob(wf * 0.7, hf * 0.3, wf * 0.38, hf * 0.52, accent2, 0.32, g, -wf * 0.06, hf * 0.06, 9.5, 0.4),
-            c = blob(wf * 0.5, hf * 0.75, wf * 0.34, hf * 0.42, warm, 0.24, g, wf * 0.04, -hf * 0.05, 10.5, 0.9),
-            d = blob(wf * 0.85, hf * 0.65, wf * 0.26, hf * 0.36, glow, 0.18, g, -wf * 0.04, -hf * 0.04, 7.5, 1.3),
+            a = blob(
+                wf * 0.2,
+                hf * 0.35,
+                wf * 0.36,
+                hf * 0.55,
+                accent,
+                0.3,
+                g,
+                wf * 0.07,
+                hf * 0.05,
+                8.5,
+                0.0
+            ),
+            b = blob(
+                wf * 0.7,
+                hf * 0.3,
+                wf * 0.38,
+                hf * 0.52,
+                accent2,
+                0.32,
+                g,
+                -wf * 0.06,
+                hf * 0.06,
+                9.5,
+                0.4
+            ),
+            c = blob(
+                wf * 0.5,
+                hf * 0.75,
+                wf * 0.34,
+                hf * 0.42,
+                warm,
+                0.24,
+                g,
+                wf * 0.04,
+                -hf * 0.05,
+                10.5,
+                0.9
+            ),
+            d = blob(
+                wf * 0.85,
+                hf * 0.65,
+                wf * 0.26,
+                hf * 0.36,
+                glow,
+                0.18,
+                g,
+                -wf * 0.04,
+                -hf * 0.04,
+                7.5,
+                1.3
+            ),
             sheen = sheen(w, h, g, plan),
             vig = vignette(w, h, plan),
         ),
 
-                "glass" => {
+        "glass" => {
             let panel = if g > 0.01 {
                 format!(
                     "<g>\
@@ -779,7 +990,19 @@ M0,{y} Q{q1},{y1} {m},{y} T{w},{y}\"/>",
             format!(
                 "{base}{blob}{panel}{sheen}{vig}",
                 base = field_stack(w, h, plan),
-                blob = blob(wf * 0.75, hf * 0.3, wf * 0.25, hf * 0.45, glow, 0.14, g, -wf * 0.04, hf * 0.05, 9.0, 0.0),
+                blob = blob(
+                    wf * 0.75,
+                    hf * 0.3,
+                    wf * 0.25,
+                    hf * 0.45,
+                    glow,
+                    0.14,
+                    g,
+                    -wf * 0.04,
+                    hf * 0.05,
+                    9.0,
+                    0.0
+                ),
                 sheen = sheen(w, h, g, plan),
                 vig = vignette(w, h, plan),
             )
@@ -925,9 +1148,7 @@ M0,{hy} Q{w1},{hy2} {w2},{hy} T{w},{hy} L{w},{h} L0,{h} Z\"/>\
             body
         }
 
-
-
-                "orbit" => {
+        "orbit" => {
             let cx = wf * 0.78;
             let cy = hf * 0.5;
             let rx = hf * 0.38;
@@ -1053,11 +1274,23 @@ M0,{hy} Q{w1},{hy2} {w2},{hy} T{w},{hy} L{w},{h} L0,{h} Z\"/>\
                     p1 = format!("0,{h} {} ,0 {} ,0 {w},{h}", wf * 0.42, wf * 0.58),
                     p2 = format!(
                         "{},{} {} ,{} {} ,{} {},{}",
-                        wf * 0.25, h, wf * 0.48, hf * 0.18, wf * 0.52, hf * 0.18, wf * 0.75, h
+                        wf * 0.25,
+                        h,
+                        wf * 0.48,
+                        hf * 0.18,
+                        wf * 0.52,
+                        hf * 0.18,
+                        wf * 0.75,
+                        h
                     ),
                     p3 = format!(
                         "{},{} {} ,0 {} ,0 {},{}",
-                        wf * 0.35, h, wf * 0.48, wf * 0.52, wf * 0.65, h
+                        wf * 0.35,
+                        h,
+                        wf * 0.48,
+                        wf * 0.52,
+                        wf * 0.65,
+                        h
                     ),
                 )
             };
@@ -1172,8 +1405,32 @@ M0,{hy} Q{w1},{hy2} {w2},{hy} T{w},{hy} L{w},{h} L0,{h} Z\"/>\
         "blur" => format!(
             "{base}{a}{b}{sheen}{vig}",
             base = field_stack(w, h, plan),
-            a = blob(wf * 0.28, hf * 0.4, wf * 0.35, hf * 0.55, "#ffffff", 0.2, g, wf * 0.06, hf * 0.07, 10.0, 0.0),
-            b = blob(wf * 0.78, hf * 0.65, wf * 0.3, hf * 0.45, "#c4b5fd", 0.16, g, -wf * 0.05, -hf * 0.06, 12.0, 1.0),
+            a = blob(
+                wf * 0.28,
+                hf * 0.4,
+                wf * 0.35,
+                hf * 0.55,
+                "#ffffff",
+                0.2,
+                g,
+                wf * 0.06,
+                hf * 0.07,
+                10.0,
+                0.0
+            ),
+            b = blob(
+                wf * 0.78,
+                hf * 0.65,
+                wf * 0.3,
+                hf * 0.45,
+                "#c4b5fd",
+                0.16,
+                g,
+                -wf * 0.05,
+                -hf * 0.06,
+                12.0,
+                1.0
+            ),
             sheen = sheen(w, h, g, plan),
             vig = vignette(w, h, plan),
         ),
@@ -1589,14 +1846,26 @@ M0,{y} C{a},{y1} {b},{y2} {c},{y3} S{d},{y4} {w},{y5} L{w},{h} L0,{h} Z\"/>\
             format!(
                 "{}{}{}{}{}",
                 field_stack(w, h, plan),
-                blob(wf * 0.3, hf * 0.4, wf * 0.28, hf * 0.4, accent, 0.16, g, wf * 0.04, 0.0, 9.0, 0.0),
+                blob(
+                    wf * 0.3,
+                    hf * 0.4,
+                    wf * 0.28,
+                    hf * 0.4,
+                    accent,
+                    0.16,
+                    g,
+                    wf * 0.04,
+                    0.0,
+                    9.0,
+                    0.0
+                ),
                 card,
                 sheen(w, h, g, plan),
                 vignette(w, h, plan)
             )
         }
 
-                _ => format!(
+        _ => format!(
             "{}{}{}",
             field_stack(w, h, plan),
             sheen(w, h, g, plan),

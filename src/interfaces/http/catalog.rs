@@ -8,7 +8,7 @@ use serde_json::json;
 use crate::bootstrap::AppState;
 use crate::capabilities::mark::domain::catalog::vocabulary;
 
-pub async fn api_index(State(st): State<AppState>) -> impl IntoResponse {
+pub(crate) async fn api_index(State(st): State<AppState>) -> impl IntoResponse {
     Json(json!({
         "name": "Sylphx Mark",
         "tagline": "Any URL. One image. Your brand.",
@@ -23,7 +23,7 @@ pub async fn api_index(State(st): State<AppState>) -> impl IntoResponse {
     }))
 }
 
-pub async fn catalog() -> impl IntoResponse {
+pub(crate) async fn catalog() -> impl IntoResponse {
     let mut v = vocabulary();
     if let Some(obj) = v.as_object_mut() {
         obj.insert(

@@ -1,6 +1,6 @@
 //! SVG primitives.
 
-pub fn esc(s: &str) -> String {
+pub(crate) fn esc(s: &str) -> String {
     let mut out = String::with_capacity(s.len());
     for c in s.chars() {
         match c {
@@ -15,11 +15,11 @@ pub fn esc(s: &str) -> String {
     out
 }
 
-pub fn strip_hash(hex: &str) -> &str {
+pub(crate) fn strip_hash(hex: &str) -> &str {
     hex.strip_prefix('#').unwrap_or(hex)
 }
 
-pub fn ensure_hash(hex: &str) -> String {
+pub(crate) fn ensure_hash(hex: &str) -> String {
     let h = strip_hash(hex);
     if h.is_empty() {
         "#000000".into()
@@ -28,7 +28,7 @@ pub fn ensure_hash(hex: &str) -> String {
     }
 }
 
-pub fn is_hex_color(v: &str) -> bool {
+pub(crate) fn is_hex_color(v: &str) -> bool {
     let h = strip_hash(v);
     matches!(h.len(), 3 | 6 | 8) && h.chars().all(|c| c.is_ascii_hexdigit())
 }
@@ -38,7 +38,7 @@ pub fn is_hex_color(v: &str) -> bool {
 /// Accepts `#rgb`, `#rrggbb`, `#rrggbbaa` (with or without `#`); expands
 /// 3-digit shorthand to 6. Anything else returns `None` so callers fall back
 /// to a trusted paint instead of emitting attacker-controlled attribute text.
-pub fn normalize_hex_token(v: &str) -> Option<String> {
+pub(crate) fn normalize_hex_token(v: &str) -> Option<String> {
     let h = strip_hash(v.trim());
     if !is_hex_color(h) {
         return None;
@@ -54,13 +54,12 @@ pub fn normalize_hex_token(v: &str) -> Option<String> {
 }
 
 /// Relative advance for system UI sans at banner/pill sizes.
-pub fn char_advance(ch: char, font_size: f32) -> f32 {
+pub(crate) fn char_advance(ch: char, font_size: f32) -> f32 {
     let unit = match ch {
         ' ' => 0.30,
         '\u{00A0}' => 0.30,
-        'i' | 'l' | 'I' | 'j' | 't' | 'f' | 'r' | '|' | '\'' | '`' | '!' | '.' | ',' | ':' | ';' => {
-            0.34
-        }
+        'i' | 'l' | 'I' | 'j' | 't' | 'f' | 'r' | '|' | '\'' | '`' | '!' | '.' | ',' | ':'
+        | ';' => 0.34,
         'm' | 'w' | 'M' | 'W' | '@' | '%' => 0.78,
         '1' | '(' | ')' | '[' | ']' | '{' | '}' | '/' | '\\' => 0.40,
         c if c.is_ascii_uppercase() => 0.58,
@@ -70,7 +69,7 @@ pub fn char_advance(ch: char, font_size: f32) -> f32 {
     font_size * unit
 }
 
-pub fn line_advance(line: &str, font_size: f32) -> f32 {
+pub(crate) fn line_advance(line: &str, font_size: f32) -> f32 {
     line.chars().map(|c| char_advance(c, font_size)).sum()
 }
 
@@ -78,7 +77,7 @@ pub fn line_advance(line: &str, font_size: f32) -> f32 {
 ///
 /// Letters come from the supplied name. The `MK` fallback is only for empty
 /// or punctuation-only input — never a substitute for non-Latin letters.
-pub fn monogram(text: &str) -> String {
+pub(crate) fn monogram(text: &str) -> String {
     let parts: Vec<&str> = text
         .split(|c: char| c.is_whitespace() || c == '-' || c == '_')
         .filter(|s| !s.is_empty())
@@ -119,7 +118,7 @@ pub fn cap_text(s: &str, max: usize) -> String {
     out
 }
 
-pub fn svg_doc(width: u32, height: u32, body: &str) -> String {
+pub(crate) fn svg_doc(width: u32, height: u32, body: &str) -> String {
     format!(
         "<?xml version=\"1.0\" encoding=\"UTF-8\"?><svg xmlns=\"http://www.w3.org/2000/svg\" width=\"{width}\" height=\"{height}\" viewBox=\"0 0 {width} {height}\" role=\"img\">{body}</svg>"
     )
@@ -153,10 +152,10 @@ pub fn credit_mark(width: u32, height: u32, enabled: bool) -> String {
 /// / eligible-for-cache keyed on the full query string). Hands is generic
 /// kube origin only. Origin headers alone cannot flip `cf-cache-status`
 /// from DYNAMIC on extensionless API paths.
-pub const SVG_CACHE: &str =
+pub(crate) const SVG_CACHE: &str =
     "public, max-age=31536000, s-maxage=31536000, stale-while-revalidate=86400, immutable";
 /// Edge TTL mirror for `CDN-Cache-Control` / `Cloudflare-CDN-Cache-Control`.
-pub const SVG_EDGE_CACHE: &str = "public, s-maxage=31536000, stale-while-revalidate=86400";
+pub(crate) const SVG_EDGE_CACHE: &str = "public, s-maxage=31536000, stale-while-revalidate=86400";
 
 #[cfg(test)]
 mod tests {

@@ -14,12 +14,14 @@ pub mod spec;
 pub mod svg;
 pub mod theme;
 
-pub use catalog::{
-    is_art_type, normalize_animation, normalize_art_type, normalize_layout, BADGE_STYLES,
-    FONTS, LAYOUTS, MAX_DESC_CHARS, MAX_ICONS, MAX_LABEL_CHARS, MAX_LINES, MAX_MESSAGE_CHARS,
-    MAX_SERVICE_CHARS, MAX_TEXT_CHARS,
+pub(crate) use catalog::{
+    normalize_animation, normalize_layout, MAX_DESC_CHARS, MAX_ICONS, MAX_LABEL_CHARS, MAX_LINES,
+    MAX_MESSAGE_CHARS, MAX_SERVICE_CHARS, MAX_TEXT_CHARS,
 };
-pub use pill::{named_color, PillStyle};
-pub use recovery::{parse_public_mark_url, readme_markdown_embed, split_badge_path, StudioBoot};
+pub(crate) use pill::{named_color, PillStyle};
+pub(crate) use recovery::split_badge_path;
+pub(crate) use svg::{cap_text, normalize_hex_token};
+
+// Kernel surface consumed by the contract tests (see tests/*.rs).
+pub use recovery::{parse_public_mark_url, readme_markdown_embed, StudioBoot};
 pub use spec::{DeploySpec, HeroSpec, MarkForm, MarkSpec, PillSpec, StripSpec};
-pub use svg::{cap_text, char_advance, esc, line_advance, monogram, normalize_hex_token};

@@ -13,7 +13,7 @@ use crate::capabilities::mark::render;
 use crate::interfaces::http::response::{decode_text, parse_bool, svg_response_conditional};
 
 #[derive(Debug, Deserialize)]
-pub struct MarkQuery {
+pub(crate) struct MarkQuery {
     pub color: Option<String>,
     pub theme: Option<String>,
     #[serde(rename = "type")]
@@ -65,23 +65,23 @@ pub struct MarkQuery {
     pub service: Option<String>,
 }
 
-pub async fn mark_handler(
+pub(crate) async fn mark_handler(
     State(st): State<AppState>,
     Path(form): Path<String>,
     Query(q): Query<MarkQuery>,
     headers: HeaderMap,
 ) -> Response {
     let spec = q.to_spec(MarkForm::parse(Some(&form)), st.default_credit);
-    svg_response_conditional(&render(&spec), cache_for(&spec), if_none_match(&headers))
+    svg_response_conditional(&render(&spec), if_none_match(&headers))
 }
 
-pub async fn mark_default_handler(
+pub(crate) async fn mark_default_handler(
     State(st): State<AppState>,
     Query(q): Query<MarkQuery>,
     headers: HeaderMap,
 ) -> Response {
     let spec = q.to_spec(MarkForm::Hero, st.default_credit);
-    svg_response_conditional(&render(&spec), cache_for(&spec), if_none_match(&headers))
+    svg_response_conditional(&render(&spec), if_none_match(&headers))
 }
 
 /// Shields-style pill shorthand: `/badge/{label}-{message}-{color}`.
@@ -89,7 +89,7 @@ pub async fn mark_default_handler(
 /// Path tokens stay the shields embed. Grammar query (`style`, `theme`,
 /// `animation`, `labelColor`, `font`, `credit`) composes the same way as
 /// `/api/v1/mark/pill` — a `?style=for-the-badge` URL is a valid mark.
-pub async fn badge_path(
+pub(crate) async fn badge_path(
     State(st): State<AppState>,
     Path(tail): Path<String>,
     Query(q): Query<MarkQuery>,
@@ -102,11 +102,11 @@ pub async fn badge_path(
     // Path tokens stay the shields embed.
     // Query `color` only fills a missing path token.
     spec.color = color.or(spec.color);
-    svg_response_conditional(&render(&spec), cache_for(&spec), if_none_match(&headers))
+    svg_response_conditional(&render(&spec), if_none_match(&headers))
 }
 
 impl MarkQuery {
-    pub fn to_spec(&self, form: MarkForm, default_credit: bool) -> MarkSpec {
+    pub(crate) fn to_spec(&self, form: MarkForm, default_credit: bool) -> MarkSpec {
         MarkSpec {
             form,
             color: self.color.clone(),
@@ -146,21 +146,13 @@ impl MarkQuery {
                 per_line: self.perline,
             },
             deploy: crate::capabilities::mark::domain::DeploySpec {
-                service: self.service.clone().map(|s| {
-                    cap_text(&s, MAX_SERVICE_CHARS)
-                }),
+                service: self
+                    .service
+                    .clone()
+                    .map(|s| cap_text(&s, MAX_SERVICE_CHARS)),
             },
         }
     }
-}
-
-/// Every mark URL pins its bytes (pure function of the URL, ADR-0003) — including
-/// SMIL-animated variants, whose `<animate*>` declarations are part of the
-/// deterministic bytes with no clock sampling. All SVG responses are therefore
-/// immutable and cache long at both browser and edge. The query string is part
-/// of the cache key; distinct URLs are distinct marks.
-fn cache_for(_spec: &MarkSpec) -> &'static str {
-    crate::capabilities::mark::domain::svg::SVG_CACHE
 }
 
 fn if_none_match(headers: &HeaderMap) -> Option<&str> {

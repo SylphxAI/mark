@@ -1,8 +1,8 @@
 //! Studio recovery oracles: a public mark URL reconstitutes composer state.
 
-use mark::{parse_public_mark_url, readme_markdown_embed};
+use mark::capabilities::mark::domain::recovery::{parse_public_mark_url, readme_markdown_embed};
 
-fn form(boot: &mark::StudioBoot) -> &str {
+fn form(boot: &mark::capabilities::mark::domain::recovery::StudioBoot) -> &str {
     boot.form.as_deref().unwrap_or("")
 }
 
