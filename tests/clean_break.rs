@@ -1,7 +1,7 @@
 //! Clean-break contract tests (ADR-0003): strict SVG attribute grammar,
 //! escaping, bounded inputs, determinism — no legacy, no clock, no upstream.
 
-use mark::capabilities::mark::domain::svg::cap_text;
+use mark::capabilities::mark::domain::text::cap_text;
 use mark::capabilities::mark::domain::{MarkForm, MarkSpec, PillSpec, StripSpec};
 use mark::capabilities::mark::render;
 
@@ -49,6 +49,33 @@ fn hero_stroke_cannot_inject_attributes() {
         assert!(!svg.contains("onmouseover="), "stroke injection: {evil}");
         assert!(!svg.contains("<x"), "stroke injection: {evil}");
     }
+}
+
+#[test]
+fn hero_typewriter_keeps_the_stroke_paint_on_the_title_only() {
+    // Regression (reviewer F1/R1): the typewriter *title* glyphs must keep the
+    // stroke paint, and the description must stay strokeless exactly as the
+    // parent revision painted it.
+    let mut spec = hero("soft", "Hi");
+    spec.desc = Some("A description line".into());
+    spec.hero.stroke = Some("#ff0000".into());
+    spec.hero.stroke_width = Some(3.0);
+    spec.animation = Some("type".into());
+    let svg = render(&spec);
+    assert!(
+        svg.contains("stroke=\"#ff0000\" stroke-width=\"3\" paint-order=\"stroke\""),
+        "typewriter title glyphs must keep the stroke paint"
+    );
+    assert_eq!(
+        svg.matches("paint-order=\"stroke\"").count(),
+        2,
+        "exactly one stroke run: the two title characters"
+    );
+    assert_eq!(
+        svg.matches("stroke=\"#ff0000\"").count(),
+        2,
+        "the description must not inherit the title stroke"
+    );
 }
 
 #[test]

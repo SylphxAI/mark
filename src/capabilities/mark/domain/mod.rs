@@ -5,6 +5,7 @@
 
 pub mod catalog;
 pub mod color;
+pub mod hash;
 pub mod icons;
 pub mod motion;
 pub mod pill;
@@ -12,17 +13,19 @@ pub mod recovery;
 pub mod shapes;
 pub mod spec;
 pub mod svg;
+pub mod text;
 pub mod theme;
 
 pub(crate) use catalog::{
-    normalize_animation, normalize_layout, MAX_DESC_CHARS, MAX_ICONS, MAX_LABEL_CHARS, MAX_LINES,
-    MAX_MESSAGE_CHARS, MAX_SERVICE_CHARS, MAX_TEXT_CHARS,
+    normalize_layout, MAX_DESC_CHARS, MAX_ICONS, MAX_LABEL_CHARS, MAX_LINES, MAX_MESSAGE_CHARS,
+    MAX_SERVICE_CHARS, MAX_TEXT_CHARS,
 };
-pub(crate) use pill::{named_color, PillStyle};
+pub(crate) use motion::normalize_animation;
+pub(crate) use pill::PillStyle;
 pub(crate) use recovery::split_badge_path;
-pub(crate) use svg::cap_text;
 pub(crate) use svg::normalize_hex_token;
 
 // Kernel surface consumed by the contract tests (see tests/*.rs). Recovery and
 // studio types are reached through `domain::recovery` directly.
 pub use spec::{DeploySpec, HeroSpec, MarkForm, MarkSpec, PillSpec, StripSpec};
+pub use text::cap_text;

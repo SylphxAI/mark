@@ -3,38 +3,15 @@
 //! Pure and deterministic (ADR-0003): the same spec renders the same SVG
 //! forever — no clock, no upstream, no state.
 
-use crate::capabilities::mark::domain::color::resolve_fill;
+use crate::capabilities::mark::domain::color::{resolve_fill, FillPlan};
 use crate::capabilities::mark::domain::motion::{ambient_gain, text_children, text_open_attrs};
 use crate::capabilities::mark::domain::shapes::{normalize_art_type, shape_background, shape_defs};
-use crate::capabilities::mark::domain::svg::{credit_mark, ensure_hash, esc, monogram, svg_doc};
+use crate::capabilities::mark::domain::svg::{credit_mark, ensure_hash, esc, svg_doc};
+use crate::capabilities::mark::domain::text::{fit_line, line_advance, monogram, Metric};
 use crate::capabilities::mark::domain::{
     cap_text, normalize_animation, normalize_hex_token, normalize_layout, MarkSpec, MAX_DESC_CHARS,
     MAX_LINES, MAX_TEXT_CHARS,
 };
-
-/// True typewriter: per-character opacity + optional cursor.
-///
-/// Uses a proportional advance table (not a flat monospace factor) so common
-/// UI sans glyphs do not look "letter-spaced apart" at README sizes.
-fn char_advance(ch: char, font_size: f32) -> f32 {
-    // Relative widths tuned for system UI sans at banner sizes.
-    let unit = match ch {
-        ' ' => 0.30,
-        '\u{00A0}' => 0.30,
-        'i' | 'l' | 'I' | 'j' | 't' | 'f' | 'r' | '|' | '\'' | '`' | '!' | '.' | ',' | ':'
-        | ';' => 0.34,
-        'm' | 'w' | 'M' | 'W' | '@' | '%' => 0.78,
-        '1' | '(' | ')' | '[' | ']' | '{' | '}' | '/' | '\\' => 0.40,
-        c if c.is_ascii_uppercase() => 0.58,
-        c if c.is_ascii_digit() => 0.54,
-        _ => 0.52,
-    };
-    font_size * unit
-}
-
-fn line_advance(line: &str, font_size: f32) -> f32 {
-    line.chars().map(|c| char_advance(c, font_size)).sum()
-}
 
 fn line_max_px(width: u32, x: f32, anchor: &str) -> f32 {
     let pad = (width as f32 * 0.04).clamp(16.0, 36.0);
@@ -43,27 +20,6 @@ fn line_max_px(width: u32, x: f32, anchor: &str) -> f32 {
         "end" | "right" => (x - pad).max(24.0),
         _ => (width as f32 - pad * 2.0).max(24.0),
     }
-}
-
-/// Cap a painted line so it stays inside the canvas. Overflow is marked with `…`.
-fn fit_to_width(line: &str, max_px: f32, font_size: f32) -> String {
-    if line_advance(line, font_size) <= max_px {
-        return line.to_string();
-    }
-    let ell = '\u{2026}';
-    let budget = (max_px - char_advance(ell, font_size)).max(0.0);
-    let mut out = String::new();
-    let mut used = 0.0;
-    for ch in line.chars() {
-        let adv = char_advance(ch, font_size);
-        if used + adv > budget {
-            break;
-        }
-        out.push(ch);
-        used += adv;
-    }
-    out.push(ell);
-    out
 }
 
 /// Normalize user-supplied floating-point geometry before it reaches SVG.
@@ -79,76 +35,84 @@ fn finite_clamp(value: Option<f32>, default: f32, min: f32, max: f32) -> f32 {
         .clamp(min, max)
 }
 
-#[allow(clippy::too_many_arguments)]
-fn typewriter_line(
-    line: &str,
-    x: f32,
-    y: f32,
-    font_size: u32,
-    font_color: &str,
-    font_family: &str,
-    anchor: &str,
-    stroke_attr: &str,
-    begin: f32,
-    char_dur: f32,
-) -> String {
-    let fs = font_size as f32;
-    let total = line_advance(line, fs);
-    // Anchor the run as a whole, then place glyphs left→right.
-    let start_x = match anchor {
-        "start" | "left" => x,
-        "end" | "right" => x - total,
-        _ => x - total / 2.0,
-    };
+/// Paint/style choices shared by every text node of one hero render.
+struct TextStyle<'a> {
+    font_color: &'a str,
+    font_family: &'a str,
+    anchor: &'a str,
+    stroke_attr: &'a str,
+}
 
-    let mut out = String::new();
-    let mut cx = start_x;
-    let mut t = begin;
-    for ch in line.chars() {
-        let adv = char_advance(ch, fs);
-        let glyph_x = cx;
-        out.push_str(&format!(
-            "<text x=\"{glyph_x}\" y=\"{y}\" text-anchor=\"start\" dominant-baseline=\"middle\" \
+impl TextStyle<'_> {
+    fn typewriter_line(
+        &self,
+        line: &str,
+        x: f32,
+        y: f32,
+        font_size: u32,
+        begin: f32,
+        char_dur: f32,
+    ) -> String {
+        let (font_color, font_family, anchor, stroke_attr) = (
+            self.font_color,
+            self.font_family,
+            self.anchor,
+            self.stroke_attr,
+        );
+        let fs = font_size as f32;
+        let total = line_advance(line, fs, Metric::Display);
+        // Anchor the run as a whole, then place glyphs left→right.
+        let start_x = match anchor {
+            "start" | "left" => x,
+            "end" | "right" => x - total,
+            _ => x - total / 2.0,
+        };
+
+        let mut out = String::new();
+        let mut cx = start_x;
+        let mut t = begin;
+        for ch in line.chars() {
+            let adv = Metric::Display.advance(ch, fs);
+            let glyph_x = cx;
+            out.push_str(&format!(
+                "<text x=\"{glyph_x}\" y=\"{y}\" text-anchor=\"start\" dominant-baseline=\"middle\" \
              font-family=\"{font_family}\" font-weight=\"650\" letter-spacing=\"0\" font-size=\"{font_size}\" \
              fill=\"{font_color}\" opacity=\"0\"{stroke_attr}>\
                <animate attributeName=\"opacity\" from=\"0\" to=\"1\" dur=\"0.01s\" begin=\"{t}s\" fill=\"freeze\"/>\
                {}</text>",
-            esc(&ch.to_string()),
-        ));
-        cx += adv;
-        t += char_dur;
-    }
-    // Blinking cursor after typed line
-    let cursor_x = cx + fs * 0.06;
-    let cy = y - fs * 0.42;
-    let cw = (fs * 0.08).clamp(2.0, 5.0);
-    let chh = fs * 0.78;
-    let cursor_begin = begin + line.chars().count() as f32 * char_dur;
-    out.push_str(&format!(
-        "<rect x=\"{cursor_x}\" y=\"{cy}\" width=\"{cw}\" height=\"{chh}\" rx=\"1.5\" fill=\"{font_color}\" opacity=\"0\">\
+                esc(&ch.to_string()),
+            ));
+            cx += adv;
+            t += char_dur;
+        }
+        // Blinking cursor after typed line
+        let cursor_x = cx + fs * 0.06;
+        let cy = y - fs * 0.42;
+        let cw = (fs * 0.08).clamp(2.0, 5.0);
+        let chh = fs * 0.78;
+        let cursor_begin = begin + line.chars().count() as f32 * char_dur;
+        out.push_str(&format!(
+            "<rect x=\"{cursor_x}\" y=\"{cy}\" width=\"{cw}\" height=\"{chh}\" rx=\"1.5\" fill=\"{font_color}\" opacity=\"0\">\
            <animate attributeName=\"opacity\" values=\"0;0;1;1;0;0\" keyTimes=\"0;0.01;0.02;0.48;0.52;1\" \
              dur=\"1.05s\" begin=\"{cursor_begin}s\" repeatCount=\"indefinite\"/>\
          </rect>"
-    ));
-    // Full string kept for accessibility / crawl / tests (invisible).
-    out.push_str(&format!(
+        ));
+        // Full string kept for accessibility / crawl / tests (invisible).
+        out.push_str(&format!(
         "<text x=\"{x}\" y=\"{y}\" text-anchor=\"{anchor}\" dominant-baseline=\"middle\" font-size=\"1\" fill=\"{font_color}\" opacity=\"0\">{}</text>",
         esc(line),
     ));
-    out
+        out
+    }
 }
 
-#[allow(clippy::too_many_arguments)]
-fn plate_chrome(
-    width: u32,
-    height: u32,
-    mono: &str,
-    accent: &str,
-    base: &str,
-    warm: &str,
-    glow: &str,
-    ink: &str,
-) -> String {
+fn plate_chrome(width: u32, height: u32, mono: &str, plan: &FillPlan, ink: &str) -> String {
+    let (accent, base, warm, glow) = (
+        plan.accent.as_str(),
+        plan.base.as_str(),
+        plan.warm.as_str(),
+        plan.glow.as_str(),
+    );
     let hf = height as f32;
     let wf = width as f32;
     // Left calm field so type always wins — tinted, not pure black.
@@ -280,6 +244,12 @@ pub fn render(spec: &MarkSpec) -> String {
         0.0,
         24.0,
     );
+    // Constant for the whole render: glyph runs and whole lines share it.
+    let stroke_attr = if let Some(ref s) = stroke {
+        format!(" stroke=\"{s}\" stroke-width=\"{stroke_width}\" paint-order=\"stroke\"")
+    } else {
+        String::new()
+    };
 
     // Plate lifts title below monogram row
     let title_y_bias = if layout == "plate" && height >= 280 {
@@ -294,18 +264,32 @@ pub fn render(spec: &MarkSpec) -> String {
         .split('\n')
         .filter(|l| !l.is_empty())
         .take(MAX_LINES)
-        .map(|l| fit_to_width(l, title_budget, font_size as f32))
+        .map(|l| fit_line(l, title_budget, font_size as f32, Metric::Display))
         .collect();
     let mut text_nodes = String::new();
     let n = lines.len().max(1) as f32;
     let use_typewriter = anim == "type";
+    let style = TextStyle {
+        font_color: &font_color,
+        font_family,
+        anchor,
+        stroke_attr: &stroke_attr,
+    };
+    // The description paints without the title's stroke (base behaviour: only the
+    // headline run carried `stroke`/`paint-order`).
+    let desc_style = TextStyle {
+        font_color: &font_color,
+        font_family,
+        anchor,
+        stroke_attr: "",
+    };
 
     for (i, line) in lines.iter().enumerate() {
         let dy = (i as f32 - (n - 1.0) / 2.0) * font_size as f32 * 1.15;
         let x = x0;
         let y = height as f32 * font_align_y / 100.0 + dy + title_y_bias;
         if spec.hero.text_bg {
-            let bw = line_advance(line, font_size as f32).max(40.0);
+            let bw = line_advance(line, font_size as f32, Metric::Display).max(40.0);
             let bx = if anchor == "start" {
                 x - 8.0
             } else {
@@ -317,26 +301,9 @@ pub fn render(spec: &MarkSpec) -> String {
                 font_size as f32 * 1.15
             ));
         }
-        let stroke_attr = if let Some(ref s) = stroke {
-            format!(" stroke=\"{s}\" stroke-width=\"{stroke_width}\" paint-order=\"stroke\"")
-        } else {
-            String::new()
-        };
-
         if use_typewriter {
             let base = i as f32 * 0.55;
-            text_nodes.push_str(&typewriter_line(
-                line,
-                x,
-                y,
-                font_size,
-                &font_color,
-                font_family,
-                anchor,
-                &stroke_attr,
-                base,
-                0.055,
-            ));
+            text_nodes.push_str(&style.typewriter_line(line, x, y, font_size, base, 0.055));
             continue;
         }
 
@@ -368,21 +335,15 @@ pub fn render(spec: &MarkSpec) -> String {
             } else {
                 0.0
             };
-        let desc = fit_to_width(&desc, line_max_px(width, dx, anchor), desc_size as f32);
+        let desc = fit_line(
+            &desc,
+            line_max_px(width, dx, anchor),
+            desc_size as f32,
+            Metric::Display,
+        );
         if use_typewriter {
             let base = lines.len() as f32 * 0.55 + 0.2;
-            typewriter_line(
-                &desc,
-                dx,
-                dy,
-                desc_size,
-                &font_color,
-                font_family,
-                anchor,
-                "",
-                base,
-                0.04,
-            )
+            desc_style.typewriter_line(&desc, dx, dy, desc_size, base, 0.04)
         } else {
             let open_extra = text_open_attrs(anim, lines.len().max(1), width, height);
             let children = text_children(anim, lines.len().max(1), width, height);
@@ -398,16 +359,7 @@ pub fn render(spec: &MarkSpec) -> String {
     };
 
     let plate = if layout == "plate" && !text.is_empty() {
-        plate_chrome(
-            width,
-            height,
-            &monogram(&text),
-            &fill.accent,
-            &fill.base,
-            &fill.warm,
-            &fill.glow,
-            &font_color,
-        )
+        plate_chrome(width, height, &monogram(&text), &fill, &font_color)
     } else {
         String::new()
     };

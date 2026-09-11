@@ -4,7 +4,9 @@
 //! Theme/base color becomes a multi-stop field + accent/secondary/warm orbs so
 //! shapes never fall back to pure white wash or theme-blind hardcodes.
 
-use crate::capabilities::mark::domain::svg::{ensure_hash, is_hex_color, strip_hash};
+use crate::capabilities::mark::domain::svg::{
+    ensure_hash, is_hex_color, normalize_hex_token, strip_hash,
+};
 use crate::capabilities::mark::domain::theme::{self, Theme};
 
 /// Resolved paint kit consumed by banner shapes + chrome.
@@ -85,13 +87,15 @@ fn theme_fill(t: &Theme, gid: &str) -> FillPlan {
 
     kit(
         gid,
-        &base,
-        &mid,
-        &accent2,
-        &accent,
-        &warm,
-        &glow,
-        strip_hash(&fg),
+        Chroma {
+            base: &base,
+            mid: &mid,
+            end: &accent2,
+            edge: &accent,
+            warm: &warm,
+            glow: &glow,
+            fg: strip_hash(&fg),
+        },
     )
 }
 
@@ -105,7 +109,18 @@ fn solid_kit(gid: &str, hex: &str) -> FillPlan {
     let glow = ensure_hash(&mix_hex(h, "FFFFFF", 0.48));
     let fg = contrasting_fg(h);
 
-    kit(gid, &base, &mid, &accent2, &accent, &warm, &glow, &fg)
+    kit(
+        gid,
+        Chroma {
+            base: &base,
+            mid: &mid,
+            end: &accent2,
+            edge: &accent,
+            warm: &warm,
+            glow: &glow,
+            fg: &fg,
+        },
+    )
 }
 
 fn gradient_kit(gid: &str, a: &str, b: &str) -> FillPlan {
@@ -116,42 +131,50 @@ fn gradient_kit(gid: &str, a: &str, b: &str) -> FillPlan {
     let accent = ensure_hash(&lighten(b, 0.08));
     let warm = ensure_hash(&mix_hex(b, "FEE140", 0.38));
     let glow = ensure_hash(&mix_hex(b, "FFFFFF", 0.4));
-    kit(gid, &base, &mid, &accent2, &accent, &warm, &glow, "FFFFFF")
+    kit(
+        gid,
+        Chroma {
+            base: &base,
+            mid: &mid,
+            end: &accent2,
+            edge: &accent,
+            warm: &warm,
+            glow: &glow,
+            fg: "FFFFFF",
+        },
+    )
 }
 
-#[allow(clippy::too_many_arguments)]
-fn kit(
-    gid: &str,
-    base: &str,
-    mid: &str,
-    accent2: &str,
-    accent: &str,
-    warm: &str,
-    glow: &str,
-    fg: &str,
-) -> FillPlan {
+/// One field's chromatic roles.
+///
+/// Passed as a value so the SVG gradient stops and the resolved `FillPlan`
+/// cannot drift apart through a positional argument list.
+struct Chroma<'a> {
+    base: &'a str,
+    mid: &'a str,
+    end: &'a str,
+    edge: &'a str,
+    warm: &'a str,
+    glow: &'a str,
+    fg: &'a str,
+}
+
+fn kit(gid: &str, c: Chroma<'_>) -> FillPlan {
     FillPlan {
-        defs: chromatic_defs(gid, base, mid, accent2, accent, warm, glow),
+        defs: chromatic_defs(gid, &c),
         fill: format!("url(#{gid})"),
-        fg: strip_hash(fg).to_string(),
-        base: base.to_string(),
-        accent: accent.to_string(),
-        accent2: accent2.to_string(),
-        warm: warm.to_string(),
-        glow: glow.to_string(),
+        fg: strip_hash(c.fg).to_string(),
+        base: c.base.to_string(),
+        accent: c.edge.to_string(),
+        accent2: c.end.to_string(),
+        warm: c.warm.to_string(),
+        glow: c.glow.to_string(),
     }
 }
 
 /// Field + chroma utilities referenced by shapes/motion.
-fn chromatic_defs(
-    id: &str,
-    base: &str,
-    mid: &str,
-    end: &str,
-    edge: &str,
-    warm: &str,
-    glow: &str,
-) -> String {
+fn chromatic_defs(id: &str, c: &Chroma<'_>) -> String {
+    let (base, mid, end, edge, warm, glow) = (c.base, c.mid, c.end, c.edge, c.warm, c.glow);
     format!(
         r##"<linearGradient id="{id}" x1="0%" y1="0%" x2="100%" y2="100%">
           <stop offset="0%" stop-color="{base}"/>
@@ -262,7 +285,18 @@ fn parse_custom_gradient(spec: &str, gid: &str) -> Option<FillPlan> {
     let accent2 = b.clone();
     let warm = ensure_hash(&mix_hex(strip_hash(&b), "FEE140", 0.35));
     let glow = ensure_hash(&mix_hex(strip_hash(&b), "FFFFFF", 0.4));
-    let mut plan = kit(gid, &base, &mid, &accent2, &accent, &warm, &glow, "FFFFFF");
+    let mut plan = kit(
+        gid,
+        Chroma {
+            base: &base,
+            mid: &mid,
+            end: &accent2,
+            edge: &accent,
+            warm: &warm,
+            glow: &glow,
+            fg: "FFFFFF",
+        },
+    );
 
     // Rebuild primary field gradient with exact user stop positions.
     let mut stop_svg = String::new();
@@ -331,6 +365,39 @@ fn mix_hex(a: &str, b: &str, t: f32) -> String {
         format!("{:02X}", v.round().clamp(0.0, 255.0) as u8)
     };
     format!("{}{}{}", mix(0), mix(2), mix(4))
+}
+
+/// Shields-compatible named colors + semantic CI colors.
+fn named_color(c: &str) -> Option<&'static str> {
+    Some(match c.to_ascii_lowercase().as_str() {
+        "brightgreen" => "4C1",
+        "green" => "97CA00",
+        "yellow" => "DFB317",
+        "yellowgreen" => "A4A61D",
+        "orange" => "FE7D37",
+        "red" => "E05D44",
+        "blue" => "007EC6",
+        "lightgrey" | "lightgray" => "9F9F9F",
+        "success" => "27AE60",
+        "important" => "FE7D37",
+        "critical" => "E05D44",
+        "informational" => "007EC6",
+        "inactive" => "9F9F9F",
+        _ => return None,
+    })
+}
+
+/// Resolve one paint token: a named color, a validated hex token, else the
+/// caller's fallback. Anything else is dropped instead of reaching an SVG
+/// attribute — the paint grammar has exactly one entry point.
+pub(crate) fn resolve_paint(c: Option<&str>, fallback: &str) -> String {
+    let Some(c) = c else {
+        return fallback.to_string();
+    };
+    if let Some(named) = named_color(c) {
+        return normalize_hex_token(named).unwrap_or_else(|| named.to_string());
+    }
+    normalize_hex_token(c).unwrap_or_else(|| fallback.to_string())
 }
 
 #[cfg(test)]

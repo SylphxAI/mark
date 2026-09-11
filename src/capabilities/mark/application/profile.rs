@@ -8,7 +8,8 @@
 use crate::capabilities::mark::domain::color::{contrasting_fg, resolve_fill};
 use crate::capabilities::mark::domain::motion::{text_children, text_open_attrs};
 use crate::capabilities::mark::domain::shapes::{normalize_art_type, shape_background, shape_defs};
-use crate::capabilities::mark::domain::svg::{credit_mark, ensure_hash, esc, monogram, svg_doc};
+use crate::capabilities::mark::domain::svg::{credit_mark, ensure_hash, esc, svg_doc};
+use crate::capabilities::mark::domain::text::{fit_line, monogram, Metric};
 use crate::capabilities::mark::domain::{
     cap_text, normalize_animation, MarkSpec, MAX_DESC_CHARS, MAX_TEXT_CHARS,
 };
@@ -83,9 +84,9 @@ pub fn render(spec: &MarkSpec) -> String {
 
     let right_pad = (wf * 0.04).clamp(16.0, 28.0) + radius;
     let text_max = (wf - text_x - right_pad).max(48.0);
-    let name = fit_line(&name, text_max, name_size);
+    let name = fit_line(&name, text_max, name_size, Metric::Bold);
     let tagline = if has_tag {
-        fit_line(&tagline, text_max, tag_size)
+        fit_line(&tagline, text_max, tag_size, Metric::Bold)
     } else {
         tagline
     };
@@ -133,45 +134,4 @@ pub fn render(spec: &MarkSpec) -> String {
     );
 
     svg_doc(w, h, &body)
-}
-
-fn fit_line(text: &str, max_px: f32, font_size: f32) -> String {
-    if line_advance(text, font_size) <= max_px {
-        return text.to_string();
-    }
-    let ellipsis = '\u{2026}';
-    let budget = (max_px - glyph_advance(ellipsis, font_size)).max(0.0);
-    let mut used = 0.0;
-    let mut out = String::new();
-    for ch in text.chars() {
-        let adv = glyph_advance(ch, font_size);
-        if used + adv > budget {
-            break;
-        }
-        out.push(ch);
-        used += adv;
-    }
-    out.push(ellipsis);
-    out
-}
-
-/// Proportional sans advances so wide glyphs (`W`, CJK) cannot outrun a 0.55em cap.
-fn glyph_advance(ch: char, font_size: f32) -> f32 {
-    let unit = match ch {
-        ' ' | '\u{00A0}' => 0.30,
-        'i' | 'l' | 'I' | 'j' | 't' | 'f' | 'r' | '|' | '\'' | '`' | '!' | '.' | ',' | ':'
-        | ';' => 0.34,
-        'm' | 'w' | 'M' | 'W' | '@' | '%' => 0.95,
-        '1' | '(' | ')' | '[' | ']' | '{' | '}' | '/' | '\\' => 0.40,
-        c if c.is_ascii_uppercase() => 0.70,
-        c if c.is_ascii_digit() => 0.58,
-        c if !c.is_ascii() && c.is_alphanumeric() => 1.05,
-        _ => 0.60,
-    };
-    // Bold name weight plus sidebearings run wider than a regular table.
-    font_size * unit * 1.12
-}
-
-fn line_advance(line: &str, font_size: f32) -> f32 {
-    line.chars().map(|c| glyph_advance(c, font_size)).sum()
 }

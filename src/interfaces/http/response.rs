@@ -3,6 +3,7 @@
 use axum::http::{header, HeaderMap, HeaderValue, StatusCode};
 use axum::response::{IntoResponse, Response};
 
+use crate::capabilities::mark::domain::hash;
 use crate::capabilities::mark::domain::svg::{SVG_CACHE, SVG_EDGE_CACHE};
 
 /// Cache directives are compile-time constants: an invalid header token fails
@@ -23,21 +24,16 @@ pub(crate) fn decode_text(s: String) -> String {
 }
 /// Stable strong ETag for byte-identical SVG URLs (FNV-1a/64 over the bytes).
 ///
-/// std `DefaultHasher` is explicitly unstable across releases, so ETags use an
-/// inline FNV-1a/64 — deterministic across processes and deploys for identical
-/// bytes, with no new dependency. The tag changes iff the bytes change, which
-/// is exactly the immutable-by-URL contract (query-pinned content).
+/// std `DefaultHasher` is explicitly unstable across releases, so ETags use
+/// [`hash::fnv1a_64`] — deterministic across processes and deploys for
+/// identical bytes, with no new dependency. The tag changes iff the bytes
+/// change, which is exactly the immutable-by-URL contract (query-pinned
+/// content).
 ///
 /// The emitted tag is always `"` + 16 lowercase hex digits + `"`, so the header
 /// conversion below cannot fail for any input.
 pub(crate) fn etag_header(svg: &str) -> HeaderValue {
-    const FNV_OFFSET: u64 = 0xcbf29ce484222325;
-    const FNV_PRIME: u64 = 0x100000001b3;
-    let mut h = FNV_OFFSET;
-    for b in svg.as_bytes() {
-        h ^= *b as u64;
-        h = h.wrapping_mul(FNV_PRIME);
-    }
+    let h = hash::fnv1a_64(svg.as_bytes());
     let tag = format!("\"{h:016x}\"");
     HeaderValue::from_str(&tag).expect("hex digest tag is a valid header value")
 }

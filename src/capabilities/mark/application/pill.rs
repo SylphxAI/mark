@@ -4,67 +4,36 @@
 //! shared grammar (theme defines the palette, explicit color wins otherwise);
 //! motion applies at text level (ambient is meaningless at this size).
 
-use crate::capabilities::mark::domain::color::contrasting_fg;
+use crate::capabilities::mark::domain::color::{contrasting_fg, resolve_paint};
 use crate::capabilities::mark::domain::motion::{text_children, text_open_attrs};
-use crate::capabilities::mark::domain::svg::{ensure_hash, esc, line_advance, svg_doc};
+use crate::capabilities::mark::domain::pill::measure;
+use crate::capabilities::mark::domain::svg::{ensure_hash, esc, svg_doc};
 use crate::capabilities::mark::domain::theme;
 use crate::capabilities::mark::domain::{
-    cap_text, named_color, normalize_animation, normalize_hex_token, MarkSpec, PillStyle,
-    MAX_LABEL_CHARS, MAX_MESSAGE_CHARS,
+    cap_text, normalize_animation, MarkSpec, PillStyle, MAX_LABEL_CHARS, MAX_MESSAGE_CHARS,
 };
 
-fn resolve_color(c: Option<&str>, fallback: &str) -> String {
-    let Some(c) = c else {
-        return fallback.to_string();
-    };
-    if let Some(n) = named_color(c) {
-        return normalize_hex_token(n).unwrap_or_else(|| n.to_string());
-    }
-    normalize_hex_token(c).unwrap_or_else(|| fallback.to_string())
-}
-
-fn measure(text: &str, style: PillStyle) -> u32 {
-    let font_size = 11.0;
-    let tracking = if style == PillStyle::ForTheBadge {
-        0.5
-    } else {
-        0.0
-    };
-    let pad = if style == PillStyle::ForTheBadge {
-        20.0
-    } else {
-        14.0
-    };
-    let n = text.chars().count() as f32;
-    let extra = if n > 1.0 { tracking * (n - 1.0) } else { 0.0 };
-    (line_advance(text, font_size) + extra + pad)
-        .ceil()
-        .max(1.0) as u32
-}
-
-/// Render a pill from resolved parts (shared by the deploy mark).
-#[allow(clippy::too_many_arguments)]
-pub(crate) fn render_pill(
-    label: &str,
-    message: &str,
-    color: Option<&str>,
-    label_color: Option<&str>,
-    style: PillStyle,
-    theme_name: Option<&str>,
-    animation: Option<&str>,
-    font: Option<&str>,
-) -> String {
+/// Pill form entry: paint and text come from the shared MarkSpec grammar.
+pub fn render(spec: &MarkSpec) -> String {
+    let (label, message) = (
+        spec.pill.label.as_deref().unwrap_or(""),
+        spec.pill.message.as_deref().unwrap_or("ok"),
+    );
+    let (color, label_color) = (spec.color.as_deref(), spec.pill.label_color.as_deref());
+    let style = PillStyle::parse(spec.pill.style.as_deref().unwrap_or("flat"));
+    let theme_name = spec.theme.as_deref();
+    let (animation, font) = (spec.animation.as_deref(), spec.font.as_deref());
     let theme = theme_name.and_then(theme::get);
 
     let msg_color = if let Some(t) = theme {
         t.accent.to_string()
     } else {
-        resolve_color(color, "4A90E2")
+        resolve_paint(color, "4A90E2")
     };
     let lbl_color = if let Some(t) = theme {
         t.bg.to_string()
     } else {
-        resolve_color(
+        resolve_paint(
             label_color,
             if style == PillStyle::Social {
                 "FFFFFF"
@@ -184,18 +153,4 @@ pub(crate) fn render_pill(
     ));
 
     svg_doc(w, h, &body)
-}
-
-/// Pill form entry: paint and text come from the shared MarkSpec grammar.
-pub fn render(spec: &MarkSpec) -> String {
-    render_pill(
-        spec.pill.label.as_deref().unwrap_or(""),
-        spec.pill.message.as_deref().unwrap_or("ok"),
-        spec.color.as_deref(),
-        spec.pill.label_color.as_deref(),
-        PillStyle::parse(spec.pill.style.as_deref().unwrap_or("flat")),
-        spec.theme.as_deref(),
-        spec.animation.as_deref(),
-        spec.font.as_deref(),
-    )
 }
