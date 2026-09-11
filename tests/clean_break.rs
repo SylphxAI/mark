@@ -2,7 +2,7 @@
 //! escaping, bounded inputs, determinism — no legacy, no clock, no upstream.
 
 use mark::capabilities::mark::domain::text::cap_text;
-use mark::capabilities::mark::domain::{MarkForm, MarkSpec, PillSpec, StripSpec};
+use mark::capabilities::mark::domain::{HeroSpec, MarkForm, MarkSpec, PillSpec, StripSpec};
 use mark::capabilities::mark::render;
 
 fn hero(ty: &str, text: &str) -> MarkSpec {
@@ -17,7 +17,9 @@ fn hero(ty: &str, text: &str) -> MarkSpec {
 // ---------- strict attribute grammar ----------
 
 #[test]
-fn hero_font_color_cannot_inject_attributes() {
+fn hero_paint_cannot_inject_attributes() {
+    // `color` is the live paint entry point; anything that is not a validated
+    // hex token or a parsed gradient falls back to theme paint.
     for evil in [
         "\" onload=\"alert(1)",
         "red\" onmouseover=\"x",
@@ -27,92 +29,61 @@ fn hero_font_color_cannot_inject_attributes() {
         "red;fill:url(#x)",
     ] {
         let mut spec = hero("soft", "Hi");
-        spec.hero.font_color = Some(evil.into());
+        spec.color = Some(evil.into());
         spec.animation = Some("none".into());
         let svg = render(&spec);
-        assert!(!svg.contains("onload="), "fontColor injection: {evil}");
-        assert!(!svg.contains("onmouseover="), "fontColor injection: {evil}");
-        assert!(!svg.contains("<script"), "fontColor injection: {evil}");
-        assert!(!svg.contains("javascript:"), "fontColor injection: {evil}");
+        for needle in ["onload=", "onmouseover=", "<script", "javascript:"] {
+            assert!(!svg.contains(needle), "paint injection {evil}: {needle}");
+        }
     }
 }
 
 #[test]
-fn hero_stroke_cannot_inject_attributes() {
-    for evil in ["\" onload=\"alert(1)", "red\" onmouseover=\"x", "#fff\"><x"] {
-        let mut spec = hero("soft", "Hi");
-        spec.hero.stroke = Some(evil.into());
-        spec.hero.stroke_width = Some(2.0);
-        spec.animation = Some("none".into());
-        let svg = render(&spec);
-        assert!(!svg.contains("onload="), "stroke injection: {evil}");
-        assert!(!svg.contains("onmouseover="), "stroke injection: {evil}");
-        assert!(!svg.contains("<x"), "stroke injection: {evil}");
-    }
-}
-
-#[test]
-fn hero_typewriter_keeps_the_stroke_paint_on_the_title_only() {
-    // Regression (reviewer F1/R1): the typewriter *title* glyphs must keep the
-    // stroke paint, and the description must stay strokeless exactly as the
-    // parent revision painted it.
+fn hero_accepts_a_custom_hex_gradient() {
     let mut spec = hero("soft", "Hi");
-    spec.desc = Some("A description line".into());
-    spec.hero.stroke = Some("#ff0000".into());
-    spec.hero.stroke_width = Some(3.0);
-    spec.animation = Some("type".into());
-    let svg = render(&spec);
-    assert!(
-        svg.contains("stroke=\"#ff0000\" stroke-width=\"3\" paint-order=\"stroke\""),
-        "typewriter title glyphs must keep the stroke paint"
-    );
-    assert_eq!(
-        svg.matches("paint-order=\"stroke\"").count(),
-        2,
-        "exactly one stroke run: the two title characters"
-    );
-    assert_eq!(
-        svg.matches("stroke=\"#ff0000\"").count(),
-        2,
-        "the description must not inherit the title stroke"
-    );
-}
-
-#[test]
-fn hero_accepts_valid_hex_tokens() {
-    let mut spec = hero("soft", "Hi");
-    spec.hero.font_color = Some("f00".into());
-    spec.hero.stroke = Some("#00ff00".into());
-    spec.hero.stroke_width = Some(2.0);
+    spec.color = Some("0:FF6B6B,100:C44569".into());
     spec.animation = Some("none".into());
     let svg = render(&spec);
-    assert!(svg.contains("#ff0000"), "3-digit shorthand must expand");
-    assert!(
-        svg.contains("stroke=\"#00ff00\""),
-        "valid stroke token kept"
-    );
+    assert!(svg.contains("#FF6B6B"), "first stop kept");
+    assert!(svg.contains("#C44569"), "last stop kept");
 }
 
 #[test]
-fn nonfinite_geometry_never_reaches_svg() {
+fn hero_keeps_valid_three_digit_hex_paint() {
     let mut spec = hero("soft", "Hi");
-    spec.hero.font_align = Some(f32::NAN);
-    spec.hero.font_align_y = Some(f32::INFINITY);
-    spec.hero.desc_align = Some(f32::NEG_INFINITY);
-    spec.hero.desc_align_y = Some(f32::NAN);
-    spec.hero.rotate = Some(f32::INFINITY);
-    spec.hero.stroke = Some("#00ff00".into());
-    spec.hero.stroke_width = Some(f32::NAN);
+    spec.color = Some("#f00".into());
     spec.animation = Some("none".into());
-
     let svg = render(&spec);
-    for invalid in ["NaN", "inf", "-inf"] {
+    assert!(svg.contains("#f00"), "valid paint token kept: {svg:.200}");
+    assert!(!svg.contains("NaN"), "no non-finite geometry can reach SVG");
+}
+
+#[test]
+fn hero_spec_is_the_dest_geometry_only() {
+    // Compile-time guard: this literal lists every `HeroSpec` field. If a
+    // retired capsule-render knob (size, colour, align, rotate, stroke, text
+    // background, section, reversal) is reintroduced, the test stops compiling.
+    let spec = MarkSpec {
+        form: MarkForm::Hero,
+        art: Some("soft".into()),
+        text: Some("Hi".into()),
+        hero: HeroSpec {
+            layout: Some("signal".into()),
+        },
+        animation: Some("none".into()),
+        ..Default::default()
+    };
+    let svg = render(&spec);
+    assert!(
+        svg.contains("text-anchor=\"middle\""),
+        "signal layout applies"
+    );
+    for retired_output in ["paint-order=", "transform=\"rotate("] {
         assert!(
-            !svg.contains(invalid),
-            "non-finite geometry escaped: {invalid}"
+            !svg.contains(retired_output),
+            "retired knob output must not exist: {retired_output}"
         );
     }
-    assert!(svg.contains("stroke=\"#00ff00\""));
 }
 
 // ---------- escaping across every form ----------
@@ -284,5 +255,12 @@ fn unknown_inputs_normalize_never_fail() {
         MarkForm::Profile,
         "retired identity form must not silently fall back to hero"
     );
+    for retired_id in ["badge", "icons", "iconsrow", "card", "deploymark"] {
+        assert_eq!(
+            MarkForm::parse(Some(retired_id)),
+            MarkForm::Hero,
+            "retired predecessor id {retired_id} is unknown input, not a form"
+        );
+    }
     let _ = render(&spec);
 }

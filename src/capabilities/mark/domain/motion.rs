@@ -8,30 +8,18 @@ pub(crate) const ANIMATIONS: &[&str] = &[
     "shimmer", "glitch", "wave", "orbit", "neon", "bounce", "type",
 ];
 
-/// Legacy aliases accepted for compatibility.
+/// Normalize `animation=` against [`ANIMATIONS`].
+///
+/// The published vocabulary is the whole contract: anything else (including the
+/// retired predecessor aliases) is unknown input and renders `ambient`.
 pub(crate) fn normalize_animation(raw: Option<&str>) -> &'static str {
-    match raw.map(|s| s.trim()).filter(|s| !s.is_empty()) {
+    match raw.map(|s| s.trim().to_ascii_lowercase()) {
         None => "ambient",
-        Some(s) => match s.to_ascii_lowercase().as_str() {
-            "0" | "false" | "off" | "static" | "none" => "none",
-            "ambient" | "bg" | "idle" => "ambient",
-            "fade" | "fadein" => "fade",
-            "rise" | "up" | "lift" => "rise",
-            "scale" | "scalein" | "pop" => "scale",
-            "float" | "hover" => "float",
-            "glow" | "twinkling" | "twinkle" => "glow",
-            "breathe" | "breath" | "pulse" | "blinking" | "blink" => "breathe",
-            "slide" | "swipe" => "slide",
-            "cascade" | "stagger" => "cascade",
-            "shimmer" | "shine" => "shimmer",
-            "glitch" | "jitter" => "glitch",
-            "wave" | "waving" => "wave",
-            "orbit" | "spin" => "orbit",
-            "neon" | "flicker" | "cyber" => "neon",
-            "bounce" | "spring" | "elastic" => "bounce",
-            "type" | "typewriter" | "reveal" => "type",
-            _ => "ambient",
-        },
+        Some(s) => ANIMATIONS
+            .iter()
+            .find(|a| **a == s)
+            .copied()
+            .unwrap_or("ambient"),
     }
 }
 

@@ -379,12 +379,102 @@ async fn catalog_exposes_the_one_vocabulary() {
 
 #[tokio::test]
 async fn injection_is_inert_over_http() {
-    let (status, _, body) = get(
-        "/api/v1/mark/hero?type=soft&text=probe&animation=none&fontColor=%22%20onload=%22alert(7)",
-    )
-    .await;
-    assert_eq!(status, StatusCode::OK);
-    assert!(!body.contains("onload="), "injection must be inert");
+    for query in [
+        "color=%22%20onload=%22alert(7)",
+        "text=%22%3E%20onload%3D%22alert(7)",
+        "theme=%22%20onload=%22alert(7)",
+        "desc=%3C%2Ftext%3E%3Cscript%3Ealert(1)%3C%2Fscript%3E",
+    ] {
+        let path = format!("/api/v1/mark/hero?type=soft&animation=none&{query}");
+        let (status, _, body) = get(&path).await;
+        assert_eq!(status, StatusCode::OK, "{query}");
+        for needle in ["onload=\"", "<script", "<img", "javascript:"] {
+            assert!(
+                !body.contains(needle),
+                "injection must not create markup: {query} -> {needle}"
+            );
+        }
+    }
+}
+
+#[tokio::test]
+async fn retired_hero_knobs_are_inert() {
+    let base = "/api/v1/mark/hero?type=soft&text=probe&animation=none";
+    let (_, _, plain) = get(base).await;
+    for knob in [
+        "fontSize=99",
+        "descSize=40",
+        "fontColor=%23ff0000",
+        "fontAlign=10",
+        "fontAlignY=10",
+        "descAlign=90",
+        "descAlignY=20",
+        "rotate=45",
+        "stroke=%2300ff00",
+        "strokeWidth=8",
+        "textBg=1",
+        "section=footer",
+        "reversal=1",
+    ] {
+        let (status, _, body) = get(&format!("{base}&{knob}")).await;
+        assert_eq!(status, StatusCode::OK, "{knob} must still render");
+        assert_eq!(
+            body, plain,
+            "retired predecessor knob {knob} must not reach the render"
+        );
+    }
+}
+
+#[tokio::test]
+async fn retired_form_ids_are_unknown_forms() {
+    let query = "?text=probe&animation=none";
+    let (_, _, hero) = get(&format!("/api/v1/mark/hero{query}")).await;
+    for id in ["badge", "icons", "iconsrow", "card", "deploymark"] {
+        let (status, _, body) = get(&format!("/api/v1/mark/{id}{query}")).await;
+        assert_eq!(status, StatusCode::OK, "{id} must still render (totality)");
+        assert_eq!(body, hero, "retired form id {id} is unknown input");
+    }
+    // `identity` is the graph's `rename-to` id (MARK-IDENTITY): it stays.
+    let (_, _, identity) = get(&format!("/api/v1/mark/identity{query}")).await;
+    let (_, _, profile) = get(&format!("/api/v1/mark/profile{query}")).await;
+    assert_eq!(
+        identity, profile,
+        "identity URLs still reach the profile card"
+    );
+}
+
+#[tokio::test]
+async fn retired_layout_and_animation_aliases_are_unknown() {
+    let (_, _, plain) = get("/api/v1/mark/hero?text=probe").await;
+    for alias in [
+        "bg",
+        "idle",
+        "off",
+        "static",
+        "pulse",
+        "shine",
+        "spin",
+        "waving",
+        "typewriter",
+    ] {
+        let (_, _, body) = get(&format!("/api/v1/mark/hero?text=probe&animation={alias}")).await;
+        assert_eq!(
+            body, plain,
+            "retired animation alias {alias} must render the default animation"
+        );
+    }
+    let (_, _, default_layout) =
+        get("/api/v1/mark/hero?text=probe&layout=default&animation=none").await;
+    for alias in ["card", "mono", "cli", "center", "product", "hero", "oss"] {
+        let (_, _, body) = get(&format!(
+            "/api/v1/mark/hero?text=probe&layout={alias}&animation=none"
+        ))
+        .await;
+        assert_eq!(
+            body, default_layout,
+            "retired layout alias {alias} must render the default layout"
+        );
+    }
 }
 
 #[tokio::test]
@@ -401,19 +491,27 @@ async fn identity_form_matches_profile_over_http() {
 }
 
 #[tokio::test]
-async fn nonfinite_geometry_is_normalized_over_http() {
-    let (status, _, body) = get(
-        "/api/v1/mark/hero?text=probe&fontAlign=NaN&fontAlignY=inf&descAlign=NaN&descAlignY=-inf&rotate=-inf&stroke=%2300ff00&strokeWidth=NaN&color=NaN%3AFF0000%2C100%3A000000",
-    )
-    .await;
-    assert_eq!(status, StatusCode::OK);
-    for invalid in ["NaN", "inf", "-inf"] {
-        assert!(
-            !body.contains(invalid),
-            "non-finite input escaped: {invalid}"
+async fn nonfinite_paint_input_cannot_reach_svg() {
+    let base = "/api/v1/mark/hero?text=probe&animation=none";
+    let (_, _, plain) = get(base).await;
+    for invalid_spec in [
+        "NaN%3AFF0000%2C100%3A000000",
+        "inf%3AFF0000",
+        "-1%3AFF0000%2C100%3A000000",
+    ] {
+        let (status, _, body) = get(&format!("{base}&color={invalid_spec}")).await;
+        assert_eq!(status, StatusCode::OK, "{invalid_spec}");
+        assert_eq!(
+            body, plain,
+            "invalid stops must fall back to exactly the default paint: {invalid_spec}"
         );
+        for invalid in ["NaN", "inf", "-inf"] {
+            assert!(
+                !body.contains(invalid),
+                "non-finite input escaped: {invalid}"
+            );
+        }
     }
-    assert!(body.contains("stroke=\"#00ff00\""));
 }
 
 #[tokio::test]

@@ -71,7 +71,7 @@ pub fn render(spec: &MarkSpec) -> String {
         format!(
             "<clipPath id=\"pc\"><rect width=\"{w}\" height=\"{h}\" rx=\"{radius}\"/></clipPath>\
              <g clip-path=\"url(#pc)\">{}</g>",
-            shape_background(ty, w, h, &fill, "header", false, 0.0),
+            shape_background(ty, w, h, &fill, 0.0),
         )
     } else {
         format!(

@@ -37,34 +37,31 @@ impl MarkForm {
     }
 
     /// Unknown forms normalize to the flagship — rendering never fails.
+    ///
+    /// `identity` is the graph's one `rename-to` id (`MARK-IDENTITY`): those
+    /// URLs must reach the profile card, not silently become a hero. Retired
+    /// predecessor ids (`badge`, `icons`, `iconsrow`, `card`, `deploymark`)
+    /// are unknown input and normalize to hero.
     pub fn parse(raw: Option<&str>) -> Self {
         match raw.map(|s| s.trim().to_ascii_lowercase()).as_deref() {
-            Some("pill") | Some("badge") => Self::Pill,
-            Some("strip") | Some("icons") | Some("iconsrow") => Self::Strip,
-            Some("profile") | Some("card") | Some("identity") => Self::Profile,
-            Some("deploy") | Some("deploymark") => Self::Deploy,
+            Some("pill") => Self::Pill,
+            Some("strip") => Self::Strip,
+            Some("profile") | Some("identity") => Self::Profile,
+            Some("deploy") => Self::Deploy,
             _ => Self::Hero,
         }
     }
 }
 
-/// Hero geometry and typography (banner).
+/// Hero geometry: the layout family only.
+///
+/// Predecessor capsule-render typography and placement knobs (size, colour,
+/// alignment, rotation, stroke, text background, section flip) are leftover and
+/// deliberately absent — the URL cannot reach them (`docs/capabilities.md`,
+/// `MARK-GRAMMAR`).
 #[derive(Debug, Clone, Default)]
 pub struct HeroSpec {
     pub layout: Option<String>,
-    pub section: Option<String>,
-    pub reversal: bool,
-    pub font_size: Option<u32>,
-    pub desc_size: Option<u32>,
-    pub font_color: Option<String>,
-    pub font_align: Option<f32>,
-    pub font_align_y: Option<f32>,
-    pub desc_align: Option<f32>,
-    pub desc_align_y: Option<f32>,
-    pub rotate: Option<f32>,
-    pub stroke: Option<String>,
-    pub stroke_width: Option<f32>,
-    pub text_bg: bool,
 }
 
 /// Pill geometry (badge).

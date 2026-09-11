@@ -24,16 +24,20 @@ pub(crate) const MAX_MESSAGE_CHARS: usize = 120;
 pub(crate) const MAX_ICONS: usize = 60;
 pub(crate) const MAX_SERVICE_CHARS: usize = 40;
 
+/// Normalize `layout=` against [`LAYOUTS`].
+///
+/// The published list is the whole vocabulary; retired predecessor aliases
+/// (`center`, `product`, `card`, `oss`, `hero`, `cli`, `mono`) are unknown
+/// input and render the default layout.
 pub(crate) fn normalize_layout(raw: Option<&str>) -> &'static str {
     match raw
         .map(|s| s.trim().to_ascii_lowercase())
         .filter(|s| !s.is_empty())
         .as_deref()
     {
-        None | Some("default") | Some("center") => "default",
-        Some("plate") | Some("product") | Some("card") | Some("oss") => "plate",
-        Some("signal") | Some("hero") => "signal",
-        Some("terminal") | Some("cli") | Some("mono") => "terminal",
+        Some("plate") => "plate",
+        Some("signal") => "signal",
+        Some("terminal") => "terminal",
         _ => "default",
     }
 }

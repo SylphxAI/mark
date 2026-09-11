@@ -65,5 +65,10 @@ This repository is the north-star end state: **one capability, one grammar**.
    when the revision is unknown. `/health.revision` is deploy proof, never
    capability proof.
 8. **Rendering never fails:** unknown inputs normalize (unknown form → hero,
-   unknown art → aurora, invalid colors → fallback paint). There is no
-   error-SVG path by construction.
+   unknown art → `waving`, unknown theme/layout/animation → the documented
+   default, invalid colors → fallback paint). There is no error-SVG path by
+   construction. Retired predecessor knobs (`fontSize`, `fontColor`, align,
+   rotate, `stroke`, `textBg`, `section`, `reversal`) and retired ids/aliases
+   (`badge`, `icons`, `card`, `deploymark`, layout/animation aliases) are
+   unknown input, never a second vocabulary — delete them again if they
+   reappear.

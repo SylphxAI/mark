@@ -51,6 +51,22 @@ SINGLE_AUTHORITY = {
     "badge path split": "split_badge_path",
 }
 
+# Retired predecessor grammar keys (`MARK-GRAMMAR`): the render accepts exactly
+# the published grammar, so these string literals must not exist in `src/`.
+RETIRED_GRAMMAR_KEYS = (
+    "fontSize",
+    "descSize",
+    "fontColor",
+    "fontAlign",
+    "fontAlignY",
+    "descAlign",
+    "descAlignY",
+    "strokeWidth",
+    "textBg",
+    "deploymark",
+    "iconsrow",
+)
+
 # Patterns applied to every scanned file.
 FORBIDDEN_PATTERNS = {
     r"allow\([^)]*dead_code": "dead code must be deleted, not allowed",
@@ -129,6 +145,15 @@ def failures() -> list[str]:
             where = ", ".join(f"{f.relative_to(ROOT)}:{line}" for f, line in hits) or "nowhere"
             found.append(f"{concept}: expected exactly 1 definition of fn {symbol}(); found {len(hits)} ({where})")
 
+    for key in RETIRED_GRAMMAR_KEYS:
+        literal = f'"{key}"'
+        for f, text in src_texts.items():
+            for match in re.finditer(re.escape(literal), text):
+                line = text[: match.start()].count("\n") + 1
+                found.append(
+                    f"{f.relative_to(ROOT)}:{line}: retired grammar key {literal} reintroduced"
+                )
+
     for pattern, reason in FORBIDDEN_PATTERNS.items():
         regex = re.compile(pattern)
         for f, text in texts.items():
@@ -161,8 +186,6 @@ def main() -> int:
         return 1
     print(
         f"OK: {len(SINGLE_AUTHORITY)} single-authority concepts, "
-        f"{len(FORBIDDEN_PATTERNS)} forbidden patterns, "
-        f"{len(CLOCK_PATTERNS)} clock patterns (src + build.rs), 0 findings"
     )
     return 0
 

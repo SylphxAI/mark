@@ -149,14 +149,6 @@ pub(crate) fn shape_defs(ty: &str, gain: f32, plan: &FillPlan) -> String {
     d
 }
 
-fn wrap(transforms: &[String], inner: String) -> String {
-    if transforms.is_empty() {
-        inner
-    } else {
-        format!("<g transform=\"{}\">{inner}</g>", transforms.join(" "))
-    }
-}
-
 fn base_fill(w: u32, h: u32, fill: &str) -> String {
     format!("<rect width=\"{w}\" height=\"{h}\" fill=\"{fill}\"/>")
 }
@@ -241,27 +233,17 @@ fn blob(
 }
 
 #[allow(clippy::format_in_format_args)]
-pub(crate) fn shape_background(
-    ty: &str,
-    w: u32,
-    h: u32,
-    plan: &FillPlan,
-    section: &str,
-    reversal: bool,
-    gain: f32,
-) -> String {
+/// Render the background for one art type.
+///
+/// `gain` scales ambient motion (0 freezes decorative layers). The retired
+/// `section`/`reversal` placement knobs no longer exist: the grammar exposes
+/// only the art type and geometry.
+pub(crate) fn shape_background(ty: &str, w: u32, h: u32, plan: &FillPlan, gain: f32) -> String {
     let fill = plan.fill.as_str();
     let accent = plan.accent.as_str();
     let accent2 = plan.accent2.as_str();
     let warm = plan.warm.as_str();
     let glow = plan.glow.as_str();
-    let mut transforms = Vec::new();
-    if reversal {
-        transforms.push(format!("translate({w},0) scale(-1,1)"));
-    }
-    if section == "footer" {
-        transforms.push(format!("translate(0,{h}) scale(1,-1)"));
-    }
     let wf = w as f32;
     let hf = h as f32;
     let g = gain;
@@ -1873,5 +1855,5 @@ M0,{y} C{a},{y1} {b},{y2} {c},{y3} S{d},{y4} {w},{y5} L{w},{h} L0,{h} Z\"/>\
         ),
     };
 
-    wrap(&transforms, body)
+    body
 }

@@ -9,8 +9,8 @@ use crate::capabilities::mark::domain::shapes::{normalize_art_type, shape_backgr
 use crate::capabilities::mark::domain::svg::{credit_mark, ensure_hash, esc, svg_doc};
 use crate::capabilities::mark::domain::text::{fit_line, line_advance, monogram, Metric};
 use crate::capabilities::mark::domain::{
-    cap_text, normalize_animation, normalize_hex_token, normalize_layout, MarkSpec, MAX_DESC_CHARS,
-    MAX_LINES, MAX_TEXT_CHARS,
+    cap_text, normalize_animation, normalize_layout, MarkSpec, MAX_DESC_CHARS, MAX_LINES,
+    MAX_TEXT_CHARS,
 };
 
 fn line_max_px(width: u32, x: f32, anchor: &str) -> f32 {
@@ -22,25 +22,11 @@ fn line_max_px(width: u32, x: f32, anchor: &str) -> f32 {
     }
 }
 
-/// Normalize user-supplied floating-point geometry before it reaches SVG.
-///
-/// Rust's `f32::clamp` preserves `NaN`, which would otherwise serialize as an
-/// invalid SVG attribute (for example `x="NaN"`). Non-finite values are
-/// treated as omitted input and finite values are bounded to the grammar's
-/// useful range.
-fn finite_clamp(value: Option<f32>, default: f32, min: f32, max: f32) -> f32 {
-    value
-        .filter(|v| v.is_finite())
-        .unwrap_or(default)
-        .clamp(min, max)
-}
-
 /// Paint/style choices shared by every text node of one hero render.
 struct TextStyle<'a> {
     font_color: &'a str,
     font_family: &'a str,
     anchor: &'a str,
-    stroke_attr: &'a str,
 }
 
 impl TextStyle<'_> {
@@ -53,12 +39,7 @@ impl TextStyle<'_> {
         begin: f32,
         char_dur: f32,
     ) -> String {
-        let (font_color, font_family, anchor, stroke_attr) = (
-            self.font_color,
-            self.font_family,
-            self.anchor,
-            self.stroke_attr,
-        );
+        let (font_color, font_family, anchor) = (self.font_color, self.font_family, self.anchor);
         let fs = font_size as f32;
         let total = line_advance(line, fs, Metric::Display);
         // Anchor the run as a whole, then place glyphs left→right.
@@ -77,7 +58,7 @@ impl TextStyle<'_> {
             out.push_str(&format!(
                 "<text x=\"{glyph_x}\" y=\"{y}\" text-anchor=\"start\" dominant-baseline=\"middle\" \
              font-family=\"{font_family}\" font-weight=\"650\" letter-spacing=\"0\" font-size=\"{font_size}\" \
-             fill=\"{font_color}\" opacity=\"0\"{stroke_attr}>\
+             fill=\"{font_color}\" opacity=\"0\">\
                <animate attributeName=\"opacity\" from=\"0\" to=\"1\" dur=\"0.01s\" begin=\"{t}s\" fill=\"freeze\"/>\
                {}</text>",
                 esc(&ch.to_string()),
@@ -146,25 +127,15 @@ pub fn render(spec: &MarkSpec) -> String {
         layout
     };
 
-    let section = if spec.hero.section.as_deref() == Some("footer") {
-        "footer"
-    } else {
-        "header"
-    };
     let anim = normalize_animation(spec.animation.as_deref());
     let gain = ambient_gain(anim);
 
     let seed = format!("{ty}-{}", spec.text.as_deref().unwrap_or(""));
     let fill = resolve_fill(spec.color.as_deref(), spec.theme.as_deref(), &seed, "mg");
 
-    // Strict color grammar: only canonical hex tokens reach SVG attributes.
-    // Anything else falls back to theme-derived ink (never raw input).
-    let font_color = spec
-        .hero
-        .font_color
-        .as_deref()
-        .and_then(normalize_hex_token)
-        .unwrap_or_else(|| ensure_hash(&fill.fg));
+    // Strict color grammar: ink is derived from the resolved palette, so only
+    // canonical hex tokens reach SVG attributes.
+    let font_color = ensure_hash(&fill.fg);
     let font_family = match spec
         .font
         .as_deref()
@@ -178,9 +149,9 @@ pub fn render(spec: &MarkSpec) -> String {
     let text = cap_text(spec.text.as_deref().unwrap_or(""), MAX_TEXT_CHARS);
     let desc = cap_text(spec.desc.as_deref().unwrap_or(""), MAX_DESC_CHARS);
 
-    // Layout-driven defaults (explicit query params still win)
-    let (def_align, def_align_y, def_desc_align, def_desc_y, def_fs, def_ds, anchor) = match layout
-    {
+    // Typography and placement come from the layout family: the grammar exposes
+    // no other hero geometry.
+    let (align, align_y, desc_align, desc_align_y, default_fs, desc_size, anchor) = match layout {
         "plate" => {
             let fs = if height >= 480 {
                 56
@@ -206,15 +177,6 @@ pub fn render(spec: &MarkSpec) -> String {
                 "start",
             )
         }
-        "signal" => (
-            50.0,
-            if desc.is_empty() { 50.0 } else { 44.0 },
-            50.0,
-            68.0,
-            48,
-            18,
-            "middle",
-        ),
         _ => (
             50.0,
             if desc.is_empty() { 50.0 } else { 44.0 },
@@ -225,31 +187,7 @@ pub fn render(spec: &MarkSpec) -> String {
             "middle",
         ),
     };
-
-    let font_size = spec
-        .hero
-        .font_size
-        .unwrap_or(if text.is_empty() { 40 } else { def_fs })
-        .clamp(10, 120);
-    let desc_size = spec.hero.desc_size.unwrap_or(def_ds).clamp(8, 60);
-    let font_align = finite_clamp(spec.hero.font_align, def_align, 0.0, 100.0);
-    let font_align_y = finite_clamp(spec.hero.font_align_y, def_align_y, 0.0, 100.0);
-    let desc_align = finite_clamp(spec.hero.desc_align, def_desc_align, 0.0, 100.0);
-    let desc_align_y = finite_clamp(spec.hero.desc_align_y, def_desc_y, 0.0, 100.0);
-    let rotate = finite_clamp(spec.hero.rotate, 0.0, -360.0, 360.0);
-    let stroke = spec.hero.stroke.as_deref().and_then(normalize_hex_token);
-    let stroke_width = finite_clamp(
-        spec.hero.stroke_width,
-        if stroke.is_some() { 1.0 } else { 0.0 },
-        0.0,
-        24.0,
-    );
-    // Constant for the whole render: glyph runs and whole lines share it.
-    let stroke_attr = if let Some(ref s) = stroke {
-        format!(" stroke=\"{s}\" stroke-width=\"{stroke_width}\" paint-order=\"stroke\"")
-    } else {
-        String::new()
-    };
+    let font_size = if text.is_empty() { 40 } else { default_fs };
 
     // Plate lifts title below monogram row
     let title_y_bias = if layout == "plate" && height >= 280 {
@@ -258,7 +196,7 @@ pub fn render(spec: &MarkSpec) -> String {
         0.0
     };
 
-    let x0 = width as f32 * font_align / 100.0;
+    let x0 = width as f32 * align / 100.0;
     let title_budget = line_max_px(width, x0, anchor);
     let lines: Vec<String> = text
         .split('\n')
@@ -273,56 +211,25 @@ pub fn render(spec: &MarkSpec) -> String {
         font_color: &font_color,
         font_family,
         anchor,
-        stroke_attr: &stroke_attr,
-    };
-    // The description paints without the title's stroke (base behaviour: only the
-    // headline run carried `stroke`/`paint-order`).
-    let desc_style = TextStyle {
-        font_color: &font_color,
-        font_family,
-        anchor,
-        stroke_attr: "",
     };
 
     for (i, line) in lines.iter().enumerate() {
         let dy = (i as f32 - (n - 1.0) / 2.0) * font_size as f32 * 1.15;
         let x = x0;
-        let y = height as f32 * font_align_y / 100.0 + dy + title_y_bias;
-        if spec.hero.text_bg {
-            let bw = line_advance(line, font_size as f32, Metric::Display).max(40.0);
-            let bx = if anchor == "start" {
-                x - 8.0
-            } else {
-                x - bw / 2.0
-            };
-            text_nodes.push_str(&format!(
-                "<rect x=\"{bx}\" y=\"{}\" width=\"{bw}\" height=\"{}\" rx=\"8\" fill=\"#000000\" fill-opacity=\"0.25\"/>",
-                y - font_size as f32 * 0.8,
-                font_size as f32 * 1.15
-            ));
-        }
+        let y = height as f32 * align_y / 100.0 + dy + title_y_bias;
+
         if use_typewriter {
             let base = i as f32 * 0.55;
             text_nodes.push_str(&style.typewriter_line(line, x, y, font_size, base, 0.055));
             continue;
         }
 
-        let rot = if rotate.abs() > 0.01 {
-            format!(" transform=\"rotate({rotate} {x} {y})\"")
-        } else {
-            String::new()
-        };
         let open_extra = text_open_attrs(anim, i, width, height);
-        let rot_attr = if open_extra.contains("transform=") {
-            String::new()
-        } else {
-            rot
-        };
         let children = text_children(anim, i, width, height);
         text_nodes.push_str(&format!(
             "<text x=\"{x}\" y=\"{y}\" text-anchor=\"{anchor}\" dominant-baseline=\"middle\" \
              font-family=\"{font_family}\" font-weight=\"650\" letter-spacing=\"-0.02em\" font-size=\"{font_size}\" \
-             fill=\"{font_color}\"{stroke_attr}{rot_attr}{open_extra}>{content}{children}</text>",
+             fill=\"{font_color}\"{open_extra}>{content}{children}</text>",
             content = esc(line),
         ));
     }
@@ -343,7 +250,7 @@ pub fn render(spec: &MarkSpec) -> String {
         );
         if use_typewriter {
             let base = lines.len() as f32 * 0.55 + 0.2;
-            desc_style.typewriter_line(&desc, dx, dy, desc_size, base, 0.04)
+            style.typewriter_line(&desc, dx, dy, desc_size, base, 0.04)
         } else {
             let open_extra = text_open_attrs(anim, lines.len().max(1), width, height);
             let children = text_children(anim, lines.len().max(1), width, height);
@@ -380,7 +287,7 @@ pub fn render(spec: &MarkSpec) -> String {
         "<defs>{}{}</defs>{}{}{}{}{}{}",
         fill.defs,
         shape_defs(ty, gain, &fill),
-        shape_background(ty, width, height, &fill, section, spec.hero.reversal, gain),
+        shape_background(ty, width, height, &fill, gain),
         plate,
         terminal_rule,
         text_nodes,
@@ -397,11 +304,14 @@ mod layout_tests {
     use crate::capabilities::mark::domain::normalize_layout;
 
     #[test]
-    fn normalize_layout_aliases() {
+    fn normalize_layout_keeps_only_the_dest_vocabulary() {
         assert_eq!(normalize_layout(Some("plate")), "plate");
-        assert_eq!(normalize_layout(Some("card")), "plate");
         assert_eq!(normalize_layout(Some("terminal")), "terminal");
+        assert_eq!(normalize_layout(Some("signal")), "signal");
         assert_eq!(normalize_layout(None), "default");
+        // Retired predecessor aliases are unknown input, not a second vocabulary.
+        assert_eq!(normalize_layout(Some("card")), "default");
+        assert_eq!(normalize_layout(Some("mono")), "default");
     }
 
     #[test]
