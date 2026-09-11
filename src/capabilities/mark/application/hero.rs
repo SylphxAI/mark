@@ -7,7 +7,9 @@ use crate::capabilities::mark::domain::color::{resolve_fill, FillPlan};
 use crate::capabilities::mark::domain::motion::{ambient_gain, text_children, text_open_attrs};
 use crate::capabilities::mark::domain::shapes::{normalize_art_type, shape_background, shape_defs};
 use crate::capabilities::mark::domain::svg::{credit_mark, ensure_hash, esc, svg_doc};
-use crate::capabilities::mark::domain::text::{fit_line, line_advance, monogram, Metric};
+use crate::capabilities::mark::domain::text::{
+    content_family, fit_line, line_advance, monogram, Metric,
+};
 use crate::capabilities::mark::domain::{
     cap_text, normalize_animation, normalize_layout, MarkSpec, MAX_DESC_CHARS, MAX_LINES,
     MAX_TEXT_CHARS,
@@ -136,15 +138,7 @@ pub fn render(spec: &MarkSpec) -> String {
     // Strict color grammar: ink is derived from the resolved palette, so only
     // canonical hex tokens reach SVG attributes.
     let font_color = ensure_hash(&fill.fg);
-    let font_family = match spec
-        .font
-        .as_deref()
-        .map(|f| f.to_ascii_lowercase())
-        .as_deref()
-    {
-        Some("mono") => "ui-monospace,SFMono-Regular,Menlo,Consolas,monospace",
-        _ => "ui-sans-serif,system-ui,-apple-system,Segoe UI,Helvetica,sans-serif",
-    };
+    let font_family = content_family(spec.font.as_deref());
 
     let text = cap_text(spec.text.as_deref().unwrap_or(""), MAX_TEXT_CHARS);
     let desc = cap_text(spec.desc.as_deref().unwrap_or(""), MAX_DESC_CHARS);

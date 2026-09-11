@@ -476,3 +476,48 @@ fn same_spec_renders_same_svg_forever() {
     let b = render(&hero("aurora", "Ship your release"));
     assert_eq!(a, b, "determinism: same URL, same mark, forever");
 }
+
+#[test]
+fn pill_and_deploy_paint_from_the_geometry_authority() {
+    // Fixture: the shields text attributes and baseline have exactly one owner
+    // (`domain/pill.rs::PillMetrics`), and `scripts/check-source-hygiene.py`
+    // forbids the attribute literals in the pill/deploy forms. A re-introduced
+    // local copy fails the gate; a value shift fails this fixture.
+    let flat = render(&MarkSpec {
+        form: MarkForm::Pill,
+        pill: mark::capabilities::mark::domain::PillSpec {
+            label: Some("build".into()),
+            message: Some("passing".into()),
+            ..Default::default()
+        },
+        ..Default::default()
+    });
+    assert!(
+        flat.contains("font-weight=\"500\"") && flat.contains("y=\"14\""),
+        "flat pill paints from the authority"
+    );
+
+    let badge = render(&MarkSpec {
+        form: MarkForm::Pill,
+        pill: mark::capabilities::mark::domain::PillSpec {
+            label: Some("build".into()),
+            message: Some("passing".into()),
+            style: Some("for-the-badge".into()),
+            ..Default::default()
+        },
+        ..Default::default()
+    });
+    assert!(
+        badge.contains("letter-spacing=\"0.5\"") && badge.contains("y=\"18\""),
+        "badge paint comes from the authority"
+    );
+
+    let deploy = render(&MarkSpec {
+        form: MarkForm::Deploy,
+        ..Default::default()
+    });
+    assert!(
+        deploy.contains("font-weight=\"500\"") && deploy.contains("y=\"14\""),
+        "deploy paints from the authority"
+    );
+}

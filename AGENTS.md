@@ -15,6 +15,8 @@ cargo clippy --all-targets --locked -- -D warnings
 cargo test
 cargo test --test public_contract
 python3 scripts/check-source-hygiene.py
+python3 scripts/check-duplication.py
+python3 scripts/check-config-parity.py
 python3 scripts/check-owned-runner-profiles.sh
 cargo run
 cargo build --release

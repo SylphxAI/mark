@@ -18,39 +18,78 @@ pub(crate) enum Metric {
 impl Metric {
     /// Relative advance of one glyph at `font_size`.
     pub(crate) fn advance(self, ch: char, font_size: f32) -> f32 {
+        let unit = match self {
+            Self::Display => match class(ch) {
+                Space => 0.30,
+                Narrow => 0.34,
+                Wide => 0.78,
+                Bracket => 0.40,
+                Upper => 0.58,
+                Digit => 0.54,
+                NonAsciiAlnum | Other => 0.52,
+            },
+            // Bold name weight plus sidebearings run wider than the regular table.
+            Self::Bold => match class(ch) {
+                Space => 0.30,
+                Narrow => 0.34,
+                Wide => 0.95,
+                Bracket => 0.40,
+                Upper => 0.70,
+                Digit => 0.58,
+                NonAsciiAlnum => 1.05,
+                Other => 0.60,
+            },
+        };
         match self {
-            Self::Display => font_size * display_unit(ch),
-            // Bold name weight plus sidebearings run wider than a regular table.
-            Self::Bold => font_size * bold_unit(ch) * 1.12,
+            Self::Display => font_size * unit,
+            Self::Bold => font_size * unit * 1.12,
         }
     }
 }
 
-fn display_unit(ch: char) -> f32 {
+/// One glyph classification per character, shared by every metric.
+#[derive(Clone, Copy)]
+enum GlyphClass {
+    Space,
+    Narrow,
+    Wide,
+    Bracket,
+    Upper,
+    Digit,
+    NonAsciiAlnum,
+    Other,
+}
+
+use GlyphClass::*;
+
+fn class(ch: char) -> GlyphClass {
     match ch {
-        ' ' => 0.30,
-        '\u{00A0}' => 0.30,
+        ' ' | '\u{00A0}' => Space,
         'i' | 'l' | 'I' | 'j' | 't' | 'f' | 'r' | '|' | '\'' | '`' | '!' | '.' | ',' | ':'
-        | ';' => 0.34,
-        'm' | 'w' | 'M' | 'W' | '@' | '%' => 0.78,
-        '1' | '(' | ')' | '[' | ']' | '{' | '}' | '/' | '\\' => 0.40,
-        c if c.is_ascii_uppercase() => 0.58,
-        c if c.is_ascii_digit() => 0.54,
-        _ => 0.52,
+        | ';' => Narrow,
+        'm' | 'w' | 'M' | 'W' | '@' | '%' => Wide,
+        '1' | '(' | ')' | '[' | ']' | '{' | '}' | '/' | '\\' => Bracket,
+        c if c.is_ascii_uppercase() => Upper,
+        c if c.is_ascii_digit() => Digit,
+        c if !c.is_ascii() && c.is_alphanumeric() => NonAsciiAlnum,
+        _ => Other,
     }
 }
 
-fn bold_unit(ch: char) -> f32 {
-    match ch {
-        ' ' | '\u{00A0}' => 0.30,
-        'i' | 'l' | 'I' | 'j' | 't' | 'f' | 'r' | '|' | '\'' | '`' | '!' | '.' | ',' | ':'
-        | ';' => 0.34,
-        'm' | 'w' | 'M' | 'W' | '@' | '%' => 0.95,
-        '1' | '(' | ')' | '[' | ']' | '{' | '}' | '/' | '\\' => 0.40,
-        c if c.is_ascii_uppercase() => 0.70,
-        c if c.is_ascii_digit() => 0.58,
-        c if !c.is_ascii() && c.is_alphanumeric() => 1.05,
-        _ => 0.60,
+/// `font-family` stacks, single-sourced: banner/profile/deploy paint content
+/// typography, pill-shaped marks add the shields default and compact stacks.
+pub(crate) const FONT_MONO: &str = "ui-monospace,SFMono-Regular,Menlo,Consolas,monospace";
+pub(crate) const FONT_UI_SANS: &str =
+    "ui-sans-serif,system-ui,-apple-system,Segoe UI,Helvetica,sans-serif";
+pub(crate) const FONT_UI_SANS_COMPACT: &str = "ui-sans-serif,system-ui,sans-serif";
+pub(crate) const FONT_SHIELDS_SANS: &str =
+    "-apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,Arial,sans-serif";
+
+/// Content typography for `font=sans|mono` (hero, profile, deploy).
+pub(crate) fn content_family(font: Option<&str>) -> &'static str {
+    match font.map(|f| f.to_ascii_lowercase()).as_deref() {
+        Some("mono") => FONT_MONO,
+        _ => FONT_UI_SANS,
     }
 }
 

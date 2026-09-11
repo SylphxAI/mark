@@ -48,6 +48,7 @@ SINGLE_AUTHORITY = {
     "svg color token": "normalize_hex_token",
     "icon glyph": "glyph",
     "theme lookup": "get",
+    "content family": "content_family",
     "badge path split": "split_badge_path",
 }
 
@@ -66,6 +67,15 @@ RETIRED_GRAMMAR_KEYS = (
     "deploymark",
     "iconsrow",
 )
+
+# The shields-style text attributes may only be built by their owner module.
+# A form that re-introduces a local copy makes the pill geometry drift again.
+SHIELDS_TEXT_OWNER = "src/capabilities/mark/domain/pill.rs"
+SHIELDS_TEXT_FORMS = (
+    "src/capabilities/mark/application/pill.rs",
+    "src/capabilities/mark/application/deploy.rs",
+)
+SHIELDS_TEXT_ATTRS = ("font-weight=", "font-family=", "letter-spacing=")
 
 # Patterns applied to every scanned file.
 FORBIDDEN_PATTERNS = {
@@ -171,6 +181,17 @@ def failures() -> list[str]:
             for match in regex.finditer(text):
                 line = text[: match.start()].count("\n") + 1
                 found.append(f"{f.relative_to(ROOT)}:{line}: {reason}")
+
+    for f, text in texts.items():
+        relative = str(f.relative_to(ROOT))
+        if relative not in SHIELDS_TEXT_FORMS:
+            continue
+        for attr in SHIELDS_TEXT_ATTRS:
+            if attr in text:
+                found.append(
+                    f"{relative}: shields text attribute {attr!r} must be built by "
+                    f"{SHIELDS_TEXT_OWNER} (PillMetrics), not locally"
+                )
 
     if not files:
         found.append("no Rust sources found — wrong root?")

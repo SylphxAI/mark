@@ -6,7 +6,7 @@
 
 use crate::capabilities::mark::domain::color::{contrasting_fg, resolve_paint};
 use crate::capabilities::mark::domain::motion::{text_children, text_open_attrs};
-use crate::capabilities::mark::domain::pill::measure;
+use crate::capabilities::mark::domain::pill::{family, measure, PillMetrics};
 use crate::capabilities::mark::domain::svg::{ensure_hash, esc, svg_doc};
 use crate::capabilities::mark::domain::theme;
 use crate::capabilities::mark::domain::{
@@ -56,10 +56,8 @@ pub fn render(spec: &MarkSpec) -> String {
         cap_text(message, MAX_MESSAGE_CHARS)
     };
 
-    let h: u32 = match style {
-        PillStyle::ForTheBadge => 28,
-        _ => 20,
-    };
+    let metrics = PillMetrics::new(style, family(font, style));
+    let h = metrics.height;
     let label_text = if style == PillStyle::ForTheBadge {
         label.to_uppercase()
     } else {
@@ -77,31 +75,14 @@ pub fn render(spec: &MarkSpec) -> String {
     };
     let mw = measure(&message_text, style);
     let w = (lw + mw).max(30);
-    let radius = match style {
-        PillStyle::Pill | PillStyle::Social => h as f32 / 2.0,
-        PillStyle::ForTheBadge => 4.0,
-        _ => 3.0,
-    };
+    let radius = metrics.radius;
 
     let label_fg = ensure_hash(&contrasting_fg(&lbl_color));
     let msg_fg = ensure_hash(&contrasting_fg(&msg_color));
-    let family = match font.map(|f| f.to_ascii_lowercase()).as_deref() {
-        Some("mono") => "ui-monospace,SFMono-Regular,Menlo,Consolas,monospace",
-        _ if style == PillStyle::ForTheBadge => "ui-sans-serif,system-ui,sans-serif",
-        _ => "-apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,Arial,sans-serif",
-    };
-    let font = if style == PillStyle::ForTheBadge {
-        format!(
-            "font-family=\"{family}\" font-size=\"11\" font-weight=\"700\" letter-spacing=\"0.5\""
-        )
-    } else {
-        format!("font-family=\"{family}\" font-size=\"11\" font-weight=\"500\"")
-    };
-    let ty = if style == PillStyle::ForTheBadge {
-        18
-    } else {
-        14
-    };
+    // Text attributes and baseline come from the same authority as the box
+    // (reviewer finding: the locals below used to shadow it).
+    let font = &metrics.text_attrs;
+    let ty = metrics.baseline;
 
     let mut body = String::new();
     if style == PillStyle::Plastic {
