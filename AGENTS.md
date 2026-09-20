@@ -1,8 +1,6 @@
 # Mark — local agent notes
 
-Static engineering and delivery standards load from the active Skills runtime
-([SylphxAI/skills](https://github.com/SylphxAI/skills) is binding instruction
-SSOT). Doctrine and Mission Control are retired historical lineage and must not
+Doctrine and Mission Control are retired historical lineage and must not
 be loaded as current instruction authority.
 
 This file is local commands/hazards only.
