@@ -9,6 +9,7 @@ use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
 
+use crate::capabilities::mark::domain::shields::split_badge_path;
 use crate::capabilities::mark::domain::spec::MarkForm;
 use crate::capabilities::mark::domain::theme;
 
@@ -45,6 +46,16 @@ pub struct StudioBoot {
     pub strip: Option<StudioStripBoot>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub deploy: Option<StudioDeployBoot>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub score: Option<StudioScoreBoot>,
+}
+
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
+pub struct StudioScoreBoot {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub value: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub max: Option<String>,
 }
 
 #[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
@@ -95,6 +106,8 @@ const GRAMMAR_KEYS: &[&str] = &[
     "icons",
     "perline",
     "service",
+    "value",
+    "max",
 ];
 
 /// Parse a public mark URL, badge shorthand, hash locator, or studio query.
@@ -104,43 +117,6 @@ const GRAMMAR_KEYS: &[&str] = &[
 /// encoded `url=` wrapper. Empty `/` is not recovery.
 pub fn parse_public_mark_url(raw: &str) -> Option<StudioBoot> {
     parse_at(raw, 0)
-}
-
-/// Shields path tokens: `/badge/{label}-{message}-{color}`.
-///
-/// `--` is the explicit separator (labels may contain `-`). Otherwise the
-/// last two `-` splits are message and color. Underscores become spaces.
-pub(crate) fn split_badge_path(tail: &str) -> (String, String, Option<String>) {
-    if tail.contains("--") {
-        let parts: Vec<&str> = tail.split("--").collect();
-        (
-            decode_token(parts.first().copied().unwrap_or("")),
-            decode_token(parts.get(1).copied().unwrap_or("ok")),
-            parts.get(2).map(|s| decode_token(s)),
-        )
-    } else {
-        let parts: Vec<&str> = tail.rsplitn(3, '-').collect();
-        match parts.len() {
-            3 => (
-                decode_token(parts[2]),
-                decode_token(parts[1]),
-                Some(decode_token(parts[0])),
-            ),
-            2 => (
-                String::new(),
-                decode_token(parts[1]),
-                Some(decode_token(parts[0])),
-            ),
-            _ => (String::new(), decode_token(tail), None),
-        }
-    }
-}
-
-fn decode_token(s: &str) -> String {
-    urlencoding::decode(s)
-        .map(|c| c.into_owned())
-        .unwrap_or_else(|_| s.to_string())
-        .replace('_', " ")
 }
 
 fn percent_decode(s: &str) -> String {
@@ -276,7 +252,16 @@ fn apply_pairs(boot: &mut StudioBoot, mut form: MarkForm, pairs: &HashMap<String
     }
 
     match form {
-        MarkForm::Pill => {
+        MarkForm::Pill | MarkForm::Score => {
+            if form == MarkForm::Score {
+                let score = boot.score.get_or_insert_with(StudioScoreBoot::default);
+                if let Some(v) = pairs.get("value") {
+                    score.value = Some(v.clone());
+                }
+                if let Some(v) = pairs.get("max") {
+                    score.max = Some(v.clone());
+                }
+            }
             let pill = boot.pill.get_or_insert_with(StudioPillBoot::default);
             if let Some(v) = pairs.get("label") {
                 pill.label = Some(v.clone());
@@ -395,6 +380,7 @@ fn badge_tail(path: &str) -> Option<&str> {
 
 fn mark_form_from_path(path: &str) -> Option<MarkForm> {
     let path = path.trim_end_matches('/');
+    let path = path.strip_suffix(".svg").unwrap_or(path);
     const PREFIX: &str = "/api/v1/mark";
     if path == PREFIX {
         return Some(MarkForm::Hero);

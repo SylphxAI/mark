@@ -42,7 +42,7 @@ Env (see `.env.example`):
 
 **mark = form × art (`type`) × paint (`theme` / `color`, pill `labelColor`) × content (`text` / `desc` / `font`) × geometry (`width` / `height`, hero `layout`) × motion (`animation`)**
 
-One endpoint: `GET /api/v1/mark/{form}` — plus the shields-style pill shorthand `GET /badge/{label}-{message}-{color}`.
+One endpoint: `GET /api/v1/mark/{form}` — plus the shields static badge dialect `GET /badge/{label}-{message}-{color}` and `GET /static/v1`. Every image route also answers with `.svg` appended to its path (edge-cacheable by extension).
 
 | Form | What it is | Key params |
 |------|-----------|-----------|
@@ -51,6 +51,7 @@ One endpoint: `GET /api/v1/mark/{form}` — plus the shields-style pill shorthan
 | `strip` | Tech identity row (any brand icon) | `icons` `perline` |
 | `profile` | Name + tagline card (text-driven) | `text` `desc` `type` (art background) `width` `height` |
 | `deploy` | “deployed on Sylphx” conversion pill | `service` `style` |
+| `score` | Graded score pill with a progress ring | `label` `value` `max` `style` |
 
 Shared params on every form: `theme` · `color` · `animation` · `credit` · `font` (`sans` | `mono`).
 Anything outside this grammar is unknown input, never a second vocabulary: the
@@ -79,16 +80,34 @@ fully transparent canvas for typing-line compositions.
 
 **Text:** use `-nl-` for newlines.
 
-### Pill
+### Pill (shields-compatible badges)
+
+Any img.shields.io static badge works by changing only the host — same
+syntax, same geometry, same widths:
 
 ```markdown
 ![build](https://mark.sylphx.com/badge/build-passing-brightgreen)
 ![build-fat](https://mark.sylphx.com/badge/build-passing-brightgreen?style=for-the-badge)
+![escaped](https://mark.sylphx.com/badge/agent--ready-92%2F100-brightgreen.svg)
+![legacy](https://mark.sylphx.com/static/v1?label=license&message=MIT&color=blueviolet)
 ![license](https://mark.sylphx.com/api/v1/mark/pill?label=license&message=MIT&color=blue&style=for-the-badge&theme=github)
 ```
 
-Styles: `flat` · `plastic` · `for-the-badge` · `social` · `pill`
-Colors: shields named colors, semantic names (`success` `important` `critical` `informational` `inactive`), or hex. A theme pack defines the palette and overrides `color`/`labelColor`. Pill `labelColor` is dest paint when no theme pack; an unknown theme name is not a theme pack. The `/badge/...` shorthand accepts the same `style` `theme` `animation` `labelColor` `font` `credit` query as `/pill`. Motion applies at text level — a glowing pill is a valid mark.
+- Path: `label-message-color` or `message-color`; `--` → `-`, `__` → `_`, `_` or `%20` → space.
+- Query: `label` and `color` override the path; `labelColor`, `style`, `logo` (base64 `data:image/svg+xml`/`png` URI), `logoWidth`; `cacheSeconds` and `link` are accepted and ignored.
+- Styles: `flat` · `flat-square` · `plastic` · `for-the-badge` · `social` · `pill`
+- Colors: shields names (`brightgreen` … `lightgrey`, `success` `important` `critical` `informational` `inactive`), 3/6-digit hex with or without `#`, CSS color names, `rgb()`/`hsl()`. A theme pack defines the palette and overrides `color`/`labelColor`. Motion applies at text level.
+
+### Score
+
+```markdown
+![agent-ready](https://mark.sylphx.com/api/v1/mark/score.svg?label=agent-ready&value=92)
+![quality](https://mark.sylphx.com/api/v1/mark/score.svg?label=quality&value=7.5&max=10&style=for-the-badge)
+```
+
+A progress ring plus the value; the color grades from `value / max` (below 50%
+red, 70% orange, 80% yellow, 90% green, then bright green) unless `color` or
+`theme` is set.
 
 ### Strip
 

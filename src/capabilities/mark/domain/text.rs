@@ -77,13 +77,14 @@ fn class(ch: char) -> GlyphClass {
 }
 
 /// `font-family` stacks, single-sourced: banner/profile/deploy paint content
-/// typography, pill-shaped marks add the shields default and compact stacks.
+/// typography, pill-shaped marks add the shields badge stacks.
 pub(crate) const FONT_MONO: &str = "ui-monospace,SFMono-Regular,Menlo,Consolas,monospace";
 pub(crate) const FONT_UI_SANS: &str =
     "ui-sans-serif,system-ui,-apple-system,Segoe UI,Helvetica,sans-serif";
-pub(crate) const FONT_UI_SANS_COMPACT: &str = "ui-sans-serif,system-ui,sans-serif";
-pub(crate) const FONT_SHIELDS_SANS: &str =
-    "-apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,Arial,sans-serif";
+/// shields' badge faces: the Verdana stack its width tables were measured in,
+/// and the Helvetica stack of the social style.
+pub(crate) const FONT_SHIELDS_SANS: &str = "Verdana,Geneva,DejaVu Sans,sans-serif";
+pub(crate) const FONT_SHIELDS_SOCIAL: &str = "Helvetica Neue,Helvetica,Arial,sans-serif";
 
 /// Content typography for `font=sans|mono` (hero, profile, deploy).
 pub(crate) fn content_family(font: Option<&str>) -> &'static str {

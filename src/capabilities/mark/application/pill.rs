@@ -1,137 +1,17 @@
 //! Pill application: pure MarkSpec → pill SVG (the atomic status mark).
 //!
-//! The pill is the smallest mark: geometry is auto-sized; paint comes from the
-//! shared grammar (theme defines the palette, explicit color wins otherwise);
-//! motion applies at text level (ambient is meaningless at this size).
+//! The pill is the shields badge: geometry is badge-maker's for the chosen
+//! style; paint comes from the shared grammar (theme defines the palette,
+//! explicit color wins otherwise); motion applies at text level.
 
-use crate::capabilities::mark::domain::color::{contrasting_fg, resolve_paint};
-use crate::capabilities::mark::domain::motion::{text_children, text_open_attrs};
-use crate::capabilities::mark::domain::pill::{family, measure, PillMetrics};
-use crate::capabilities::mark::domain::svg::{ensure_hash, esc, svg_doc};
-use crate::capabilities::mark::domain::theme;
-use crate::capabilities::mark::domain::{
-    cap_text, normalize_animation, MarkSpec, PillStyle, MAX_LABEL_CHARS, MAX_MESSAGE_CHARS,
-};
+use super::badge::{compose, Badge};
+use crate::capabilities::mark::domain::MarkSpec;
 
 /// Pill form entry: paint and text come from the shared MarkSpec grammar.
 pub fn render(spec: &MarkSpec) -> String {
-    let (label, message) = (
-        spec.pill.label.as_deref().unwrap_or(""),
-        spec.pill.message.as_deref().unwrap_or("ok"),
-    );
-    let (color, label_color) = (spec.color.as_deref(), spec.pill.label_color.as_deref());
-    let style = PillStyle::parse(spec.pill.style.as_deref().unwrap_or("flat"));
-    let theme_name = spec.theme.as_deref();
-    let (animation, font) = (spec.animation.as_deref(), spec.font.as_deref());
-    let theme = theme_name.and_then(theme::get);
-
-    let msg_color = if let Some(t) = theme {
-        t.accent.to_string()
-    } else {
-        resolve_paint(color, "4A90E2")
+    let message = match spec.pill.message.as_deref() {
+        None | Some("") => "ok",
+        Some(m) => m,
     };
-    let lbl_color = if let Some(t) = theme {
-        t.bg.to_string()
-    } else {
-        resolve_paint(
-            label_color,
-            if style == PillStyle::Social {
-                "FFFFFF"
-            } else {
-                "555555"
-            },
-        )
-    };
-
-    // Motion at pill scale is text-level only; ambient is static here.
-    let anim = match normalize_animation(animation) {
-        "ambient" | "none" => "none",
-        a => a,
-    };
-
-    let label = cap_text(label, MAX_LABEL_CHARS);
-    let message = if message.is_empty() {
-        "ok".into()
-    } else {
-        cap_text(message, MAX_MESSAGE_CHARS)
-    };
-
-    let metrics = PillMetrics::new(style, family(font, style));
-    let h = metrics.height;
-    let label_text = if style == PillStyle::ForTheBadge {
-        label.to_uppercase()
-    } else {
-        label.clone()
-    };
-    let message_text = if style == PillStyle::ForTheBadge {
-        message.to_uppercase()
-    } else {
-        message.clone()
-    };
-    let lw = if label.is_empty() {
-        0
-    } else {
-        measure(&label_text, style)
-    };
-    let mw = measure(&message_text, style);
-    let w = (lw + mw).max(30);
-    let radius = metrics.radius;
-
-    let label_fg = ensure_hash(&contrasting_fg(&lbl_color));
-    let msg_fg = ensure_hash(&contrasting_fg(&msg_color));
-    // Text attributes and baseline come from the same authority as the box
-    // (reviewer finding: the locals below used to shadow it).
-    let font = &metrics.text_attrs;
-    let ty = metrics.baseline;
-
-    let mut body = String::new();
-    if style == PillStyle::Plastic {
-        body.push_str(
-            "<defs><linearGradient id=\"p\" x1=\"0\" y1=\"0\" x2=\"0\" y2=\"1\">\
-             <stop offset=\"0\" stop-color=\"#fff\" stop-opacity=\".7\"/>\
-             <stop offset=\".1\" stop-color=\"#fff\" stop-opacity=\".1\"/>\
-             <stop offset=\".9\" stop-opacity=\".3\"/>\
-             <stop offset=\"1\" stop-opacity=\".5\"/></linearGradient></defs>",
-        );
-    }
-    body.push_str(&format!(
-        "<clipPath id=\"r\"><rect width=\"{w}\" height=\"{h}\" rx=\"{radius}\"/></clipPath><g clip-path=\"url(#r)\">"
-    ));
-    if !label.is_empty() {
-        body.push_str(&format!(
-            "<rect width=\"{lw}\" height=\"{h}\" fill=\"{}\"/>",
-            ensure_hash(&lbl_color)
-        ));
-    }
-    body.push_str(&format!(
-        "<rect x=\"{lw}\" width=\"{mw}\" height=\"{h}\" fill=\"{}\"/>",
-        ensure_hash(&msg_color)
-    ));
-    if style == PillStyle::Plastic {
-        body.push_str(&format!(
-            "<rect width=\"{w}\" height=\"{h}\" fill=\"url(#p)\"/>"
-        ));
-    }
-    body.push_str("</g>");
-    body.push_str(&format!(
-        "<rect width=\"{w}\" height=\"{h}\" rx=\"{radius}\" fill=\"none\" stroke=\"#000\" stroke-opacity=\".08\"/>"
-    ));
-    if !label.is_empty() {
-        let open = text_open_attrs(anim, 0, w, h);
-        let children = text_children(anim, 0, w, h);
-        body.push_str(&format!(
-            "<text x=\"{}\" y=\"{ty}\" text-anchor=\"middle\" fill=\"{label_fg}\" {font}{open}>{}{children}</text>",
-            lw as f32 / 2.0,
-            esc(&label_text)
-        ));
-    }
-    let open = text_open_attrs(anim, 1, w, h);
-    let children = text_children(anim, 1, w, h);
-    body.push_str(&format!(
-        "<text x=\"{}\" y=\"{ty}\" text-anchor=\"middle\" fill=\"{msg_fg}\" {font}{open}>{}{children}</text>",
-        lw as f32 + mw as f32 / 2.0,
-        esc(&message_text)
-    ));
-
-    svg_doc(w, h, &body)
+    compose(&Badge::from_spec(spec, message, "4A90E2"))
 }

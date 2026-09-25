@@ -9,7 +9,14 @@ use crate::capabilities::mark::domain::{brand_icons, icons};
 pub(crate) const LAYOUTS: &[&str] = &["default", "plate", "signal", "terminal"];
 
 /// Pill styles (shields vocabulary).
-pub(crate) const BADGE_STYLES: &[&str] = &["flat", "plastic", "for-the-badge", "social", "pill"];
+pub(crate) const BADGE_STYLES: &[&str] = &[
+    "flat",
+    "flat-square",
+    "plastic",
+    "for-the-badge",
+    "social",
+    "pill",
+];
 
 /// Content typography (ADR-0004): neutral, no embedded fonts.
 pub(crate) const FONTS: &[&str] = &["sans", "mono"];
