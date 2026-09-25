@@ -43,6 +43,13 @@ value = "https://mark.sylphx.com"
 [env.DEFAULT_CREDIT]
 value = "0"
 
+# Live GitHub cards (MARK-LIVE): optional server token that raises the GitHub
+# rate limit. The code falls back to anonymous REST when it is empty, but the
+# platform refuses a release whose from_secret has no secret, so this line
+# lands only after the GITHUB_TOKEN project secret exists (cloud#8849).
+[env.GITHUB_TOKEN]
+from_secret = "GITHUB_TOKEN"
+
 [env.RUST_LOG]
 value = "mark=info,tower_http=info"
 
