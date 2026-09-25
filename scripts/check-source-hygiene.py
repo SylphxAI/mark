@@ -7,7 +7,7 @@ These are static properties of the source (not runtime behaviour proofs):
    repository accumulated parallel render authorities, so each listed symbol
    must be defined exactly once.
 2. No `#[allow(dead_code)]`: unused code is deleted, never silenced.
-3. No clock: `MARK-GRAMMAR`/`MARK-STATS` require a mark to be a pure function
+3. No clock: `MARK-GRAMMAR` requires a static mark to be a pure function
    of its URL, so time sources are forbidden in `src/`.
 4. No `dbg!`/`todo!`/`unimplemented!` left in `src/`.
 
@@ -88,10 +88,10 @@ FORBIDDEN_PATTERNS = {
 # Patterns applied to product sources and the build script only: a contract test
 # may legitimately wait on a timeout, but a mark must never read a clock.
 CLOCK_PATTERNS = {
-    r"\bSystemTime\b": "no clock on the render path (MARK-STATS is dead)",
-    r"\bInstant::now\b": "no clock on the render path (MARK-STATS is dead)",
-    r"\bstd::time\b": "no clock on the render path (MARK-STATS is dead)",
-    r"\btokio::time\b": "no clock on the render path (MARK-STATS is dead)",
+    r"\bSystemTime\b": "no clock on the render path (static routes are pure; only src/capabilities/live may)",
+    r"\bInstant::now\b": "no clock on the render path (static routes are pure; only src/capabilities/live may)",
+    r"\bstd::time\b": "no clock on the render path (static routes are pure; only src/capabilities/live may)",
+    r"\btokio::time\b": "no clock on the render path (static routes are pure; only src/capabilities/live may)",
 }
 
 
@@ -171,7 +171,10 @@ def failures() -> list[str]:
                 line = text[: match.start()].count("\n") + 1
                 found.append(f"{f.relative_to(ROOT)}:{line}: {reason}")
 
-    clock_scope = dict(src_texts)
+    # ADR-0005: the live capability (MARK-LIVE) needs TTLs and timeouts; it is
+    # the only clock exception.
+    live_root = SRC / "capabilities" / "live"
+    clock_scope = {f: t for f, t in src_texts.items() if live_root not in f.parents}
     build_script = ROOT / "build.rs"
     if build_script in texts:
         clock_scope[build_script] = texts[build_script]

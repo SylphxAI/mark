@@ -1,64 +1,38 @@
-# Mark
+# Mark (readme-mark)
 
-Sylphx **Mark** is the identity layer of the README: an embeddable image API —
-**URL → SVG** — where every mark is a pure function of its URL.
+**Beautiful README images from one URL.** Banners, badges, typing text, tech
+icons, and GitHub stats cards — free, no token, no signup.
 
 ## Lifecycle
 
-- Lifecycle: `active` (internal dogfood → public free promo surface)
-- Layer: `product` / acquisition
+- Lifecycle: `active` — open-source flagship (star program)
 - Owner org: `SylphxAI`
 - Stack: Rust (`axum`), pure SVG (no headless browser)
+- Decision of record: [`docs/adr/ADR-0005-readme-visuals-toolkit.md`](docs/adr/ADR-0005-readme-visuals-toolkit.md)
 
 ## Goals
 
-- One host (`mark.sylphx.com`) for all embeddable marks
-- One grammar: form (`hero` `pill` `strip` `profile` `deploy`) × art × paint ×
-  content × geometry × motion
-- Neutral design themes only — no personal names, no company names in the
-  public catalog ; content is always supplied by the URL
-- High cacheability, stateless, deterministic render kernel
-- Ordinary Apps Service on `https://mark.sylphx.com`; the Apps auto host is not dest
-- Soft brand exposure via optional credit watermark + deploy marks
+- The best free README-visuals toolkit; drop-in for shields, skill-icons,
+  readme-typing-svg, capsule-render, and github-readme-stats URLs
+- Every URL ever public on `https://mark.sylphx.com` keeps working
+- Beautiful zero-config defaults; delightful studio at `/`
+- Fast and cacheable: deterministic static routes, cached live routes
 
 ## Non-goals
 
-- **Not a data host:** no live GitHub stats/org/repo cards, no upstream
-  network adapter, no tokens, no caches of remote state. Same URL renders the
-  same mark forever. Use specialist hosts for live data.
-- **Not time-dependent:** no clock-sampled fills (`timeAuto`/`timeGradient`
-  are retired). Determinism is the reliability moat.
-- Not a full shields.io replacement for every CI vendor
-- Not AI image generation on the hot path
-- Not a general CDN for arbitrary user uploads
-- Not star-history / contribution time-series analytics
-
-## Positioning
-
-**Art + brand embed product.** Beauty is non-negotiable: hierarchy, calm field,
-name craft, contrast, crop-honest surfaces. The mark is the first sentence of
-your README; every render is optional Sylphx brand surface. Composition is the
-product: any form × any palette × any layout × any motion × any size, from one
-URL. Studio is **palette-first** (2–3 color fields, Surprise me, session
-inspiration). Every mark owns a **chromatic system**
-(base/mid/accent/accent2/warm/glow): theme drives motif color, not only the
-field wash. Ambient motion is color-bearing (gradient drift + motif phase).
+- Accounts, uploads, saved marks, PNG or AI generation on the hot path
+- Requiring a user token
+- Personal or company names in theme ids
 
 ## Public surfaces
 
-- HTTP API: `/api/v1/mark/{form}` · `/badge/{label}-{message}-{color}` · `/api/v1/catalog` · `/health`
-- Generator UI: `/` (`static/index.html`)
-- Repo: https://github.com/SylphxAI/mark
-
-## Architecture
-
-- Binding shape: one capability (`mark`), one grammar
-- Code roots: `src/capabilities/mark/*` (domain + application + interfaces),
-  `src/interfaces/*`, `src/bootstrap.rs`
-- Default semantic unit: Rust module (single crate)
+- Studio: `/`
+- Native grammar: `/api/v1/mark/{form}` · catalog `/api/v1/catalog` · `/health`
+- Dialects: `/badge/…`, `/icons?i=…`, `/typing?lines=…`, `/api?type=…`,
+  `/api?username=…` (see README)
+- Repo: https://github.com/SylphxAI/readme-mark
 
 ## Delivery
 
-- Ordinary reversible work: roleless direct-trunk to `main`
-- Validate: `cargo test` · `cargo build --release`
-- Runtime: container or `cargo run` on port `8787`
+- PRs through the merge queue; the Sylphx platform deploys `main`
+- Validate: `cargo test` · `cargo clippy --all-targets -- -D warnings`

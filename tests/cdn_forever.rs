@@ -7,10 +7,7 @@ use mark::{app, AppState};
 use tower::ServiceExt;
 
 fn state() -> AppState {
-    AppState {
-        default_credit: false,
-        public_base: "http://test.local".into(),
-    }
+    AppState::for_tests()
 }
 
 async fn get(path: &str, inm: Option<&str>) -> (StatusCode, axum::http::HeaderMap, Vec<u8>) {
