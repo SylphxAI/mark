@@ -89,12 +89,13 @@ syntax, same geometry, same widths:
 ![build](https://mark.sylphx.com/badge/build-passing-brightgreen)
 ![build-fat](https://mark.sylphx.com/badge/build-passing-brightgreen?style=for-the-badge)
 ![escaped](https://mark.sylphx.com/badge/agent--ready-92%2F100-brightgreen.svg)
+![rust](https://mark.sylphx.com/badge/rust-1.80-orange?logo=rust)
 ![legacy](https://mark.sylphx.com/static/v1?label=license&message=MIT&color=blueviolet)
 ![license](https://mark.sylphx.com/api/v1/mark/pill?label=license&message=MIT&color=blue&style=for-the-badge&theme=github)
 ```
 
 - Path: `label-message-color` or `message-color`; `--` → `-`, `__` → `_`, `_` or `%20` → space.
-- Query: `label` and `color` override the path; `labelColor`, `style`, `logo` (base64 `data:image/svg+xml`/`png` URI), `logoWidth`; `cacheSeconds` and `link` are accepted and ignored.
+- Query: `label` and `color` override the path; `labelColor`, `style`, `logo` (any Simple Icons slug or title, e.g. `logo=rust`, or a base64 `data:image/svg+xml`/`png` URI), `logoColor`, `logoWidth`; `cacheSeconds` and `link` are accepted and ignored.
 - Styles: `flat` · `flat-square` · `plastic` · `for-the-badge` · `social` · `pill`
 - Colors: shields names (`brightgreen` … `lightgrey`, `success` `important` `critical` `informational` `inactive`), 3/6-digit hex with or without `#`, CSS color names, `rgb()`/`hsl()`. A theme pack defines the palette and overrides `color`/`labelColor`. Motion applies at text level.
 
