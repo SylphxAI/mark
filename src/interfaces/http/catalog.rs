@@ -27,6 +27,7 @@ pub(crate) async fn api_index(State(st): State<AppState>) -> impl IntoResponse {
             "/api/top-langs?username=",
             "/api/pin?username=&repo=",
             "/streak?user=",
+            "/trophy?username=",
             "/github/{stars|forks|license|last-commit}/{owner}/{repo}",
             "/github/v/release/{owner}/{repo}",
             "/npm/{v|dm|dw|dt|l}/{package}",

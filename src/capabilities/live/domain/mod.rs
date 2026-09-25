@@ -15,3 +15,4 @@ pub(crate) mod rank;
 pub(crate) mod repo_card;
 pub(crate) mod stats_card;
 pub(crate) mod streak_card;
+pub(crate) mod trophy_card;

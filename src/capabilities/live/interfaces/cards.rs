@@ -14,6 +14,7 @@ use crate::capabilities::live::domain::palette::ColorOverrides;
 use crate::capabilities::live::domain::repo_card::{self, RepoOptions};
 use crate::capabilities::live::domain::stats_card::{self, StatsOptions};
 use crate::capabilities::live::domain::streak_card::{self, StreakColors};
+use crate::capabilities::live::domain::trophy_card::{self, TrophyOptions};
 use crate::capabilities::mark::domain::cap_text;
 use crate::interfaces::http::response::{
     decode_text, if_none_match, parse_bool, svg_response_cached, CachePolicy,
@@ -61,6 +62,19 @@ pub(crate) struct CardQuery {
     #[serde(rename = "sideLabels")]
     pub side_labels: Option<String>,
     pub dates: Option<String>,
+    // github-profile-trophy
+    pub column: Option<String>,
+    pub row: Option<String>,
+    #[serde(rename = "margin-w")]
+    pub margin_w: Option<String>,
+    #[serde(rename = "margin-h")]
+    pub margin_h: Option<String>,
+    #[serde(rename = "no-bg")]
+    pub no_bg: Option<String>,
+    #[serde(rename = "no-frame")]
+    pub no_frame: Option<String>,
+    pub title: Option<String>,
+    pub rank: Option<String>,
 }
 
 /// A GitHub login: 1–39 ASCII letters, digits, or hyphens.
@@ -153,6 +167,29 @@ impl CardQuery {
                 .description_lines_count
                 .as_deref()
                 .and_then(|n| n.parse().ok()),
+        }
+    }
+
+    fn trophy_options(&self) -> TrophyOptions {
+        let num = |v: &Option<String>| v.as_deref().and_then(|n| n.trim().parse::<i64>().ok());
+        let d = TrophyOptions::default();
+        TrophyOptions {
+            column: num(&self.column)
+                .map(|c| c.clamp(-1, 30) as i32)
+                .unwrap_or(d.column),
+            row: num(&self.row)
+                .map(|r| r.clamp(1, 10) as u32)
+                .unwrap_or(d.row),
+            margin_w: num(&self.margin_w)
+                .map(|m| m.clamp(0, 100) as u32)
+                .unwrap_or(0),
+            margin_h: num(&self.margin_h)
+                .map(|m| m.clamp(0, 100) as u32)
+                .unwrap_or(0),
+            no_bg: flag(&self.no_bg, false),
+            no_frame: flag(&self.no_frame, false),
+            titles: list(&self.title),
+            ranks: list(&self.rank),
         }
     }
 
@@ -281,6 +318,25 @@ async fn streak(st: &AppState, q: &CardQuery) -> Card {
     })
 }
 
+async fn trophy(st: &AppState, q: &CardQuery) -> Card {
+    let (style, o) = (q.style(), q.trophy_options());
+    let size = trophy_card::fallback_size(&o);
+    let title = "GitHub Trophies";
+    let Some(login) = q.login().filter(|l| valid_login(l)) else {
+        return match q.login() {
+            None => explain(&style, size, title, Why::Ask("username=your-github-name")),
+            Some(_) => explain(&style, size, title, Why::Missing("user")),
+        };
+    };
+    let now = st.live.now_unix();
+    let data = st.live.stats(&login, &[]).await;
+    outcome(data, &style, size, title, "user", |s| {
+        let all = trophy_card::trophies(&s, now);
+        let label = format!("{} GitHub trophies", s.login);
+        trophy_card::render(&all, &style.palette, &o, &label)
+    })
+}
+
 async fn repo(st: &AppState, q: &CardQuery) -> Card {
     let (style, o) = (q.style(), q.repo_options());
     let size = repo_card::fallback_size(&style, &o);
@@ -334,6 +390,20 @@ pub(crate) async fn pin_handler(
 }
 
 /// `/?user=…` (github-readme-streak-stats' root path).
+pub(crate) async fn trophy_card(st: &AppState, q: &CardQuery, headers: &HeaderMap) -> Response {
+    respond(trophy(st, q).await, headers)
+}
+
+/// `/trophy?username=…`.
+pub(crate) async fn trophy_handler(
+    State(st): State<AppState>,
+    Query(q): Query<CardQuery>,
+    headers: HeaderMap,
+) -> Response {
+    respond(trophy(&st, &q).await, &headers)
+}
+
+/// `/?user=…` (github-readme-streak-stats' root path).
 pub(crate) async fn streak_card(st: &AppState, q: &CardQuery, headers: &HeaderMap) -> Response {
     respond(streak(st, q).await, headers)
 }
@@ -360,6 +430,7 @@ pub(crate) async fn card_handler(
         "langs" | "top-langs" => langs(&st, &q).await,
         "streak" => streak(&st, &q).await,
         "repo" | "pin" => repo(&st, &q).await,
+        "trophy" | "trophies" => trophy(&st, &q).await,
         _ => return StatusCode::NOT_FOUND.into_response(),
     };
     respond(card, &headers)

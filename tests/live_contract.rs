@@ -45,6 +45,10 @@ const LIVE_PATHS: &[&str] = &[
     "/github/license/SylphxAI/mark.svg",
     "/npm/v/@sylphx/mark-demo",
     "/npm/dm/mark-demo",
+    "/trophy?username=ada-dev",
+    "/trophy.svg?username=ada-dev&theme=nord",
+    "/?username=ada-dev&column=3",
+    "/api/v1/card/trophy?username=ada-dev",
 ];
 
 #[tokio::test]
@@ -98,6 +102,8 @@ async fn failures_render_short_cached_cards_never_errors() {
         "/github/stars/..%2F..%2Fetc/passwd",
         "/npm/v/ghost-404",
         "/npm/v/Not_Valid!",
+        "/trophy?username=ghost-404",
+        "/trophy?username=ada-dev&column=abc&row=-4&margin-w=99999",
         "/api?username=ada-dev&card_width=abc&border_radius=NaN&langs_count=-3",
     ] {
         let (status, h, body) = get(path).await;
