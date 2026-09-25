@@ -66,8 +66,26 @@ pub(crate) fn svg_doc_scaled(
     view_h: u32,
     body: &str,
 ) -> String {
+    svg_root(width, height, view_w, view_h, "", body)
+}
+
+/// [`svg_doc`] with extra root attributes (static strings only, e.g. the
+/// `xmlns:xlink` declaration a `<textPath>` needs for older renderers).
+pub(crate) fn svg_doc_with(width: u32, height: u32, root_attrs: &str, body: &str) -> String {
+    let (w, h) = (width.to_string(), height.to_string());
+    svg_root(&w, &h, width, height, root_attrs, body)
+}
+
+fn svg_root(
+    width: &str,
+    height: &str,
+    view_w: u32,
+    view_h: u32,
+    root_attrs: &str,
+    body: &str,
+) -> String {
     format!(
-        "<?xml version=\"1.0\" encoding=\"UTF-8\"?><svg xmlns=\"http://www.w3.org/2000/svg\" width=\"{width}\" height=\"{height}\" viewBox=\"0 0 {view_w} {view_h}\" role=\"img\">{body}</svg>"
+        "<?xml version=\"1.0\" encoding=\"UTF-8\"?><svg xmlns=\"http://www.w3.org/2000/svg\"{root_attrs} width=\"{width}\" height=\"{height}\" viewBox=\"0 0 {view_w} {view_h}\" role=\"img\">{body}</svg>"
     )
 }
 

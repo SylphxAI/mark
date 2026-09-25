@@ -317,7 +317,7 @@ fn apply_pairs(boot: &mut StudioBoot, mut form: MarkForm, pairs: &HashMap<String
                 deploy.style = Some(v.clone());
             }
         }
-        MarkForm::Hero | MarkForm::Profile => {}
+        MarkForm::Hero | MarkForm::Profile | MarkForm::Typing => {}
     }
 }
 

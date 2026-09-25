@@ -1,7 +1,9 @@
 //! Mark HTTP surface — one grammar, one endpoint.
 
-use axum::extract::{Path, Query, State};
-use axum::http::{header, HeaderMap};
+use std::collections::HashMap;
+
+use axum::extract::{Path, Query, RawQuery, State};
+use axum::http::HeaderMap;
 use axum::response::Response;
 use serde::Deserialize;
 
@@ -10,8 +12,11 @@ use crate::capabilities::mark::application::tiles::{self, parse_per_line, TileTh
 use crate::capabilities::mark::domain::{
     cap_text, split_badge_path, MarkForm, MarkSpec, MAX_SERVICE_CHARS,
 };
+use crate::capabilities::mark::interfaces::dialects;
 use crate::capabilities::mark::render;
-use crate::interfaces::http::response::{decode_text, parse_bool, svg_response_conditional};
+use crate::interfaces::http::response::{
+    decode_text, if_none_match, parse_bool, svg_response_conditional,
+};
 
 #[derive(Debug, Deserialize)]
 pub(crate) struct MarkQuery {
@@ -48,10 +53,27 @@ pub(crate) async fn mark_handler(
     State(st): State<AppState>,
     Path(form): Path<String>,
     Query(q): Query<MarkQuery>,
+    Query(pairs): Query<HashMap<String, String>>,
+    RawQuery(raw): RawQuery,
     headers: HeaderMap,
 ) -> Response {
-    let spec = q.to_spec(MarkForm::parse(Some(&form)), st.default_credit);
-    svg_response_conditional(&render(&spec), if_none_match(&headers))
+    let form = MarkForm::parse(Some(&form));
+    let svg = if form == MarkForm::Typing {
+        dialects::typing::svg(&pairs, raw.as_deref().unwrap_or(""))
+    } else {
+        render(&q.to_spec(form, st.default_credit))
+    };
+    svg_response_conditional(&svg, if_none_match(&headers))
+}
+
+/// `/typing?lines=…`: the typing mark (readme-typing-svg parameters).
+pub(crate) async fn typing_handler(
+    Query(pairs): Query<HashMap<String, String>>,
+    RawQuery(raw): RawQuery,
+    headers: HeaderMap,
+) -> Response {
+    let svg = dialects::typing::svg(&pairs, raw.as_deref().unwrap_or(""));
+    svg_response_conditional(&svg, if_none_match(&headers))
 }
 
 pub(crate) async fn mark_default_handler(
@@ -135,12 +157,7 @@ impl MarkQuery {
                     .clone()
                     .map(|s| cap_text(&s, MAX_SERVICE_CHARS)),
             },
+            typing: Default::default(),
         }
     }
-}
-
-fn if_none_match(headers: &HeaderMap) -> Option<&str> {
-    headers
-        .get(header::IF_NONE_MATCH)
-        .and_then(|v| v.to_str().ok())
 }
