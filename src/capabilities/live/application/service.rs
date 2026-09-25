@@ -67,10 +67,13 @@ impl LiveService {
     }
 
     /// Production wiring: real HTTP, optional server tokens from the env.
-    pub fn from_env() -> Self {
+    ///
+    /// Fails when the bounded HTTP client cannot be built, so startup never
+    /// serves live cards through a client without timeouts.
+    pub fn from_env() -> Result<Self, reqwest::Error> {
         let tokens = HttpUpstream::tokens_from_env();
         tracing::info!(tokens = tokens.len(), "live upstream configured");
-        Self::build(Arc::new(HttpUpstream::new(tokens)), unix_now)
+        Ok(Self::build(Arc::new(HttpUpstream::new(tokens)?), unix_now))
     }
 
     /// Offline fixtures and a fixed clock (anonymous path).

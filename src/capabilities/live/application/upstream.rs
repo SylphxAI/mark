@@ -131,6 +131,33 @@ struct Budget {
 pub(crate) const MAX_CONCURRENT: usize = 16;
 const MAX_BODY: usize = 4 * 1024 * 1024;
 
+/// A decoded response body that refuses to grow past its cap.
+struct BodyBuf {
+    bytes: Vec<u8>,
+    cap: usize,
+}
+
+impl BodyBuf {
+    fn new(cap: usize) -> Self {
+        Self {
+            bytes: Vec::new(),
+            cap,
+        }
+    }
+
+    fn push(&mut self, chunk: &[u8]) -> Result<(), UpstreamError> {
+        if self.bytes.len().saturating_add(chunk.len()) > self.cap {
+            return Err(UpstreamError::Malformed("body too large".into()));
+        }
+        self.bytes.extend_from_slice(chunk);
+        Ok(())
+    }
+
+    fn into_string(self) -> String {
+        String::from_utf8_lossy(&self.bytes).into_owned()
+    }
+}
+
 pub(crate) struct HttpUpstream {
     client: reqwest::Client,
     tokens: Vec<String>,
@@ -141,7 +168,10 @@ pub(crate) struct HttpUpstream {
 }
 
 impl HttpUpstream {
-    pub(crate) fn new(tokens: Vec<String>) -> Self {
+    /// Build the bounded HTTP client. A client that cannot be built is a
+    /// startup failure: falling back to a default client would drop every
+    /// timeout the adapter promises.
+    pub(crate) fn new(tokens: Vec<String>) -> Result<Self, reqwest::Error> {
         let client = reqwest::Client::builder()
             .connect_timeout(Duration::from_secs(3))
             .timeout(Duration::from_secs(5))
@@ -151,15 +181,14 @@ impl HttpUpstream {
                 " (+https://mark.sylphx.com)"
             ))
             .gzip(true)
-            .build()
-            .unwrap_or_default();
-        Self {
+            .build()?;
+        Ok(Self {
             client,
             tokens,
             next: AtomicUsize::new(0),
             budgets: Mutex::new(HashMap::new()),
             permits: Semaphore::new(MAX_CONCURRENT),
-        }
+        })
     }
 
     /// Tokens from `GITHUB_TOKENS` (comma-separated) and `GITHUB_TOKEN`.
@@ -270,7 +299,7 @@ impl HttpUpstream {
         if let Some(i) = slot {
             req = req.bearer_auth(&self.tokens[i]);
         }
-        let res = req.send().await.map_err(|e| {
+        let mut res = req.send().await.map_err(|e| {
             if e.is_timeout() {
                 UpstreamError::Timeout
             } else {
@@ -282,13 +311,18 @@ impl HttpUpstream {
         if status == 200 && res.content_length().is_some_and(|l| l as usize > MAX_BODY) {
             return Err(UpstreamError::Malformed("body too large".into()));
         }
-        let body = res.text().await.map_err(|e| {
-            if e.is_timeout() {
-                UpstreamError::Timeout
-            } else {
-                UpstreamError::Transport(e.without_url().to_string())
+        // Content-Length is absent (or describes the compressed size) when the
+        // body is gzip-encoded, so the cap is enforced on the decoded stream.
+        let mut buf = BodyBuf::new(MAX_BODY);
+        loop {
+            match res.chunk().await {
+                Ok(Some(chunk)) => buf.push(&chunk)?,
+                Ok(None) => break,
+                Err(e) if e.is_timeout() => return Err(UpstreamError::Timeout),
+                Err(e) => return Err(UpstreamError::Transport(e.without_url().to_string())),
             }
-        })?;
+        }
+        let body = buf.into_string();
         Ok((status, body))
     }
 
@@ -347,7 +381,7 @@ mod tests {
 
     #[test]
     fn anonymous_graphql_is_refused_without_a_round_trip() {
-        let up = HttpUpstream::new(Vec::new());
+        let up = HttpUpstream::new(Vec::new()).expect("client builds");
         assert_eq!(up.pick(Resource::Graphql), Err(UpstreamError::NoToken));
         assert_eq!(up.pick(Resource::Core), Ok(None));
         up.exhaust(None, Resource::Core, 60);
@@ -360,8 +394,21 @@ mod tests {
     }
 
     #[test]
+    fn decoded_body_is_capped_while_streaming() {
+        let mut buf = BodyBuf::new(8);
+        assert_eq!(buf.push(b"12345"), Ok(()));
+        assert_eq!(buf.push(b"678"), Ok(()), "exactly the cap is allowed");
+        assert_eq!(
+            buf.push(b"9"),
+            Err(UpstreamError::Malformed("body too large".into())),
+            "one byte past the cap fails without buffering it"
+        );
+        assert_eq!(buf.into_string(), "12345678");
+    }
+
+    #[test]
     fn tokens_rotate_and_skip_exhausted_ones() {
-        let up = HttpUpstream::new(vec!["a".into(), "b".into()]);
+        let up = HttpUpstream::new(vec!["a".into(), "b".into()]).expect("client builds");
         up.exhaust(Some(0), Resource::Core, 60);
         for _ in 0..4 {
             assert_eq!(up.pick(Resource::Core), Ok(Some(1)));
