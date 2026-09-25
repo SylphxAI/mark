@@ -4,9 +4,8 @@
 //! Theme/base color becomes a multi-stop field + accent/secondary/warm orbs so
 //! shapes never fall back to pure white wash or theme-blind hardcodes.
 
-use crate::capabilities::mark::domain::svg::{
-    ensure_hash, is_hex_color, normalize_hex_token, strip_hash,
-};
+use crate::capabilities::mark::domain::paint::css_color;
+use crate::capabilities::mark::domain::svg::{ensure_hash, is_hex_color, strip_hash};
 use crate::capabilities::mark::domain::theme::{self, Theme};
 
 /// Resolved paint kit consumed by banner shapes + chrome.
@@ -357,37 +356,13 @@ fn mix_hex(a: &str, b: &str, t: f32) -> String {
     format!("{}{}{}", mix(0), mix(2), mix(4))
 }
 
-/// Shields-compatible named colors + semantic CI colors.
-fn named_color(c: &str) -> Option<&'static str> {
-    Some(match c.to_ascii_lowercase().as_str() {
-        "brightgreen" => "4C1",
-        "green" => "97CA00",
-        "yellow" => "DFB317",
-        "yellowgreen" => "A4A61D",
-        "orange" => "FE7D37",
-        "red" => "E05D44",
-        "blue" => "007EC6",
-        "lightgrey" | "lightgray" => "9F9F9F",
-        "success" => "27AE60",
-        "important" => "FE7D37",
-        "critical" => "E05D44",
-        "informational" => "007EC6",
-        "inactive" => "9F9F9F",
-        _ => return None,
-    })
-}
-
-/// Resolve one paint token: a named color, a validated hex token, else the
-/// caller's fallback. Anything else is dropped instead of reaching an SVG
-/// attribute — the paint grammar has exactly one entry point.
+/// Resolve one paint token: any color spelling shields accepts (named, hex,
+/// CSS name, `rgb()`/`hsl()`), else the caller's fallback. Anything else is
+/// dropped instead of reaching an SVG attribute — the paint grammar has
+/// exactly one entry point.
 pub(crate) fn resolve_paint(c: Option<&str>, fallback: &str) -> String {
-    let Some(c) = c else {
-        return fallback.to_string();
-    };
-    if let Some(named) = named_color(c) {
-        return normalize_hex_token(named).unwrap_or_else(|| named.to_string());
-    }
-    normalize_hex_token(c).unwrap_or_else(|| fallback.to_string())
+    c.and_then(css_color)
+        .unwrap_or_else(|| fallback.to_string())
 }
 
 /// WCAG 2.x relative luminance of a six-digit hex color (`#` optional).

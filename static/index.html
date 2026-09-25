@@ -159,12 +159,12 @@
 <script>
 const BASE = "{{BASE}}";
 window.__MARK_BOOT__ = {{BOOT}};
-let FORMS = ["hero","pill","strip","profile","deploy"];
+let FORMS = ["hero","pill","strip","profile","deploy","score"];
 let THEMES = ["","dark","light","tokyonight","dracula","nord","monokai","radical","gruvbox","ocean","sunset","forest","neon","github"];
 let ART = ["wave","waving","aurora","soft","rounded","slice","glass","product","terminal","mesh","plasma","holo","neon","liquid","silk","orbit","constellation","grid","blur","ring","circuit","hud","pulse","noise","cylinder","checkered","egg","shark","venom","speech","org","transparent"];
 let LAYOUTS = ["default","plate","signal","terminal"];
 let ANIMS = ["none","ambient","fade","rise","scale","float","glow","breathe","slide","cascade","shimmer","glitch","wave","orbit","neon","bounce","type"];
-let STYLES = ["flat","plastic","for-the-badge","social","pill"];
+let STYLES = ["flat","flat-square","plastic","for-the-badge","social","pill"];
 let ICONS = ["rust","go","ts","js","python","react","node","docker","kubernetes","linux","git","github","postgres","redis","aws","gcp","azure","nextjs","vue","svelte","bun","deno","css","html","graphql","tailwind","prisma","sqlite","nginx","cloudflare","vercel"];
 const RANDOM = ["667EEA,764BA2","4FACFE,00F2FE","43E97B,38F9D7","FA709A,FEE140","FF6B35,F15BB5","7C3AED,00F5D4","E03840,FF6B35","00F5D4,F15BB5","4338CA,F093FB","0EA5E9,A78BFA","F43F5E,FB923C","14B8A6,6366F1","D87000,4A90E2"];
 const SIG_GRAD = "0:1A1A2E,50:4A90E2,100:D87000";
@@ -181,7 +181,8 @@ const state = {
   height:HERO_H, width:HERO_W, credit:false,
   pill:{label:"build", message:"passing", style:"flat", labelColor:""},
   strip:{icons:["rust","ts","docker","kubernetes"], perline:12},
-  deploy:{service:"app", style:"flat"}
+  deploy:{service:"app", style:"flat"},
+  score:{value:"92", max:"100"}
 };
 
 const PRESETS = [
@@ -190,6 +191,7 @@ const PRESETS = [
   { name:"Typing lines", apply(){ Object.assign(state,{form:"hero",color:"4A90E2",theme:"",type:"transparent",layout:"signal",animation:"type",font:"mono",text:"First line\nSecond line\nThird line",desc:"",height:150,width:880}); } },
   { name:"Profile card", apply(){ Object.assign(state,{form:"profile",color:"",theme:"tokyonight",type:"",animation:"none",font:"sans",text:"Your name",desc:"What you build",width:640}); } },
   { name:"Status pill", apply(){ Object.assign(state,{form:"pill",color:"brightgreen",theme:"",type:"",animation:"none",pill:{label:"build",message:"passing",style:"flat",labelColor:""}}); } },
+  { name:"Score badge", apply(){ Object.assign(state,{form:"score",color:"",theme:"",type:"",animation:"none",pill:{label:"agent-ready",message:"",style:"flat",labelColor:""},score:{value:"92",max:"100"}}); } },
   { name:"Tech strip", apply(){ Object.assign(state,{form:"strip",color:"",theme:"dark",type:"",animation:"none",strip:{icons:["rust","ts","docker","kubernetes"],perline:12}}); } }
 ];
 
@@ -208,35 +210,34 @@ function parseForm(raw){
   if (s === "profile" || s === "identity") return "profile";
   if (s === "deploy") return "deploy";
   if (s === "typing") return "typing";
+  if (s === "score") return "score";
   return "hero";
 }
 
 function decodeText(s){ return String(s).replace(/-nl-/g, "\n"); }
 
 function splitBadgePath(tail){
+  // shields static badge (domain/shields.rs): split on single dashes of the
+  // raw path; `--` is a dash, `__` an underscore, a lone `_` a space.
+  const escapeFormat = t => t.replace(/_+/g, run => "_".repeat(run.length >> 1) + (run.length % 2 ? " " : "")).replace(/--/g, "-");
   const decodeTok = t => {
     let v = String(t);
     try { v = decodeURIComponent(v); } catch {}
-    return v.replace(/_/g, " ");
+    return escapeFormat(v);
   };
-  if (tail.includes("--")) {
-    const parts = tail.split("--");
-    return {
-      label: decodeTok(parts[0] || ""),
-      message: decodeTok(parts[1] || "ok"),
-      color: parts[2] != null ? decodeTok(parts[2]) : ""
-    };
+  tail = String(tail).replace(/\.svg$/, "");
+  const segs = [""];
+  for (let i = 0; i < tail.length; i++) {
+    if (tail[i] === "-") {
+      if (tail[i + 1] === "-") { segs[segs.length - 1] += "--"; i++; }
+      else segs.push("");
+    } else segs[segs.length - 1] += tail[i];
   }
-  const bits = tail.split("-");
-  if (bits.length >= 3) {
-    const color = decodeTok(bits.pop());
-    const message = decodeTok(bits.pop());
-    return { label: decodeTok(bits.join("-")), message, color };
-  }
-  if (bits.length === 2) {
-    return { label: "", message: decodeTok(bits[0]), color: decodeTok(bits[1]) };
-  }
-  return { label: "", message: decodeTok(tail), color: "" };
+  if (segs.length === 1) return { label: "", message: decodeTok(tail), color: "" };
+  if (segs.length === 2) return { label: "", message: decodeTok(segs[0]), color: decodeTok(segs[1]) };
+  const color = decodeTok(segs.pop());
+  const label = decodeTok(segs.shift());
+  return { label, message: segs.map(decodeTok).join("-"), color };
 }
 
 function peelOrigin(s){
@@ -341,7 +342,12 @@ function pairsToBoot(params, form){
   if (params.has("height") && Number(params.get("height"))) boot.height = Number(params.get("height"));
   if (params.has("credit")) boot.credit = /^(1|true|yes|on)$/i.test(params.get("credit") || "");
   const f = boot.form || form;
-  if (f === "pill") {
+  if (f === "score") {
+    boot.score = {};
+    if (params.has("value")) boot.score.value = params.get("value");
+    if (params.has("max")) boot.score.max = params.get("max");
+  }
+  if (f === "pill" || f === "score") {
     boot.pill = {};
     if (params.has("label")) boot.pill.label = params.get("label");
     if (params.has("message")) boot.pill.message = params.get("message");
@@ -376,7 +382,8 @@ function blankState(form){
     credit: false,
     pill: {label:"", message:"ok", style:"flat", labelColor:""},
     strip: {icons:[], perline:12},
-    deploy: {service:"", style:"flat"}
+    deploy: {service:"", style:"flat"},
+    score: {value:"", max:"100"}
   };
 }
 
@@ -406,6 +413,10 @@ function applyBoot(boot){
     else if (typeof boot.strip.icons === "string") next.strip.icons = boot.strip.icons.split(",").map(s => s.trim()).filter(Boolean);
     if (boot.strip.perline != null && Number(boot.strip.perline)) next.strip.perline = Number(boot.strip.perline);
   }
+  if (boot.score && typeof boot.score === "object") {
+    if (boot.score.value != null) next.score.value = String(boot.score.value);
+    if (boot.score.max != null) next.score.max = String(boot.score.max);
+  }
   if (boot.deploy && typeof boot.deploy === "object") {
     if (boot.deploy.service != null) next.deploy.service = String(boot.deploy.service);
     if (boot.deploy.style != null) next.deploy.style = String(boot.deploy.style);
@@ -418,6 +429,7 @@ function applyBoot(boot){
   state.pill = next.pill;
   state.strip = next.strip;
   state.deploy = next.deploy;
+  state.score = next.score;
   state._preset = undefined;
   return true;
 }
@@ -458,6 +470,12 @@ function grammarParams(){
     q.set("message", s.pill.message || "ok");
     if (s.pill.style !== "flat") q.set("style", s.pill.style);
     if (!isThemePack(s.theme) && s.pill.labelColor) q.set("labelColor", s.pill.labelColor);
+  } else if (s.form === "score") {
+    if (s.pill.label) q.set("label", s.pill.label);
+    if (s.score.value !== "") q.set("value", s.score.value);
+    if (s.score.max && s.score.max !== "100") q.set("max", s.score.max);
+    if (s.pill.style !== "flat") q.set("style", s.pill.style);
+    if (!isThemePack(s.theme) && s.pill.labelColor) q.set("labelColor", s.pill.labelColor);
   } else if (s.form === "strip") {
     q.set("icons", s.strip.icons.join(","));
     if (s.strip.perline !== 12) q.set("perline", String(s.strip.perline));
@@ -471,6 +489,7 @@ function grammarParams(){
 function markdownAlt(){
   const s = state;
   if (s.form === "pill") return [s.pill.label, s.pill.message].filter(Boolean).join(" ") || "pill";
+  if (s.form === "score") return [s.pill.label || "score", s.score.value].filter(Boolean).join(" ");
   if (s.form === "strip") return s.strip.icons.join(" ") || "strip";
   if (s.form === "deploy") return s.deploy.service ? s.deploy.service + " deployed on Sylphx" : "deployed on Sylphx";
   const text = String(s.text || "").split("\n")[0].trim();
@@ -606,6 +625,11 @@ function renderControls(){
   } else if (s.form === "pill") {
     html += `<div class="row"><div class="field"><label>Label</label><input type="text" id="pillLabel" value="${esc(s.pill.label)}" /></div>
       <div class="field"><label>Message</label><input type="text" id="pillMessage" value="${esc(s.pill.message)}" /></div></div>`;
+  } else if (s.form === "score") {
+    html += `<div class="row"><div class="field"><label>Label</label><input type="text" id="pillLabel" value="${esc(s.pill.label)}" /></div>
+      <div class="field"><label>Value</label><input type="number" id="scoreValue" value="${esc(s.score.value)}" /></div>
+      <div class="field"><label>Max</label><input type="number" id="scoreMax" min="1" value="${esc(s.score.max)}" /></div></div>
+      <p class="hint">Color grades from the fraction unless a theme or color is set.</p>`;
   } else if (s.form === "strip") {
     html += `<div class="field"><label>Icons</label><div class="chips" id="iconChips"></div></div>
       <div class="field"><label>Per line</label><input type="number" id="perlineInput" min="1" max="60" value="${s.strip.perline}" /></div>`;
@@ -620,7 +644,7 @@ function renderControls(){
     <div class="field"><label>Custom color (used when no theme)</label>
       <div class="row"><input type="text" id="colorInput" placeholder="gradient | auto | hex | 0:EEFF00,100:a82da8" value="${esc(s.color)}" />
       <button type="button" class="chip" id="surpriseBtn">Surprise</button></div></div>
-    ${s.form === "pill" ? `<div class="field"><label>Label color (used when no theme)</label>
+    ${s.form === "pill" || s.form === "score" ? `<div class="field"><label>Label color (used when no theme)</label>
       <input type="text" id="pillLabelColor" placeholder="gray | hex | red" value="${esc(s.pill.labelColor || "")}" /></div>` : ""}
   </div>`;
 
@@ -639,7 +663,7 @@ function renderControls(){
         <div class="field"><label>Height</label><input type="number" id="heightInput" min="40" max="900" value="${s.height}" /></div>
       </div>
     </div>`;
-  } else if (s.form === "pill" || s.form === "deploy") {
+  } else if (s.form === "pill" || s.form === "deploy" || s.form === "score") {
     html += `<div class="group"><h3>Style</h3>
       <div class="field"><label>Style</label><div id="styleChips">${chips(STYLES, s.pill.style || s.deploy.style, null)}</div></div>
       <div class="field"><label>Motion</label><div id="animChips">${chips(ANIMS, s.animation, null)}</div></div>
@@ -662,6 +686,8 @@ function renderControls(){
   bind("heightInput", e => { state.height = Number(e.target.value) || state.height; refresh(); });
   bind("pillLabel", e => { state.pill.label = e.target.value; refresh(); });
   bind("pillMessage", e => { state.pill.message = e.target.value; refresh(); });
+  bind("scoreValue", e => { state.score.value = e.target.value; refresh(); });
+  bind("scoreMax", e => { state.score.max = e.target.value; refresh(); });
   bind("perlineInput", e => { state.strip.perline = Number(e.target.value) || 12; refresh(); });
   bind("serviceInput", e => { state.deploy.service = e.target.value; refresh(); });
   bind("colorInput", e => { state.color = e.target.value.trim(); if (state.color) state.theme = ""; refresh(); });
@@ -678,8 +704,8 @@ function renderControls(){
     wireChips("fontChips", v => { state.font = v; refresh(); });
     wireChips("animChips", v => { state.animation = v; refresh(); });
     if (s.form === "hero") wireChips("layoutChips", v => { state.layout = v; refresh(); });
-  } else if (s.form === "pill" || s.form === "deploy") {
-    wireChips("styleChips", v => { if (s.form === "pill") state.pill.style = v; else state.deploy.style = v; refresh(); });
+  } else if (s.form === "pill" || s.form === "deploy" || s.form === "score") {
+    wireChips("styleChips", v => { if (s.form !== "deploy") state.pill.style = v; else state.deploy.style = v; refresh(); });
     wireChips("animChips", v => { state.animation = v; refresh(); });
   } else if (s.form === "strip") {
     wireChips("animChips", v => { state.animation = v; refresh(); });

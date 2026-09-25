@@ -73,7 +73,7 @@ async fn catalog_publishes_the_one_vocabulary() {
     }
     assert_eq!(
         strings(&v["forms"]),
-        ["hero", "pill", "strip", "profile", "deploy", "typing"]
+        ["hero", "pill", "strip", "profile", "deploy", "typing", "score"]
     );
     let limits = &v["limits"];
     assert_eq!(limits["text"], 500);
@@ -117,6 +117,7 @@ async fn catalog_forms_serve_svg_to_a_stranger() {
             "profile" => "/api/v1/mark/profile?text=Ada%20Lovelace",
             "deploy" => "/api/v1/mark/deploy?service=mark",
             "typing" => "/api/v1/mark/typing?lines=Hello;World",
+            "score" => "/api/v1/mark/score?label=agent-ready&value=92",
             other => panic!("unexpected published form {other}"),
         };
         let (status, ctype, body) = get(path).await;

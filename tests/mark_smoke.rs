@@ -92,7 +92,14 @@ fn hero_short_title_is_not_truncated() {
 
 #[test]
 fn pill_styles_render() {
-    for style in ["flat", "plastic", "for-the-badge", "social", "pill"] {
+    for style in [
+        "flat",
+        "flat-square",
+        "plastic",
+        "for-the-badge",
+        "social",
+        "pill",
+    ] {
         let spec = MarkSpec {
             form: MarkForm::Pill,
             pill: mark::capabilities::mark::domain::PillSpec {
@@ -479,10 +486,11 @@ fn same_spec_renders_same_svg_forever() {
 
 #[test]
 fn pill_and_deploy_paint_from_the_geometry_authority() {
-    // Fixture: the shields text attributes and baseline have exactly one owner
-    // (`domain/pill.rs::PillMetrics`), and `scripts/check-source-hygiene.py`
-    // forbids the attribute literals in the pill/deploy forms. A re-introduced
-    // local copy fails the gate; a value shift fails this fixture.
+    // Fixture: the shields text group (font family, size) and baselines have
+    // exactly one owner (`domain/pill.rs`), and
+    // `scripts/check-source-hygiene.py` forbids the attribute literals in the
+    // pill/deploy forms. A re-introduced local copy fails the gate; a value
+    // shift fails this fixture.
     let flat = render(&MarkSpec {
         form: MarkForm::Pill,
         pill: mark::capabilities::mark::domain::PillSpec {
@@ -493,7 +501,9 @@ fn pill_and_deploy_paint_from_the_geometry_authority() {
         ..Default::default()
     });
     assert!(
-        flat.contains("font-weight=\"500\"") && flat.contains("y=\"14\""),
+        flat.contains("font-family=\"Verdana,Geneva,DejaVu Sans,sans-serif\"")
+            && flat.contains("y=\"140\"")
+            && flat.contains("textLength=\"270\""),
         "flat pill paints from the authority"
     );
 
@@ -508,7 +518,7 @@ fn pill_and_deploy_paint_from_the_geometry_authority() {
         ..Default::default()
     });
     assert!(
-        badge.contains("letter-spacing=\"0.5\"") && badge.contains("y=\"18\""),
+        badge.contains("font-size=\"100\"") && badge.contains("y=\"175\""),
         "badge paint comes from the authority"
     );
 
@@ -517,7 +527,7 @@ fn pill_and_deploy_paint_from_the_geometry_authority() {
         ..Default::default()
     });
     assert!(
-        deploy.contains("font-weight=\"500\"") && deploy.contains("y=\"14\""),
+        deploy.contains("font-size=\"110\"") && deploy.contains("y=\"140\""),
         "deploy paints from the authority"
     );
 }

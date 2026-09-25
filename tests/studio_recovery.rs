@@ -72,11 +72,12 @@ fn recovers_badge_shorthand() {
 }
 
 #[test]
-fn badge_double_dash_keeps_hyphens_in_label() {
-    let boot = parse_public_mark_url("/badge/build--passing--brightgreen").expect("badge");
+fn badge_double_dash_is_a_literal_dash() {
+    // shields escaping: `--` is a literal dash, never a separator.
+    let boot = parse_public_mark_url("/badge/agent--ready-92%2F100-brightgreen").expect("badge");
     let pill = boot.pill.as_ref().expect("pill");
-    assert_eq!(pill.label.as_deref(), Some("build"));
-    assert_eq!(pill.message.as_deref(), Some("passing"));
+    assert_eq!(pill.label.as_deref(), Some("agent-ready"));
+    assert_eq!(pill.message.as_deref(), Some("92/100"));
     assert_eq!(boot.color.as_deref(), Some("brightgreen"));
 }
 
@@ -202,4 +203,18 @@ fn studio_page_ships_the_markdown_embed_control() {
         html.contains("![") && html.contains("]("),
         "embed is ![alt](url)"
     );
+}
+
+#[test]
+fn recovers_score_badge() {
+    let boot = parse_public_mark_url("/api/v1/mark/score.svg?label=agent-ready&value=92&max=100")
+        .expect("score");
+    assert_eq!(form(&boot), "score");
+    assert_eq!(
+        boot.pill.as_ref().and_then(|p| p.label.as_deref()),
+        Some("agent-ready")
+    );
+    let score = boot.score.as_ref().expect("score fields");
+    assert_eq!(score.value.as_deref(), Some("92"));
+    assert_eq!(score.max.as_deref(), Some("100"));
 }

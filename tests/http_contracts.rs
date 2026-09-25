@@ -203,7 +203,7 @@ async fn badge_shorthand_accepts_grammar_query() {
         "theme query must paint"
     );
     assert!(
-        !themed.contains("fill=\"#44CC11\""),
+        !themed.contains("fill=\"#44bb00\""),
         "theme query must override path color"
     );
 
@@ -212,7 +212,7 @@ async fn badge_shorthand_accepts_grammar_query() {
 
     let (_, _, labeled) = get("/badge/build-passing-brightgreen?labelColor=red").await;
     assert!(
-        labeled.contains("fill=\"#E05D44\""),
+        labeled.contains("fill=\"#dd4343\""),
         "labelColor query must paint the label"
     );
 
@@ -230,15 +230,47 @@ async fn badge_shorthand_accepts_grammar_query() {
         "credit query must stay a valid mark"
     );
 
-    let (_, _, path_color) = get("/badge/build-passing-brightgreen?color=red").await;
+    // shields semantics: query `color` and `label` override the path tokens.
+    let (_, _, overridden) = get("/badge/build-passing-brightgreen?color=red&label=ci").await;
     assert!(
-        path_color.contains("fill=\"#44CC11\""),
-        "path color still wins over ?color="
+        overridden.contains("fill=\"#dd4343\"") && !overridden.contains("fill=\"#44bb00\""),
+        "query color overrides the path color, as on shields"
     );
     assert!(
-        !path_color.contains("fill=\"#E05D44\""),
-        "query color must not replace the shields path token"
+        overridden.contains(">ci<"),
+        "query label overrides the path label"
     );
+}
+
+#[tokio::test]
+async fn svg_suffix_serves_identical_bytes() {
+    for path in [
+        "/badge/build-passing-brightgreen",
+        "/badge/agent--ready-92%2F100-brightgreen?style=for-the-badge",
+        "/api/v1/mark/hero?text=Hi",
+        "/api/v1/mark/score?label=agent-ready&value=92",
+        "/api/v1/mark",
+        "/static/v1?label=a&message=b&color=blue",
+    ] {
+        let suffixed = match path.split_once('?') {
+            Some((p, q)) => format!("{p}.svg?{q}"),
+            None => format!("{path}.svg"),
+        };
+        let (s1, c1, plain) = get(path).await;
+        let (s2, c2, with_suffix) = get(&suffixed).await;
+        assert_eq!(s1, StatusCode::OK, "{path}");
+        assert_eq!(s2, StatusCode::OK, "{suffixed}");
+        assert_eq!(c1, c2);
+        assert_eq!(plain, with_suffix, "{suffixed} must equal {path}");
+    }
+}
+
+#[tokio::test]
+async fn shields_invalid_color_paints_brightgreen_and_static_v1_defaults_lightgrey() {
+    let (_, _, invalid) = get("/badge/a-b-notacolor").await;
+    assert!(invalid.contains("fill=\"#44bb00\""));
+    let (_, _, missing) = get("/static/v1?label=a&message=b").await;
+    assert!(missing.contains("fill=\"#939393\""));
 }
 
 #[tokio::test]
@@ -586,4 +618,13 @@ async fn capsule_typography_keys_stay_off_the_native_grammar() {
     .await
     .2;
     assert_eq!(plain, knobs);
+}
+
+#[tokio::test]
+async fn studio_boots_from_wrapped_score_url() {
+    let (_, _, body) =
+        get("/?url=%2Fapi%2Fv1%2Fmark%2Fscore%3Flabel%3Dagent-ready%26value%3D92").await;
+    let boot = studio_boot(&body);
+    assert_eq!(boot["form"], "score");
+    assert_eq!(boot["score"]["value"], "92");
 }

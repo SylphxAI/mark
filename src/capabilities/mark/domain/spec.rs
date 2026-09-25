@@ -23,11 +23,14 @@ pub enum MarkForm {
     Deploy,
     /// Typing — animated typing text (readme-typing-svg geometry).
     Typing,
+    /// Score — a pill whose message carries a graded value and progress ring.
+    Score,
 }
 
 impl MarkForm {
-    pub(crate) const ALL: [&'static str; 6] =
-        ["hero", "pill", "strip", "profile", "deploy", "typing"];
+    pub(crate) const ALL: [&'static str; 7] = [
+        "hero", "pill", "strip", "profile", "deploy", "typing", "score",
+    ];
 
     pub fn name(&self) -> &'static str {
         match self {
@@ -37,6 +40,7 @@ impl MarkForm {
             Self::Profile => "profile",
             Self::Deploy => "deploy",
             Self::Typing => "typing",
+            Self::Score => "score",
         }
     }
 
@@ -53,6 +57,7 @@ impl MarkForm {
             Some("profile") | Some("identity") => Self::Profile,
             Some("deploy") => Self::Deploy,
             Some("typing") => Self::Typing,
+            Some("score") => Self::Score,
             _ => Self::Hero,
         }
     }
@@ -123,6 +128,21 @@ pub struct PillSpec {
     pub message: Option<String>,
     pub style: Option<String>,
     pub label_color: Option<String>,
+    /// Logo left of the label: a Simple Icons slug or a base64 image data URI.
+    pub logo: Option<String>,
+    /// Paint for a named logo.
+    pub logo_color: Option<String>,
+    /// `auto` widens wide logos (shields `logoSize`).
+    pub logo_size: Option<String>,
+    /// Explicit logo width in px (shields `logoWidth`).
+    pub logo_width: Option<u32>,
+}
+
+/// Score geometry: a value out of a maximum.
+#[derive(Debug, Clone, Default)]
+pub struct ScoreSpec {
+    pub value: Option<f64>,
+    pub max: Option<f64>,
 }
 
 /// Strip geometry (icon row).
@@ -162,4 +182,5 @@ pub struct MarkSpec {
     pub strip: StripSpec,
     pub deploy: DeploySpec,
     pub typing: TypingSpec,
+    pub score: ScoreSpec,
 }

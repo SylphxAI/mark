@@ -53,8 +53,15 @@ pub(crate) fn normalize_hex_token(v: &str) -> Option<String> {
     }
 }
 
-pub(crate) fn svg_doc(width: u32, height: u32, body: &str) -> String {
-    svg_doc_scaled(&width.to_string(), &height.to_string(), width, height, body)
+/// The SVG document shell. Dimensions are any display number: pill-shaped
+/// marks can be fractional (for-the-badge advances are quarter pixels).
+pub(crate) fn svg_doc(
+    width: impl std::fmt::Display,
+    height: impl std::fmt::Display,
+    body: &str,
+) -> String {
+    let (w, h) = (width.to_string(), height.to_string());
+    svg_doc_scaled(&w, &h, &w, &h, body)
 }
 
 /// An SVG document whose rendered size differs from its viewBox (icon tiles
@@ -62,8 +69,8 @@ pub(crate) fn svg_doc(width: u32, height: u32, body: &str) -> String {
 pub(crate) fn svg_doc_scaled(
     width: &str,
     height: &str,
-    view_w: u32,
-    view_h: u32,
+    view_w: impl std::fmt::Display,
+    view_h: impl std::fmt::Display,
     body: &str,
 ) -> String {
     svg_root(width, height, view_w, view_h, "", body)
@@ -79,8 +86,8 @@ pub(crate) fn svg_doc_with(width: u32, height: u32, root_attrs: &str, body: &str
 fn svg_root(
     width: &str,
     height: &str,
-    view_w: u32,
-    view_h: u32,
+    view_w: impl std::fmt::Display,
+    view_h: impl std::fmt::Display,
     root_attrs: &str,
     body: &str,
 ) -> String {
