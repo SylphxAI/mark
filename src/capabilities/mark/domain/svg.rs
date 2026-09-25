@@ -54,8 +54,20 @@ pub(crate) fn normalize_hex_token(v: &str) -> Option<String> {
 }
 
 pub(crate) fn svg_doc(width: u32, height: u32, body: &str) -> String {
+    svg_doc_scaled(&width.to_string(), &height.to_string(), width, height, body)
+}
+
+/// An SVG document whose rendered size differs from its viewBox (icon tiles
+/// draw on a 300-unit grid and render at 48px per tile).
+pub(crate) fn svg_doc_scaled(
+    width: &str,
+    height: &str,
+    view_w: u32,
+    view_h: u32,
+    body: &str,
+) -> String {
     format!(
-        "<?xml version=\"1.0\" encoding=\"UTF-8\"?><svg xmlns=\"http://www.w3.org/2000/svg\" width=\"{width}\" height=\"{height}\" viewBox=\"0 0 {width} {height}\" role=\"img\">{body}</svg>"
+        "<?xml version=\"1.0\" encoding=\"UTF-8\"?><svg xmlns=\"http://www.w3.org/2000/svg\" width=\"{width}\" height=\"{height}\" viewBox=\"0 0 {view_w} {view_h}\" role=\"img\">{body}</svg>"
     )
 }
 

@@ -1,9 +1,9 @@
 //! The Mark vocabulary — one catalog, one contract.
 
 use crate::capabilities::mark::domain::art::{art_ids, featured_art_ids};
-use crate::capabilities::mark::domain::icons;
 use crate::capabilities::mark::domain::motion::ANIMATIONS;
 use crate::capabilities::mark::domain::spec::MarkForm;
+use crate::capabilities::mark::domain::{brand_icons, icons};
 
 /// Layout families (hero composition, not background recipe).
 pub(crate) const LAYOUTS: &[&str] = &["default", "plate", "signal", "terminal"];
@@ -51,6 +51,14 @@ pub(crate) fn vocabulary() -> serde_json::Value {
         "layouts": LAYOUTS,
         "themes": super::theme::list_names(),
         "icons": icons::available(),
+        "icon_count": icons::count(),
+        "skill_icons": icons::skill_ids().collect::<Vec<_>>(),
+        "icon_source": {
+            "name": "Simple Icons",
+            "version": brand_icons::version(),
+            "license": "CC0-1.0",
+            "icons_url": "https://simpleicons.org",
+        },
         "badge_styles": BADGE_STYLES,
         "animations": ANIMATIONS,
         "fonts": FONTS,

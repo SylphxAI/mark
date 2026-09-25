@@ -6,6 +6,7 @@ use axum::response::Response;
 use serde::Deserialize;
 
 use crate::bootstrap::AppState;
+use crate::capabilities::mark::application::tiles::{self, parse_per_line, TileTheme};
 use crate::capabilities::mark::domain::{
     cap_text, split_badge_path, MarkForm, MarkSpec, MAX_SERVICE_CHARS,
 };
@@ -81,6 +82,24 @@ pub(crate) async fn badge_path(
     // Query `color` only fills a missing path token.
     spec.color = color.or(spec.color);
     svg_response_conditional(&render(&spec), if_none_match(&headers))
+}
+
+/// skill-icons dialect query: `i`/`icons`, `theme`/`t`, `perline`.
+#[derive(Debug, Deserialize)]
+pub(crate) struct IconsQuery {
+    pub i: Option<String>,
+    pub icons: Option<String>,
+    pub t: Option<String>,
+    pub theme: Option<String>,
+    pub perline: Option<String>,
+}
+
+/// skillicons.dev drop-in: `/icons?i=js,ts,rust&theme=light&perline=8`.
+pub(crate) async fn icons_handler(Query(q): Query<IconsQuery>, headers: HeaderMap) -> Response {
+    let ids = q.i.or(q.icons).unwrap_or_default();
+    let theme = TileTheme::parse(q.theme.or(q.t).as_deref());
+    let svg = tiles::render(&ids, theme, parse_per_line(q.perline.as_deref()));
+    svg_response_conditional(&svg, if_none_match(&headers))
 }
 
 impl MarkQuery {

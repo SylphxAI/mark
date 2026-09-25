@@ -48,7 +48,7 @@ One endpoint: `GET /api/v1/mark/{form}` — plus the shields-style pill shorthan
 |------|-----------|-----------|
 | `hero` | The flagship banner (42 art types, 4 layouts) | `type` `text` `desc` `layout` `height` `width` |
 | `pill` | Atomic status mark (shields-style) | `label` `message` `style` `labelColor` |
-| `strip` | Tech identity row (47 icons) | `icons` `perline` |
+| `strip` | Tech identity row (any brand icon) | `icons` `perline` |
 | `profile` | Name + tagline card (text-driven) | `text` `desc` `type` (art background) `width` `height` |
 | `deploy` | “deployed on Sylphx” conversion pill | `service` `style` |
 
@@ -95,6 +95,21 @@ Colors: shields named colors, semantic names (`success` `important` `critical` `
 ```markdown
 ![stack](https://mark.sylphx.com/api/v1/mark/strip?icons=rust,ts,docker,kubernetes,postgres&theme=dark)
 ```
+
+`icons` takes any [Simple Icons](https://simpleicons.org) slug or title
+(`fastify`, `Node.js`, `bun`), plus every skill-icons id.
+
+### Icon tiles (skill-icons compatible)
+
+```markdown
+![skills](https://mark.sylphx.com/icons?i=js,ts,rust,go,react,docker,k8s,postgres)
+![skills](https://mark.sylphx.com/icons?i=py,pytorch,fastapi,redis&theme=light&perline=4)
+```
+
+A drop-in for `skillicons.dev`: swap the host and keep the URL. `i` (or
+`icons`) takes skill-icons ids or any Simple Icons slug; `theme` (or `t`) is
+`dark` (default) or `light`; `perline` is 1–50 (default 15); `i=all` renders
+the whole skill-icons set. Unknown ids are skipped.
 
 ### Profile
 
@@ -156,6 +171,12 @@ One capability, one grammar.
 ## License
 
 MIT — see product intent in `PROJECT.md`.
+
+Brand icons come from [Simple Icons](https://github.com/simple-icons/simple-icons)
+(path data CC0-1.0; version in `data/simple-icons.tsv`, refreshed by
+`scripts/update-simple-icons.py`). Brand names and logos are trademarks of
+their owners; showing one does not imply endorsement. See the Simple Icons
+[disclaimer](https://github.com/simple-icons/simple-icons/blob/develop/DISCLAIMER.md).
 
 ## Destination
 

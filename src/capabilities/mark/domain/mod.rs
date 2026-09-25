@@ -4,9 +4,11 @@
 //! no process env. The kernel lives with its capability.
 
 pub mod art;
+pub mod brand_icons;
 pub mod catalog;
 pub mod color;
 pub mod hash;
+pub mod icon_aliases;
 pub mod icons;
 pub mod motion;
 pub mod pill;

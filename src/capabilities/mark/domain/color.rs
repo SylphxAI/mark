@@ -390,6 +390,35 @@ pub(crate) fn resolve_paint(c: Option<&str>, fallback: &str) -> String {
     normalize_hex_token(c).unwrap_or_else(|| fallback.to_string())
 }
 
+/// WCAG 2.x relative luminance of a six-digit hex color (`#` optional).
+/// Anything that is not six hex digits reads as black.
+pub(crate) fn relative_luminance(hex: &str) -> f64 {
+    let h = strip_hash(hex);
+    let channel = |i: usize| -> f64 {
+        let v = h
+            .get(i..i + 2)
+            .and_then(|s| u8::from_str_radix(s, 16).ok())
+            .unwrap_or(0) as f64
+            / 255.0;
+        if v <= 0.04045 {
+            v / 12.92
+        } else {
+            ((v + 0.055) / 1.055).powf(2.4)
+        }
+    };
+    if h.len() != 6 {
+        return 0.0;
+    }
+    0.2126 * channel(0) + 0.7152 * channel(2) + 0.0722 * channel(4)
+}
+
+/// WCAG 2.x contrast ratio between two hex colors (1.0 ..= 21.0).
+pub(crate) fn contrast_ratio(a: &str, b: &str) -> f64 {
+    let (la, lb) = (relative_luminance(a), relative_luminance(b));
+    let (hi, lo) = if la > lb { (la, lb) } else { (lb, la) };
+    (hi + 0.05) / (lo + 0.05)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -447,5 +476,14 @@ mod tests {
             assert!(!p.defs.contains("-1%"), "invalid offset escaped: {spec}");
             assert!(!p.defs.contains("101%"), "invalid offset escaped: {spec}");
         }
+    }
+
+    #[test]
+    fn wcag_contrast_matches_reference_values() {
+        assert!((contrast_ratio("#000000", "#FFFFFF") - 21.0).abs() < 1e-9);
+        assert!((contrast_ratio("777777", "777777") - 1.0).abs() < 1e-9);
+        // GitHub's brand ink on the dark icon tile is unreadable.
+        assert!(contrast_ratio("181717", "242938") < 2.5);
+        assert!(contrast_ratio("F7DF1E", "242938") > 2.5);
     }
 }

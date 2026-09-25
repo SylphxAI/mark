@@ -192,7 +192,12 @@ fn strip_is_capped() {
         ..Default::default()
     };
     let svg = render(&spec);
-    assert!(svg.len() < 40_000, "strip must stay bounded");
+    // Bounded by icon count (MAX_ICONS = 60); bytes follow the brand paths.
+    assert_eq!(
+        svg.matches("<title>").count(),
+        60,
+        "strip must stay bounded"
+    );
 }
 
 #[test]

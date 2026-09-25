@@ -256,7 +256,6 @@ async fn legacy_surfaces_are_removed() {
         "/stats/shtse8",
         "/org/SylphxAI",
         "/repo/SylphxAI/mark",
-        "/icons",
         "/brand/sylphx",
         "/deploy",
         "/api/v1/nope",
