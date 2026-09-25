@@ -18,6 +18,8 @@ pub(crate) async fn api_index(State(st): State<AppState>) -> impl IntoResponse {
             "/api/v1/mark/{form}",
             "/badge/{label}-{message}-{color}",
             "/icons?i={ids}",
+            "/typing?lines={a};{b}",
+            "/?lines={a};{b}",
             "/api/v1/catalog",
             "/health"
         ]
@@ -38,7 +40,8 @@ pub(crate) async fn catalog() -> impl IntoResponse {
                 "strip_icons": 60,
                 "tile_icons": 300,
                 "tile_perline": 50,
-                "deploy_service": 40
+                "deploy_service": 40,
+                "typing_lines": 32
             }),
         );
         obj.insert(

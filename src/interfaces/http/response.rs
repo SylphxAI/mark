@@ -22,6 +22,13 @@ pub(crate) fn decode_text(s: String) -> String {
     let decoded = urlencoding::decode(&s).map(|c| c.into_owned()).unwrap_or(s);
     decoded.replace("-nl-", "\n")
 }
+/// The raw `If-None-Match` request header, if any.
+pub(crate) fn if_none_match(headers: &HeaderMap) -> Option<&str> {
+    headers
+        .get(header::IF_NONE_MATCH)
+        .and_then(|v| v.to_str().ok())
+}
+
 /// Stable strong ETag for byte-identical SVG URLs (FNV-1a/64 over the bytes).
 ///
 /// std `DefaultHasher` is explicitly unstable across releases, so ETags use

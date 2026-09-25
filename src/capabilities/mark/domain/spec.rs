@@ -21,10 +21,13 @@ pub enum MarkForm {
     Profile,
     /// Deploy — the conversion pill ("deployed on Sylphx").
     Deploy,
+    /// Typing — animated typing text (readme-typing-svg geometry).
+    Typing,
 }
 
 impl MarkForm {
-    pub(crate) const ALL: [&'static str; 5] = ["hero", "pill", "strip", "profile", "deploy"];
+    pub(crate) const ALL: [&'static str; 6] =
+        ["hero", "pill", "strip", "profile", "deploy", "typing"];
 
     pub fn name(&self) -> &'static str {
         match self {
@@ -33,6 +36,7 @@ impl MarkForm {
             Self::Strip => "strip",
             Self::Profile => "profile",
             Self::Deploy => "deploy",
+            Self::Typing => "typing",
         }
     }
 
@@ -48,10 +52,13 @@ impl MarkForm {
             Some("strip") => Self::Strip,
             Some("profile") | Some("identity") => Self::Profile,
             Some("deploy") => Self::Deploy,
+            Some("typing") => Self::Typing,
             _ => Self::Hero,
         }
     }
 }
+
+pub use super::typing::TypingSpec;
 
 /// Hero geometry: the layout family only.
 ///
@@ -109,4 +116,5 @@ pub struct MarkSpec {
     pub pill: PillSpec,
     pub strip: StripSpec,
     pub deploy: DeploySpec,
+    pub typing: TypingSpec,
 }

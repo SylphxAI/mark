@@ -93,6 +93,72 @@ pub(crate) fn content_family(font: Option<&str>) -> &'static str {
     }
 }
 
+/// A URL-requested `font-family` (dialects): the requested families first,
+/// then a system stack. No webfont is fetched (no upstream), so the stack is
+/// what renders when the viewer lacks the family: a code/pixel family falls
+/// back to the monospace stack, anything else to the sans stack. Names are
+/// sanitized to `[0-9A-Za-z- ]` and single-quoted, so the value is safe inside
+/// a double-quoted attribute.
+pub(crate) fn requested_family(raw: &str) -> String {
+    const GENERIC: [&str; 6] = [
+        "serif",
+        "sans-serif",
+        "monospace",
+        "cursive",
+        "fantasy",
+        "system-ui",
+    ];
+    const MONO_HINTS: [&str; 12] = [
+        "mono",
+        "code",
+        "consol",
+        "courier",
+        "menlo",
+        "hack",
+        "inconsolata",
+        "terminal",
+        "vt323",
+        "press start",
+        "pixel",
+        "typewriter",
+    ];
+    let names: Vec<String> = raw
+        .split(',')
+        .map(|n| {
+            n.chars()
+                .filter(|c| c.is_ascii_alphanumeric() || *c == '-' || *c == ' ')
+                .take(60)
+                .collect::<String>()
+                .trim()
+                .to_string()
+        })
+        .filter(|n| !n.is_empty())
+        .take(8)
+        .collect();
+    let lower: Vec<String> = names.iter().map(|n| n.to_ascii_lowercase()).collect();
+    match lower.first().map(String::as_str) {
+        None | Some("sans") => return FONT_UI_SANS.into(),
+        Some("mono") | Some("monospace") if names.len() == 1 => return FONT_MONO.into(),
+        _ => {}
+    }
+    let mono = lower
+        .iter()
+        .any(|n| MONO_HINTS.iter().any(|h| n.contains(h)));
+    let mut out: Vec<String> = names
+        .iter()
+        .zip(&lower)
+        .map(|(n, l)| {
+            if GENERIC.contains(&l.as_str()) {
+                l.clone()
+            } else {
+                format!("'{n}'")
+            }
+        })
+        .collect();
+    out.push(if mono { FONT_MONO } else { FONT_UI_SANS }.into());
+    out.join(",")
+}
+
 /// Total advance of a painted line.
 pub(crate) fn line_advance(line: &str, font_size: f32, metric: Metric) -> f32 {
     line.chars().map(|c| metric.advance(c, font_size)).sum()
@@ -170,6 +236,26 @@ fn upcase(c: char) -> char {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn requested_family_puts_the_request_first_with_a_safe_fallback() {
+        assert_eq!(requested_family("monospace"), FONT_MONO);
+        assert_eq!(requested_family("sans"), FONT_UI_SANS);
+        assert_eq!(requested_family(""), FONT_UI_SANS);
+        assert_eq!(
+            requested_family("Fira Code"),
+            format!("'Fira Code',{FONT_MONO}")
+        );
+        assert_eq!(
+            requested_family("Lobster"),
+            format!("'Lobster',{FONT_UI_SANS}")
+        );
+        assert_eq!(
+            requested_family("Roboto,sans-serif"),
+            format!("'Roboto',sans-serif,{FONT_UI_SANS}")
+        );
+        assert_eq!(requested_family("x\"'><y"), format!("'xy',{FONT_UI_SANS}"));
+    }
 
     #[test]
     fn monogram_latin_and_empty_fallback() {

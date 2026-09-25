@@ -3,6 +3,7 @@
 //! Domain meaning is not owned here; handlers translate HTTP to capability use cases.
 
 mod catalog;
+mod dispatch;
 mod health;
 pub(crate) mod response;
 mod studio;
@@ -30,7 +31,9 @@ pub fn app(state: AppState) -> Router {
         .route("/api/v1/mark/{form}", get(mark_http::mark_handler))
         .route("/badge/{*tail}", get(mark_http::badge_path))
         .route("/icons", get(mark_http::icons_handler))
-        .route("/", get(studio::index_page))
+        .route("/typing", get(mark_http::typing_handler))
+        // `/` is the studio, and readme-typing-svg's image path (`?lines=`).
+        .route("/", get(dispatch::root))
         .fallback_service(ServeDir::new("static"))
         // Public SVG GET is origin-independent (`ACAO: *`, no credentials).
         // Default CorsLayer Vary includes Origin, which splits the CDN cache

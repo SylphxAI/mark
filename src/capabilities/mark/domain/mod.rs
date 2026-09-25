@@ -18,6 +18,7 @@ pub mod spec;
 pub mod svg;
 pub mod text;
 pub mod theme;
+pub mod typing;
 
 pub(crate) use catalog::{
     normalize_layout, MAX_DESC_CHARS, MAX_ICONS, MAX_LABEL_CHARS, MAX_LINES, MAX_MESSAGE_CHARS,
@@ -30,5 +31,5 @@ pub(crate) use svg::normalize_hex_token;
 
 // Kernel surface consumed by the contract tests (see tests/*.rs). Recovery and
 // studio types are reached through `domain::recovery` directly.
-pub use spec::{DeploySpec, HeroSpec, MarkForm, MarkSpec, PillSpec, StripSpec};
+pub use spec::{DeploySpec, HeroSpec, MarkForm, MarkSpec, PillSpec, StripSpec, TypingSpec};
 pub use text::cap_text;

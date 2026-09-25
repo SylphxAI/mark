@@ -7,5 +7,6 @@ mod profile;
 mod render;
 mod strip;
 pub mod tiles;
+mod typing;
 
 pub use render::render;

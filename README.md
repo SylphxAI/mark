@@ -126,6 +126,23 @@ The profile card is text-driven: the URL supplies the name (`text`) and tagline 
 ![typing](https://mark.sylphx.com/api/v1/mark/hero?type=transparent&font=mono&animation=type&layout=signal&color=4A90E2&text=MCP%20%26%20AI-agent%20tooling%20-nl-20%20years%20shipping%20at%20scale)
 ```
 
+### Typing SVG (readme-typing-svg compatible)
+
+```markdown
+![typing](https://mark.sylphx.com/?lines=First+line;Second+line&font=Fira+Code&center=true&width=435&height=50&color=36BCF7&vCenter=true&pause=1000&size=20)
+![typing](https://mark.sylphx.com/typing?lines=Hello;World&multiline=true&height=80)
+```
+
+A drop-in for `readme-typing-svg.demolab.com`: swap the host and keep the
+URL (`/?lines=` or `/typing?lines=`). Every upstream parameter works with its
+upstream default: `lines`, `separator`, `font`, `weight`, `size`, `color`,
+`background`, `center`, `vCenter`, `multiline`, `width`, `height`,
+`duration`, `pause`, `repeat`, `random`, `letterSpacing`. Mark never fetches
+webfonts: `font` is named first, then a system fallback stack (monospace for
+code fonts). `random=true` is deterministic: the order is derived from a hash
+of the URL, so one URL always renders one order. The native form is
+`/api/v1/mark/typing` (`text` works in place of `lines`).
+
 ### Deploy
 
 ```markdown

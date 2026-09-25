@@ -528,3 +528,28 @@ async fn svg_export_has_no_raw_template_markers() {
         "SVG must not expose Rust template continuation markers"
     );
 }
+
+#[tokio::test]
+async fn root_is_the_studio_unless_the_query_is_a_typing_url() {
+    for path in ["/", "/?form=hero&text=Hi", "/?text=Hi"] {
+        let (status, ctype, body) = get(path).await;
+        assert_eq!(status, StatusCode::OK, "{path}");
+        assert!(
+            ctype.starts_with("text/html"),
+            "{path} stays the studio: {ctype}"
+        );
+        assert!(
+            body.contains("<html") || body.contains("<!doctype"),
+            "{path}"
+        );
+    }
+    let (status, ctype, body) = get("/?lines=Hello;World&center=true").await;
+    assert_eq!(status, StatusCode::OK);
+    assert!(
+        ctype.starts_with("image/svg+xml"),
+        "typing dialect: {ctype}"
+    );
+    assert!(body.contains("<textPath") && body.contains(">World</textPath>"));
+    let (_, _, native) = get("/typing?lines=Hello;World&center=true").await;
+    assert_eq!(body, native, "host swap and /typing are one render");
+}

@@ -11,5 +11,6 @@ pub fn render(spec: &MarkSpec) -> String {
         MarkForm::Strip => super::strip::render(spec),
         MarkForm::Profile => super::profile::render(spec),
         MarkForm::Deploy => super::deploy::render(spec),
+        MarkForm::Typing => super::typing::render(spec),
     }
 }
