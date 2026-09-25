@@ -66,12 +66,12 @@ impl Config {
         }
     }
 
-    pub(crate) fn state(&self) -> AppState {
-        AppState {
+    pub(crate) fn state(&self) -> Result<AppState, reqwest::Error> {
+        Ok(AppState {
             default_credit: self.default_credit,
             public_base: self.public_base.clone(),
-            live: Arc::new(LiveService::from_env()),
-        }
+            live: Arc::new(LiveService::from_env()?),
+        })
     }
 
     pub(crate) fn addr(&self) -> SocketAddr {
@@ -112,7 +112,7 @@ pub fn init_tracing() {
 
 /// Bind and serve the HTTP composition root.
 pub async fn serve(config: Config) {
-    let state = config.state();
+    let state = config.state().expect("build the live upstream HTTP client");
     let addr = config.addr();
     tracing::info!(
         "Sylphx Mark listening on {addr} (base={})",
