@@ -16,6 +16,26 @@ use crate::capabilities::mark::domain::{
     MAX_TEXT_CHARS,
 };
 
+/// Share of the line budget text may fill. The width metric follows the
+/// system UI sans; viewers without it fall back to wider faces (DejaVu Sans is
+/// ~8% wider), so text is fitted with headroom instead of edge to edge.
+const FIT_MARGIN: f32 = 0.92;
+
+/// Largest size ≤ `size` (down to `min_ratio` of it) at which every line fits
+/// `budget`; lines that still overflow at the floor are truncated by the
+/// caller. Short text keeps `size` exactly.
+fn shrink_to_fit(lines: &[&str], budget: f32, size: u32, min_ratio: f32, metric: Metric) -> u32 {
+    let widest = lines
+        .iter()
+        .map(|l| line_advance(l, size as f32, metric))
+        .fold(0.0_f32, f32::max);
+    if widest <= budget || widest <= 0.0 {
+        return size;
+    }
+    let fitted = (size as f32 * budget / widest).floor();
+    fitted.max((size as f32 * min_ratio).ceil()) as u32
+}
+
 fn line_max_px(width: u32, x: f32, anchor: &str) -> f32 {
     let pad = (width as f32 * 0.04).clamp(16.0, 36.0);
     match anchor {
@@ -200,12 +220,17 @@ pub fn render(spec: &MarkSpec) -> String {
     };
 
     let x0 = width as f32 * align / 100.0;
-    let title_budget = line_max_px(width, x0, anchor);
-    let lines: Vec<String> = text
+    let title_budget = line_max_px(width, x0, anchor) * FIT_MARGIN;
+    let raw_lines: Vec<&str> = text
         .split('\n')
         .filter(|l| !l.is_empty())
         .take(MAX_LINES)
-        .map(|l| fit_line(l, title_budget, font_size as f32, Metric::Display))
+        .collect();
+    // Titles are drawn at weight 650: measure with the bold table.
+    let font_size = shrink_to_fit(&raw_lines, title_budget, font_size, 0.6, Metric::Bold);
+    let lines: Vec<String> = raw_lines
+        .iter()
+        .map(|l| fit_line(l, title_budget, font_size as f32, Metric::Bold))
         .collect();
     let mut text_nodes = String::new();
     let n = lines.len().max(1) as f32;
@@ -245,12 +270,15 @@ pub fn render(spec: &MarkSpec) -> String {
             } else {
                 0.0
             };
-        let desc = fit_line(
-            &desc,
-            line_max_px(width, dx, anchor),
-            desc_size as f32,
+        let desc_budget = line_max_px(width, dx, anchor) * FIT_MARGIN;
+        let desc_size = shrink_to_fit(
+            &[desc.as_str()],
+            desc_budget,
+            desc_size,
+            0.8,
             Metric::Display,
         );
+        let desc = fit_line(&desc, desc_budget, desc_size as f32, Metric::Display);
         if use_typewriter {
             let base = lines.len() as f32 * 0.55 + 0.2;
             style.typewriter_line(&desc, dx, dy, desc_size, base, 0.04)
