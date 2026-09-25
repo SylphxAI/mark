@@ -54,6 +54,8 @@ SINGLE_AUTHORITY = {
 
 # Retired predecessor grammar keys (`MARK-GRAMMAR`): the render accepts exactly
 # the published grammar, so these string literals must not exist in `src/`.
+# ADR-0005 decision 4: the capsule-render dialect parser is the one file that
+# reads them (they are that tool's URL vocabulary); nothing else may.
 RETIRED_GRAMMAR_KEYS = (
     "fontSize",
     "descSize",
@@ -67,6 +69,7 @@ RETIRED_GRAMMAR_KEYS = (
     "deploymark",
     "iconsrow",
 )
+RETIRED_GRAMMAR_KEYS_EXEMPT = "src/capabilities/mark/interfaces/dialects/capsule.rs"
 
 # The shields-style text attributes may only be built by their owner module.
 # A form that re-introduces a local copy makes the pill geometry drift again.
@@ -158,6 +161,8 @@ def failures() -> list[str]:
     for key in RETIRED_GRAMMAR_KEYS:
         literal = f'"{key}"'
         for f, text in src_texts.items():
+            if str(f.relative_to(ROOT)) == RETIRED_GRAMMAR_KEYS_EXEMPT:
+                continue
             for match in re.finditer(re.escape(literal), text):
                 line = text[: match.start()].count("\n") + 1
                 found.append(

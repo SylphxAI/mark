@@ -126,6 +126,27 @@ The profile card is text-driven: the URL supplies the name (`text`) and tagline 
 ![typing](https://mark.sylphx.com/api/v1/mark/hero?type=transparent&font=mono&animation=type&layout=signal&color=4A90E2&text=MCP%20%26%20AI-agent%20tooling%20-nl-20%20years%20shipping%20at%20scale)
 ```
 
+### Capsule banners (capsule-render compatible)
+
+```markdown
+![header](https://mark.sylphx.com/api?type=waving&color=gradient&height=300&section=header&text=Hello&fontSize=90&fontAlignY=38)
+![footer](https://mark.sylphx.com/api?type=waving&color=gradient&height=100&section=footer)
+```
+
+A drop-in for `capsule-render.vercel.app`: swap the host and keep the URL.
+All capsule-render types (`wave`, `waving`, `egg`, `shark`, `slice`, `rect`,
+`soft`, `rounded`, `cylinder`, `venom`, `speech`, `transparent`, `blur`,
+`pulse`, `checkered`), colors (hex, `0:EEFF00,100:a82da8`, `gradient`,
+`auto`, `random`, `timeAuto`, `timeGradient`, `customColorList`, `theme`), and
+typography knobs (`fontSize`, `fontColor`, `fontAlign`, `fontAlignY`,
+`fontFamily`, `desc`, `descSize`, `descAlign`, `descAlignY`, `rotate`,
+`stroke`, `strokeWidth`, `textBg`, `section`, `reversal`) keep their upstream
+defaults. Animations (`fadeIn`, `scaleIn`, `blink`, `blinking`, `twinkling`)
+are SMIL, so they run inside GitHub's image proxy. Colors that upstream picks
+at random or by the clock are picked from a hash of the URL instead: one URL,
+one image. These knobs exist only in this dialect; the native grammar
+(`/api/v1/mark/hero`) does not read them.
+
 ### Typing SVG (readme-typing-svg compatible)
 
 ```markdown

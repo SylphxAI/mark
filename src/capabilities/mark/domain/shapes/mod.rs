@@ -10,6 +10,7 @@ use crate::capabilities::mark::domain::art::Art;
 use crate::capabilities::mark::domain::color::FillPlan;
 
 mod canvas;
+pub(crate) mod capsule;
 mod cloud;
 mod geometry;
 mod pane;

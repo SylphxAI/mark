@@ -211,6 +211,25 @@ pub(crate) fn text_children(anim: &str, line_index: usize, width: u32, height: u
             )
         }
 
+        other => dialect_children(other),
+    }
+}
+
+/// Dialect-only motion (capsule-render `blink`/`blinking`/`twinkling`):
+/// reachable through `HeroOverrides`, never through `animation=`
+/// (`normalize_animation` keeps the published list the whole grammar).
+fn dialect_children(anim: &str) -> String {
+    match anim {
+        "blink" => "<animate attributeName=\"opacity\" values=\"1;0;1;0;1\" keyTimes=\"0;0.1;0.25;0.4;0.7\" \
+             calcMode=\"discrete\" dur=\"0.6s\" begin=\"0s\"/>"
+            .into(),
+        "blinking" => "<animate attributeName=\"opacity\" values=\"1;0;1\" keyTimes=\"0;0.2;0.5\" \
+             calcMode=\"discrete\" dur=\"1.6s\" begin=\"0s\" repeatCount=\"indefinite\"/>"
+            .into(),
+        "twinkling" => "<animate attributeName=\"opacity\" values=\"1;1;0.5;1;0.5;1;1\" \
+             keyTimes=\"0;0.4;0.5;0.6;0.7;0.8;1\" dur=\"4s\" begin=\"0s\" repeatCount=\"indefinite\"/>"
+            .into(),
+
         _ => String::new(),
     }
 }
