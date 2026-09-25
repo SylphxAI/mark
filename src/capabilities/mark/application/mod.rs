@@ -1,6 +1,7 @@
 //! Mark application layer — pure render use cases (functional core).
 
 mod badge;
+mod badge_logo;
 mod badge_social;
 mod deploy;
 mod hero;

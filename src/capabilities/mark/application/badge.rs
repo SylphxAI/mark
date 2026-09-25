@@ -5,59 +5,21 @@
 //! style. Geometry constants, text measurement, and text paint come from the
 //! domain authority (`domain/pill.rs`); this module only places boxes.
 
+pub(crate) use super::badge_logo::Logo;
+
 use crate::capabilities::mark::domain::color::resolve_paint;
 use crate::capabilities::mark::domain::motion::{text_children, text_open_attrs};
 use crate::capabilities::mark::domain::pill::{
     bold_run, fmt, ink, measure, text_group_open, text_run, Part,
 };
-use crate::capabilities::mark::domain::shields::data_uri_logo;
 use crate::capabilities::mark::domain::svg::{ensure_hash, esc, svg_doc};
 use crate::capabilities::mark::domain::theme;
 use crate::capabilities::mark::domain::{
     cap_text, normalize_animation, MarkSpec, PillStyle, MAX_LABEL_CHARS, MAX_MESSAGE_CHARS,
 };
 
-/// Logo height in px (badge-maker `DEFAULT_LOGO_HEIGHT`).
-const LOGO_H: f64 = 14.0;
 /// Gap between a label-side logo and the label text (shields `logoPadding`).
 const LOGO_PAD: f64 = 3.0;
-
-/// What sits left of the label.
-#[derive(Debug, Clone)]
-pub(crate) enum Logo {
-    /// A validated base64 image data URI.
-    Image { href: String, width: f64 },
-    /// The deploy conversion mark: a dot in a ring, painted as vectors.
-    DeployMark,
-}
-
-impl Logo {
-    pub(super) fn width(&self) -> f64 {
-        match self {
-            Self::Image { width, .. } => *width,
-            Self::DeployMark => LOGO_H,
-        }
-    }
-
-    pub(super) fn paint(&self, x: f64, h: f64) -> String {
-        let y = (h - LOGO_H) / 2.0;
-        match self {
-            Self::Image { href, width } => format!(
-                "<image x=\"{}\" y=\"{}\" width=\"{}\" height=\"14\" href=\"{href}\"/>",
-                fmt(x),
-                fmt(y),
-                fmt(*width)
-            ),
-            Self::DeployMark => {
-                let (cx, cy) = (fmt(x + 7.0), fmt(h / 2.0));
-                format!(
-                    "<circle cx=\"{cx}\" cy=\"{cy}\" r=\"2.5\" fill=\"#fff\"/>\
-                     <circle cx=\"{cx}\" cy=\"{cy}\" r=\"5.75\" fill=\"none\" stroke=\"#fff\" stroke-width=\"1.5\"/>"
-                )
-            }
-        }
-    }
-}
 
 /// A pill ready to lay out.
 pub(crate) struct Badge {
@@ -93,15 +55,7 @@ impl Badge {
                 ensure_hash(&resolve_paint(spec.pill.label_color.as_deref(), "555555")),
             ),
         };
-        let logo = spec
-            .pill
-            .logo
-            .as_deref()
-            .and_then(data_uri_logo)
-            .map(|href| {
-                let width = spec.pill.logo_width.unwrap_or(14).clamp(1, 64) as f64;
-                Logo::Image { href, width }
-            });
+        let logo = Logo::from_spec(spec, style);
         // Motion at pill scale is text-level only; ambient is static here.
         let anim = match normalize_animation(spec.animation.as_deref()) {
             "ambient" | "none" => "none",
