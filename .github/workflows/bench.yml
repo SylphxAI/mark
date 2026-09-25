@@ -1,0 +1,26 @@
+name: Bench
+
+# Render latency in release mode, published to the job summary. Not a merge
+# gate: numbers inform the README's performance section.
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ["src/**", "Cargo.toml", "Cargo.lock", "tests/render_bench.rs"]
+permissions:
+  contents: read
+concurrency:
+  group: bench-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Render latency (release, in-process)
+        run: |
+          cargo test --release --locked --test render_bench -- --ignored --nocapture --test-threads=1 \
+            | grep '^|' | tee -a "$GITHUB_STEP_SUMMARY"
