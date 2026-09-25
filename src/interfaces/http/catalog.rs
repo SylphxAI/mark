@@ -22,6 +22,14 @@ pub(crate) async fn api_index(State(st): State<AppState>) -> impl IntoResponse {
             "/?lines={a};{b}",
             "/api?type={art}&text={text}",
             "/static/v1",
+            "/api/v1/card/{stats|langs|streak|repo}?username=",
+            "/api?username=",
+            "/api/top-langs?username=",
+            "/api/pin?username=&repo=",
+            "/streak?user=",
+            "/github/{stars|forks|license|last-commit}/{owner}/{repo}",
+            "/github/v/release/{owner}/{repo}",
+            "/npm/{v|dm|dw|dt|l}/{package}",
             "/api/v1/catalog",
             "/health"
         ]
@@ -51,8 +59,8 @@ pub(crate) async fn catalog() -> impl IntoResponse {
             json!({
                 "grammar": "mark = form × art (type) × paint (theme/color, pill labelColor) × content (text/desc/font) × geometry (width/height, hero layout) × motion (animation)",
                 "themes": "neutral design themes — no personal or company names",
-                "determinism": "same URL, same mark, forever — no clock, no upstream, no state",
-                "live_data": "not offered — use specialist hosts; Mark renders only what the URL says",
+                "determinism": "static marks: same URL, same mark, forever — no clock, no upstream, no state",
+                "live_data": "cards (/api/v1/card/*) and dynamic badges (/github/*, /npm/*) read public GitHub/npm data with no user token; cached for hours, stale on upstream error, never a broken image",
                 "animation_type": "true per-character typewriter with cursor (SMIL)",
                 "icons": "any Simple Icons slug or title, plus every skill-icons id (/icons?i=). Simple Icons path data is CC0-1.0; brand names and logos are trademarks of their owners and their use does not imply endorsement — see https://github.com/simple-icons/simple-icons/blob/develop/DISCLAIMER.md"
             }),

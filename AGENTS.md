@@ -21,7 +21,8 @@ cargo run
 cargo build --release
 ```
 
-Env: see `.env.example` (`PORT`, `HOST`, `PUBLIC_BASE_URL`, `DEFAULT_CREDIT`, `RUST_LOG`).
+Env: see `.env.example` (`PORT`, `HOST`, `PUBLIC_BASE_URL`, `DEFAULT_CREDIT`, `RUST_LOG`;
+optional `GITHUB_TOKEN`/`GITHUB_TOKENS` for live cards).
 
 ## Hazards
 

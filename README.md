@@ -35,6 +35,7 @@ Env (see `.env.example`):
 | `PUBLIC_BASE_URL` | derived | Canonical host `https://mark.sylphx.com`; used in docs / generator copy |
 | `DEFAULT_CREDIT` | `0` | Opt-in soft `mark` watermark (`credit=1`) |
 | `RUST_LOG` | `mark=info` | |
+| `GITHUB_TOKEN` / `GITHUB_TOKENS` | unset | Optional server token(s) for live cards (comma-separated rotate). Unset = anonymous GitHub REST + the public contributions calendar, cached for hours. Never a user token. |
 
 ---
 
@@ -184,6 +185,21 @@ code fonts). `random=true` is deterministic: the order is derived from a hash
 of the URL, so one URL always renders one order. The native form is
 `/api/v1/mark/typing` (`text` works in place of `lines`).
 
+### Live GitHub cards and badges (github-readme-stats / streak-stats / shields compatible)
+
+No token, no signup: swap the host. Cards cache for hours, serve stale on upstream errors, and never render a broken image.
+
+```markdown
+![stats](https://mark.sylphx.com/api?username=octocat&theme=radical)
+![langs](https://mark.sylphx.com/api/top-langs?username=octocat&layout=compact)
+![streak](https://mark.sylphx.com/streak?user=octocat)
+![pin](https://mark.sylphx.com/api/pin?username=octocat&repo=Hello-World)
+![stars](https://mark.sylphx.com/github/stars/octocat/Hello-World)
+![npm](https://mark.sylphx.com/npm/v/react)
+```
+
+Native: `/api/v1/card/{stats|langs|streak|repo}`. Badges: `/github/{stars,forks,license,last-commit}/{owner}/{repo}`, `/github/v/release/{owner}/{repo}`, `/npm/{v,dm,dw,dt,l}/{package}`. Without a server token, commits show as contributions in the last year and top languages weight each repository's primary language by its size.
+
 ### Deploy
 
 ```markdown
@@ -194,7 +210,7 @@ of the URL, so one URL always renders one order. The native form is
 
 ## The contract
 
-- **Determinism:** same URL, same mark, forever. No clock-sampled fills, no upstream, no state, no secrets. (Retired: `timeAuto`/`timeGradient`, GitHub stats/org/repo cards, all legacy capability routes.)
+- **Determinism:** same URL, same mark, forever. No clock-sampled fills, no upstream, no state, no secrets. (Retired: `timeAuto`/`timeGradient`, all legacy capability routes.) Live cards and badges are the one exception (ADR-0005): bounded upstream reads, hour-scale cache (`s-maxage=14400`, `stale-while-revalidate`, `stale-if-error`), a `200` fallback card.
 - **Totality:** rendering never fails. Unknown form → hero, unknown art → `waving` (the shipped default), invalid colors → fallback paint, unknown theme/layout/animation → the documented default.
 - **CSP + escaping:** SVG responses carry `Content-Security-Policy: script-src 'none'` + `X-Content-Type-Options: nosniff`; every user string is escaped; color-bearing attributes accept only validated hex/named tokens.
 - **Cache:** every mark URL pins its bytes (pure function of the URL, including SMIL-animated variants) and caches long as immutable (`max-age=31536000, s-maxage=31536000, immutable` + `ETag` + `CDN-Cache-Control`/`Cloudflare-CDN-Cache-Control`); conditional `If-None-Match` returns `304`. Origin headers are this product's write. Live edge `HIT` on dest extensionless `/api/v1/mark*` + `/badge/*` is Apps (Cloudflare for SaaS Custom Hostname + grey CNAME to `cname.sylphx.com`, plus Cache Everything / eligible-for-cache keyed on the full query string). Hands is generic kube origin only.
