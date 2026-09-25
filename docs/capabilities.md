@@ -1,84 +1,45 @@
 # Mark identity graph
 
 **Status:** Identity registry. Not live proof.
-**Scope:** Mark — stateless SVG marks from one grammar.
-**Cite:** the **ID** column.
-
-This file is the identity graph. Destination stays in [`vision.md`](vision.md). This file and that file own identity, fate, dependency, and oracle. Historical ADRs and [`north-star/DELIVERY-AUTHORITY.md`](north-star/DELIVERY-AUTHORITY.md) do not add identities. If they conflict with this graph on identity or fate, they are leftover.
+**Scope:** Mark (`readme-mark`) — README images from one URL.
+**Decision:** [`adr/ADR-0005-readme-visuals-toolkit.md`](adr/ADR-0005-readme-visuals-toolkit.md)
 
 ```text
 ID | Identity | Fate | Depends on | Done when
 ```
 
-One colloquial name has one row and one fate (`live`, `dead`, or `rename-to:<ID>`). **Depends on** is a truth prerequisite, not a work-queue order. **Done when** is an oracle. This file does not claim the oracle is already true.
-
-The render contract consumes no peer APIs. Mega-clients and `{project}.api.sylphx.com` are not dest. Mark is an ordinary Apps Service; Hands is generic kube origin only.
+One colloquial name has one row and one fate (`live`, `dead`, or
+`rename-to:<ID>`). **Done when** is an oracle, not a claim it is true today.
 
 ## Graph
 
 | ID | Identity | Fate | Depends on | Done when |
 | --- | --- | --- | --- | --- |
-| MARK-GRAMMAR | One-grammar stateless render | live | — | Live `GET https://mark.sylphx.com/api/v1/mark/{form}` for `form∈{hero,pill,strip,profile,deploy}` with dest grammar `type`/`theme`/`color`/pill `labelColor`/`text`/`desc`/`font`/`width`/`height`/hero `layout`/`animation` returns a deterministic SVG; no clock, upstream, or account. The render honors that grammar and nothing else: a retired predecessor knob (`section`, `reversal`, `fontSize`, `descSize`, `fontColor`, `fontAlign`, `fontAlignY`, `descAlign`, `descAlignY`, `rotate`, `stroke`, `strokeWidth`, `textBg`) or a retired id/alias (`badge`, `icons`, `iconsrow`, `card`, `deploymark`; layout `center`/`product`/`oss`/`hero`/`cli`/`mono`; animation aliases such as `bg`/`pulse`/`shine`) is unknown input, never a second vocabulary. Pill dest paint includes `labelColor` when no theme pack. An unknown theme name is not a theme pack. Unknown art renders `waving`, unknown layout renders `default`, unknown animation renders `ambient`, unknown form renders hero (except `identity` → profile), and an unknown theme name is not a theme pack — the explicit `color` (or the default gradient) paints instead. |
-| MARK-BADGE | Shields-style pill shorthand | live | MARK-GRAMMAR | Live `GET /badge/{label}-{message}-{color}` is the same pill as `/api/v1/mark/pill` with those tokens. Query `style`, `theme`, `animation`, `labelColor`, `font`, and `credit` compose the same way as `/pill`. |
-| MARK-SVG | Valid SVG + XSS-safe paint | live | MARK-GRAMMAR | Live SVG is well-formed, user text is escaped, non-canonical paint falls back, and responses carry `Content-Security-Policy: script-src 'none'` plus `X-Content-Type-Options: nosniff`. |
-| MARK-HOST | Canonical customer host | live | MARK-GRAMMAR | Ordinary URL is `https://mark.sylphx.com` and a grammar GET there returns the product SVG. The Apps auto host `mark-web-prod.sylphx.app` is not dest. Naming the locator is not live-success. |
-| MARK-CDN | Immutable URL cache | live | MARK-GRAMMAR, MARK-HOST | Live grammar/badge GET returns origin `Cache-Control: public, max-age=31536000, s-maxage=31536000, immutable` plus a strong ETag, `If-None-Match` → 304, and `CDN-Cache-Control` / `Cloudflare-CDN-Cache-Control`. Origin headers are this product's write. Edge `HIT` is Apps (SaaS Custom Hostname + cache rule keyed on the full query), not this identity. Hands is generic kube origin only. |
-| MARK-CATALOG | Public vocabulary | live | MARK-GRAMMAR | Live `GET /api/v1/catalog` publishes forms, art, layouts, themes, icons, fonts, and limits that the live render honors, plus `notes.grammar` that matches dest grammar (`mark = form × art (type) × paint (theme/color, pill labelColor) × content (text/desc/font) × geometry (width/height, hero layout) × motion (animation)`). Theme and icon ids contain no personal or company names. |
-| MARK-STUDIO | URL composer | live | MARK-GRAMMAR, MARK-CATALOG | Live `GET /` is the no-account composer: catalog-backed SVG preview, copy of the public mark URL, copy of the README markdown embed `![alt](url)`, and download of that SVG. Loading the studio with a public mark URL recovers dest composer state, including pill `labelColor` when no theme pack. The studio page uses system font stacks only — no webfont origin. Noscript still offers grammar links. |
-| MARK-PROFILE | Text-driven profile card | live | MARK-GRAMMAR | Live `/api/v1/mark/profile?text&desc` renders name and tagline from the URL. Retired `identity` URLs map here, not silent hero. |
-| MARK-DEPLOY | Conversion mark | live | MARK-GRAMMAR | Live `/api/v1/mark/deploy?service=…` renders the “deployed on Sylphx” pill. |
-| MARK-STATS | Live GitHub stats / clock / upstream as product authority | dead | — | Must not return as a silent dependency. Reintroduction needs an explicit capability and a network contract. |
-| MARK-IDENTITY | Fleet identity form | rename-to:MARK-PROFILE | — | Not a second product. Successor mapping is dest. |
+| MARK-GRAMMAR | Native render grammar | live | — | `GET /api/v1/mark/{form}` renders a deterministic SVG for every form in `/api/v1/catalog`; unknown input normalizes (unknown form → hero, unknown art → `waving`, unknown theme/layout/animation → default). |
+| MARK-FOREVER | Public URLs never break | live | MARK-GRAMMAR | Every `tests/snapshots/legacy-*.url` answers `200 image/svg+xml` on the live host. |
+| MARK-BADGE | Shields-compatible static badge | live | MARK-GRAMMAR, MARK-ICONS | `/badge/{label}-{message}-{color}` (and `{message}-{color}`) honors shields escaping (`--`, `__`, `_`), `style` (`flat` `flat-square` `plastic` `for-the-badge` `social`), `logo`, `logoColor`, `labelColor`, `color`, and the `.svg` suffix. |
+| MARK-DIALECTS | Drop-in URL dialects | live | MARK-GRAMMAR | A URL written for shields, skill-icons, readme-typing-svg, capsule-render, or github-readme-stats renders the equivalent image when only the host changes. |
+| MARK-ICONS | Brand icon set | live | — | Simple Icons slugs (thousands) plus short aliases render as badge logos and as tech-icon tiles. |
+| MARK-TYPING | Typing-text SVG | live | MARK-GRAMMAR | `/typing?lines=…` renders an animated typing SVG that works inside `<img>`. |
+| MARK-LIVE | Live GitHub data cards and badges | live | MARK-GRAMMAR | Stats, top-languages, streak, and repo cards plus dynamic badges render from GitHub/npm data with no user token, a bounded cached upstream, stale-on-error, and a `200` fallback card. |
+| MARK-SVG | Valid SVG + XSS-safe paint | live | MARK-GRAMMAR | SVG is well-formed, user text is escaped, non-canonical paint falls back, and responses carry `Content-Security-Policy: script-src 'none'` plus `X-Content-Type-Options: nosniff`. |
+| MARK-CDN | Cacheable responses | live | MARK-GRAMMAR | Static routes send immutable long cache + strong ETag + `304`; live routes send hour-scale `s-maxage` with `stale-while-revalidate`/`stale-if-error`; every image route also answers with a `.svg` suffix for edge caching. |
+| MARK-CATALOG | Public vocabulary | live | MARK-GRAMMAR | `/api/v1/catalog` publishes forms, art, layouts, themes, icons, fonts, and limits that the render honors. Theme ids stay neutral. |
+| MARK-STUDIO | Composer at `/` | live | MARK-CATALOG | `/` offers live preview, presets, copy URL / markdown / HTML, and recovers state from a pasted URL. |
+| MARK-HOST | Canonical host | live | MARK-GRAMMAR | `https://mark.sylphx.com` serves the product. |
+| MARK-PROFILE | Text-driven profile card | live | MARK-GRAMMAR | `/api/v1/mark/profile?text&desc` renders name and tagline from the URL; `identity` maps here. |
+| MARK-DEPLOY | Conversion mark | live | MARK-GRAMMAR | `/api/v1/mark/deploy?service=…` renders the "deployed on Sylphx" pill. |
+| MARK-STATS | Live GitHub stats | rename-to:MARK-LIVE | — | Superseded by MARK-LIVE (ADR-0005). |
+| MARK-IDENTITY | Fleet identity form | rename-to:MARK-PROFILE | — | Not a second product. |
 
-## Release boundary (GOV-017)
+## Release boundary
 
-Company ADR-030 consequence (Owner runbook GOVERNANCE-AUDIT-2026-08-28,
-row GOV-017): every Active product declares its public probe, owned
-manifest/migration writers, consumed receipts, runtime effects, and
-forbidden writes. Declared from this graph and this repository's docs;
-not live proof. Facts not establishable here are `Unknown`, never green.
-
-- **Public probe:** `GET https://mark.sylphx.com/api/v1/mark/{form}`
-  (or `/badge/{label}-{message}-{color}`) with
-  form+art+paint+content+geometry+motion returns a deterministic,
-  XSS-safe SVG with canonical hex-only paint tokens and no clock,
-  upstream, or account (`MARK-GRAMMAR`, `MARK-SVG`, `MARK-HOST`). That
-  anonymous fetch is the cheapest customer-visible falsifier. `cargo
-  test` green and `GET /health` 200 are not this probe (vision,
-  README). Naming the locator is not a live-success claim.
-- **Owned manifest/migration writers:** this repository owns
-  `sylphx.toml` (dockerfile `web`, `path_prefixes`, health `/health`,
-  `PUBLIC_BASE_URL`) as a customer desired spec. Mark is stateless and
-  owns no database-schema migration writer. It owns no kube or
-  Release-intent writer: Apps admits production Release; Hands
-  realizes generic kube origin. The authority that admits Mark's own
-  production Release is not named in this graph — `Unknown`. The stale
-  Apps auto host `mark-web-prod.sylphx.app` is not a writer.
-  `preview_deploys = true` is preview autoDeploy only; it is not
-  production Promote. Do not mint a Mark-owned `MARK-RELEASE` writer.
-- **Consumed receipts:** none for the render contract — dest forbids
-  clock, upstream, and account (`MARK-GRAMMAR`, `MARK-STATS` `dead`).
-  Apps Deployment and Hands realization receipts for the
-  `sylphx.toml` service are consumed as a customer, not owned.
-- **Runtime effects:** render and serve deterministic SVG (and the
-  catalog / studio shell) from URL parameters only. No persistence, no
-  account write, no upstream fetch, no schema change. Origin immutable
-  cache headers are this product's write (`MARK-CDN`). Edge `HIT` is
-  Apps, not this product.
-- **Forbidden writes:** never a second render authority or grammar
-  (vision). Predecessor capsule-render typography and placement knobs
-  are leftover, not dest. Never live GitHub stats, clock, or upstream
-  as product authority (`MARK-STATS` `dead`), including a webfont
-  origin on the studio page. Never kube, HTTPRoute, or Journal
-  `spec` writes. Never `{project}.api.sylphx.com` or a mega-client
-  (ADR-038). Never a GitHub check name, webhook receipt, or
-  deploy-status projection as Release admission or `Live`. Never
-  `GET /health` as the product oracle. Never a runtime Apps auto host
-  as the vanity/canonical URL (`MARK-HOST`). Never personal or company
-  names in theme definitions. Never claim generated SDK consumption
-  on the render path.
-
-Unknown in this declaration: which Apps authority admits this
-product's production Release; whether the current production Release
-matches HEAD or passes the public probe. Those are live- or
-owning-lease facts, not greened here.
+- **Public probe:** anonymous `GET https://mark.sylphx.com/badge/build-passing-brightgreen`
+  and one URL per dialect return SVG. `/health` 200 is deploy proof
+  (`revision`), not product proof.
+- **Owned writers:** `sylphx.toml` (the Apps service spec). No database, no
+  migrations.
+- **Runtime effects:** render SVG; live routes read public GitHub/npm APIs
+  through a bounded in-memory cache. No persistence.
+- **Forbidden writes:** kube, HTTPRoute, or platform state; any write to
+  GitHub or npm.

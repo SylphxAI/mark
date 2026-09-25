@@ -7,16 +7,13 @@ use mark::{app, AppState};
 use tower::ServiceExt;
 
 fn state() -> AppState {
-    AppState {
-        default_credit: false,
-        public_base: "http://test.local".into(),
-    }
+    AppState::for_tests()
 }
 
 fn state_with_credit() -> AppState {
     AppState {
         default_credit: true,
-        public_base: "http://test.local".into(),
+        ..AppState::for_tests()
     }
 }
 

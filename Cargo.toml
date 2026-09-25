@@ -3,9 +3,9 @@ name = "mark"
 version = "0.1.0"
 edition = "2021"
 license = "MIT"
-description = "Sylphx Mark — embeddable image API (URL → SVG)"
+description = "Beautiful README images from one URL: banners, badges, typing text, tech icons, GitHub stats cards"
 authors = ["SylphxAI"]
-repository = "https://github.com/SylphxAI/mark"
+repository = "https://github.com/SylphxAI/readme-mark"
 publish = false
 
 [[bin]]

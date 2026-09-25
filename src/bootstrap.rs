@@ -19,6 +19,18 @@ pub struct AppState {
     pub public_base: String,
 }
 
+impl AppState {
+    /// Process state for in-process contract tests: no credit, a local base
+    /// URL. New process fields get their test default here, once, instead of
+    /// in every test file.
+    pub fn for_tests() -> Self {
+        Self {
+            default_credit: false,
+            public_base: "http://test.local".into(),
+        }
+    }
+}
+
 /// Runtime configuration loaded from the environment (imperative shell).
 #[derive(Debug, Clone)]
 pub struct Config {
