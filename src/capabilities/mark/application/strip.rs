@@ -1,13 +1,16 @@
 //! Strip application: pure MarkSpec → strip SVG (the tech identity row).
 
 use crate::capabilities::mark::domain::color::contrasting_fg;
-use crate::capabilities::mark::domain::icons::{glyph, normalize_id};
+use crate::capabilities::mark::domain::icons::{paint, resolve};
 use crate::capabilities::mark::domain::motion::group_wrap;
 use crate::capabilities::mark::domain::svg::{esc, svg_doc};
 use crate::capabilities::mark::domain::theme;
 use crate::capabilities::mark::domain::{
     normalize_animation, normalize_hex_token, MarkSpec, MAX_ICONS,
 };
+
+/// Glyph box inside a 48px tile (Simple Icons draw edge to edge on 24 units).
+const GLYPH: u32 = 28;
 
 pub fn render(spec: &MarkSpec) -> String {
     let ids: Vec<String> = spec
@@ -18,7 +21,7 @@ pub fn render(spec: &MarkSpec) -> String {
         .split([',', '|', ' '])
         .map(str::trim)
         .filter(|s| !s.is_empty())
-        .map(normalize_id)
+        .map(str::to_ascii_lowercase)
         .take(MAX_ICONS)
         .collect();
 
@@ -50,17 +53,23 @@ pub fn render(spec: &MarkSpec) -> String {
     let (open, close) = group_wrap(anim, 0, w, h);
     let mut body = format!("<rect width=\"{w}\" height=\"{h}\" rx=\"12\" fill=\"{bg}\"/>{open}");
     let fallback = "<rect x=\"6\" y=\"6\" width=\"20\" height=\"20\" rx=\"4\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"/><text x=\"16\" y=\"20\" text-anchor=\"middle\" font-size=\"8\" fill=\"currentColor\">?</text>";
+    let inset = (tile - GLYPH) / 2;
     for (i, id) in ids.iter().enumerate() {
         let col = (i as u32) % per;
         let row = (i as u32) / per;
         let x = 8 + col * (tile + gap);
         let y = 8 + row * (tile + gap);
-        let g = glyph(id).unwrap_or(fallback);
+        let g = match resolve(id) {
+            Some(icon) => format!(
+                "<g transform=\"translate({inset},{inset})\">{}</g>",
+                paint(&icon, f64::from(GLYPH), "currentColor")
+            ),
+            None => format!("<g transform=\"translate(8,8)\">{fallback}</g>"),
+        };
         body.push_str(&format!(
             "<g transform=\"translate({x},{y})\" color=\"{fg}\">\
              <rect width=\"{tile}\" height=\"{tile}\" rx=\"10\" fill=\"#ffffff\" fill-opacity=\"0.06\"/>\
-             <g transform=\"translate(8,8)\">{g}</g>\
-             <title>{}</title></g>",
+             {g}<title>{}</title></g>",
             esc(id)
         ));
     }
@@ -69,5 +78,5 @@ pub fn render(spec: &MarkSpec) -> String {
 }
 
 fn ensure_fg(hex: &str) -> String {
-    contrasting_fg(hex.trim_start_matches('#'))
+    format!("#{}", contrasting_fg(hex.trim_start_matches('#')))
 }

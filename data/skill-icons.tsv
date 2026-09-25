@@ -1,0 +1,290 @@
+# skill-icons vocabulary (https://github.com/tandpfun/skill-icons) mapped onto Mark glyphs.
+# icon  <skill-icons name>  <target>  [hex]   target: a Simple Icons slug, hand:<glyph id>, or mono:<letters>
+# short <short name>  <skill-icons name>     skill-icons shortNames, verbatim
+# mark  <short name>  <skill-icons name>     Mark's own pre-compatibility spellings
+short	js	javascript
+short	ts	typescript
+short	py	python
+short	tailwind	tailwindcss
+short	vue	vuejs
+short	nuxt	nuxtjs
+short	go	golang
+short	cf	cloudflare
+short	wasm	webassembly
+short	postgres	postgresql
+short	k8s	kubernetes
+short	next	nextjs
+short	mongo	mongodb
+short	md	markdown
+short	ps	photoshop
+short	ai	illustrator
+short	pr	premiere
+short	ae	aftereffects
+short	scss	sass
+short	sc	scala
+short	net	dotnet
+short	gatsbyjs	gatsby
+short	gql	graphql
+short	vlang	v
+short	amazonwebservices	aws
+short	bots	discordbots
+short	express	expressjs
+short	googlecloud	gcp
+short	mui	materialui
+short	windi	windicss
+short	unreal	unrealengine
+short	nest	nestjs
+short	ktorio	ktor
+short	pwsh	powershell
+short	au	audition
+short	rollup	rollupjs
+short	rxjs	reactivex
+short	rxjava	reactivex
+short	ghactions	githubactions
+short	sklearn	scikitlearn
+mark	node	nodejs
+mark	c#	cs
+mark	c-sharp	cs
+mark	csharp	cs
+mark	tf	terraform
+mark	html5	html
+mark	css3	css
+icon	ableton	mono:Ab	000000
+icon	activitypub	activitypub
+icon	actix	actix
+icon	adonis	adonisjs
+icon	aftereffects	mono:Ae	9999FF
+icon	aiscript	mono:AiS	86B300
+icon	alpinejs	alpinedotjs
+icon	anaconda	anaconda
+icon	androidstudio	androidstudio
+icon	angular	angular
+icon	ansible	ansible
+icon	apollo	apollographql
+icon	apple	apple
+icon	appwrite	appwrite
+icon	arch	archlinux
+icon	arduino	arduino
+icon	astro	astro
+icon	atom	mono:At	66595C
+icon	audition	mono:Au	00E4BB
+icon	autocad	autocad
+icon	aws	hand:aws	FF9900
+icon	azul	mono:Az	2C5E9E
+icon	azure	hand:azure	0078D4
+icon	babel	babel
+icon	bash	gnubash
+icon	bevy	bevy
+icon	bitbucket	bitbucket
+icon	blender	blender
+icon	bootstrap	bootstrap
+icon	bsd	bsd
+icon	bun	bun
+icon	c	c
+icon	cassandra	apachecassandra
+icon	clion	clion
+icon	clojure	clojure
+icon	cloudflare	cloudflare
+icon	cmake	cmake
+icon	codepen	mono:CP	000000
+icon	coffeescript	coffeescript
+icon	cpp	cplusplus
+icon	crystal	crystal
+icon	cs	hand:csharp	512BD4
+icon	css	css
+icon	cypress	cypress
+icon	d3	d3
+icon	dart	dart
+icon	debian	debian
+icon	deno	deno
+icon	devto	devdotto
+icon	discord	discord
+icon	discordbots	discord
+icon	discordjs	discorddotjs
+icon	django	django
+icon	docker	docker
+icon	dotnet	dotnet
+icon	dynamodb	mono:Dy	4053D6
+icon	eclipse	eclipseide
+icon	elasticsearch	elasticsearch
+icon	electron	electron
+icon	elixir	elixir
+icon	elysia	mono:Ely	F06292
+icon	emacs	gnuemacs
+icon	ember	emberdotjs
+icon	emotion	mono:Em	D36AC2
+icon	expressjs	express
+icon	fastapi	fastapi
+icon	fediverse	mono:Fe	A730B8
+icon	figma	figma
+icon	firebase	firebase
+icon	flask	flask
+icon	flutter	flutter
+icon	forth	mono:Fo	EF5350
+icon	fortran	fortran
+icon	gamemakerstudio	gamemaker
+icon	gatsby	gatsby
+icon	gcp	googlecloud
+icon	gherkin	cucumber
+icon	git	git
+icon	github	github
+icon	githubactions	githubactions
+icon	gitlab	gitlab
+icon	gmail	gmail
+icon	godot	godotengine
+icon	golang	go
+icon	gradle	gradle
+icon	grafana	grafana
+icon	graphql	graphql
+icon	gtk	gtk
+icon	gulp	gulp
+icon	haskell	haskell
+icon	haxe	haxe
+icon	haxeflixel	haxe
+icon	heroku	mono:H	430098
+icon	hibernate	hibernate
+icon	html	html5
+icon	htmx	htmx
+icon	idea	intellijidea
+icon	illustrator	mono:Ai	FF9A00
+icon	instagram	instagram
+icon	ipfs	ipfs
+icon	java	hand:java	ED8B00
+icon	javascript	javascript
+icon	jenkins	jenkins
+icon	jest	jest
+icon	jquery	jquery
+icon	julia	julia
+icon	kafka	apachekafka
+icon	kali	kalilinux
+icon	kotlin	kotlin
+icon	ktor	ktor
+icon	kubernetes	kubernetes
+icon	laravel	laravel
+icon	latex	latex
+icon	less	less
+icon	linkedin	mono:in	0A66C2
+icon	linux	linux
+icon	lit	lit
+icon	lua	lua
+icon	markdown	markdown
+icon	mastodon	mastodon
+icon	materialui	mui
+icon	matlab	mono:ML	E16737
+icon	maven	apachemaven
+icon	mint	linuxmint
+icon	misskey	misskey
+icon	mongodb	mongodb
+icon	mysql	mysql
+icon	neovim	neovim
+icon	nestjs	nestjs
+icon	netlify	netlify
+icon	nextjs	nextdotjs
+icon	nginx	nginx
+icon	nim	nim
+icon	nix	nixos
+icon	nodejs	nodedotjs
+icon	notion	notion
+icon	npm	npm
+icon	nuxtjs	nuxt
+icon	obsidian	obsidian
+icon	ocaml	ocaml
+icon	octave	octave
+icon	opencv	opencv
+icon	openshift	redhatopenshift
+icon	openstack	openstack
+icon	p5js	p5dotjs
+icon	perl	perl
+icon	photoshop	mono:Ps	31A8FF
+icon	php	php
+icon	phpstorm	phpstorm
+icon	pinia	pinia
+icon	pkl	mono:pkl	6B9543
+icon	plan9	mono:P9	E53935
+icon	planetscale	planetscale
+icon	pnpm	pnpm
+icon	postgresql	postgresql
+icon	postman	postman
+icon	powershell	mono:>_	5391FE
+icon	premiere	mono:Pr	EA77FF
+icon	prisma	prisma
+icon	processing	processingfoundation
+icon	prometheus	prometheus
+icon	pug	pug
+icon	pycharm	pycharm
+icon	python	python
+icon	pytorch	pytorch
+icon	qt	qt
+icon	r	r
+icon	rabbitmq	rabbitmq
+icon	rails	rubyonrails
+icon	raspberrypi	raspberrypi
+icon	react	react
+icon	reactivex	reactivex
+icon	redhat	redhat
+icon	redis	redis
+icon	redux	redux
+icon	regex	mono:.*	F44336
+icon	remix	remix
+icon	replit	replit
+icon	rider	rider
+icon	robloxstudio	robloxstudio
+icon	rocket	rocket
+icon	rollupjs	rollupdotjs
+icon	ros	ros
+icon	ruby	ruby
+icon	rust	rust
+icon	sass	sass
+icon	scala	scala
+icon	scikitlearn	scikitlearn
+icon	selenium	selenium
+icon	sentry	sentry
+icon	sequelize	sequelize
+icon	sketchup	sketchup
+icon	solidity	solidity
+icon	solidjs	solid
+icon	spotify	spotify
+icon	spring	spring
+icon	sqlite	sqlite
+icon	stackoverflow	stackoverflow
+icon	styledcomponents	styledcomponents
+icon	sublime	sublimetext
+icon	supabase	supabase
+icon	svelte	svelte
+icon	svg	svg
+icon	swift	swift
+icon	symfony	symfony
+icon	tailwindcss	tailwindcss
+icon	tauri	tauri
+icon	tensorflow	tensorflow
+icon	terraform	terraform
+icon	threejs	threedotjs
+icon	twitter	x
+icon	typescript	typescript
+icon	ubuntu	ubuntu
+icon	unity	unity
+icon	unrealengine	unrealengine
+icon	v	v
+icon	vala	vala
+icon	vercel	vercel
+icon	verilog	mono:Vlg	1A348F
+icon	vim	vim
+icon	visualstudio	mono:VS	5C2D91
+icon	vite	vite
+icon	vitest	vitest
+icon	vscode	hand:vscode	007ACC
+icon	vscodium	vscodium
+icon	vuejs	vuedotjs
+icon	vuetify	vuetify
+icon	webassembly	webassembly
+icon	webflow	webflow
+icon	webpack	webpack
+icon	webstorm	webstorm
+icon	windicss	mono:W	48B0F1
+icon	windows	hand:windows	0078D4
+icon	wordpress	wordpress
+icon	workers	cloudflareworkers
+icon	xd	mono:Xd	FF61F6
+icon	yarn	yarn
+icon	yew	yew
+icon	zig	zig

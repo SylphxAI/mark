@@ -17,6 +17,7 @@ pub(crate) async fn api_index(State(st): State<AppState>) -> impl IntoResponse {
             "/api/v1/mark",
             "/api/v1/mark/{form}",
             "/badge/{label}-{message}-{color}",
+            "/icons?i={ids}",
             "/api/v1/catalog",
             "/health"
         ]
@@ -35,6 +36,8 @@ pub(crate) async fn catalog() -> impl IntoResponse {
                 "pill_label": 80,
                 "pill_message": 120,
                 "strip_icons": 60,
+                "tile_icons": 300,
+                "tile_perline": 50,
                 "deploy_service": 40
             }),
         );
@@ -45,7 +48,8 @@ pub(crate) async fn catalog() -> impl IntoResponse {
                 "themes": "neutral design themes — no personal or company names",
                 "determinism": "same URL, same mark, forever — no clock, no upstream, no state",
                 "live_data": "not offered — use specialist hosts; Mark renders only what the URL says",
-                "animation_type": "true per-character typewriter with cursor (SMIL)"
+                "animation_type": "true per-character typewriter with cursor (SMIL)",
+                "icons": "any Simple Icons slug or title, plus every skill-icons id (/icons?i=). Simple Icons path data is CC0-1.0; brand names and logos are trademarks of their owners and their use does not imply endorsement — see https://github.com/simple-icons/simple-icons/blob/develop/DISCLAIMER.md"
             }),
         );
     }
