@@ -31,7 +31,9 @@ optional `GITHUB_TOKEN`/`GITHUB_TOKENS` for live cards).
   are history where they conflict.
 - **URLs are forever.** Anything once public on `mark.sylphx.com` must keep
   answering `200 image/svg+xml`. Add a `tests/snapshots/legacy-*.url` case
-  when you touch a public route; never delete one.
+  when you touch a public route; never delete one. `contract-*` cases are URL
+  shapes other products emit (repomap's `/badge/agent--ready-N%2F100-color`):
+  changing them needs the consumer released in the same crossing.
 - Static routes are pure functions of the URL (no clock, no upstream, immutable
   cache). Only the live capability may read upstream or a clock, bounded by
   timeouts, cache, stale-on-error, and a `200` fallback card.

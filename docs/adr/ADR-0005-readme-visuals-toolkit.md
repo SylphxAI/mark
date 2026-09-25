@@ -94,3 +94,22 @@ Mark renders good SVG, but almost nobody can find it or switch to it:
   allowed exactly the exceptions stated above, and nothing more.
 - Visual regressions are caught by byte snapshots
   (`tests/visual_snapshots.rs`).
+
+## Amendment (2026-09-25, owner)
+
+- **Clean cut on pre-launch URLs.** Mark was never promoted, and the only
+  embeds were our own. Routes retired before this ADR (`/api/v1/banner`,
+  `/api/v1/deploy`, and the other legacy capability routes) stay retired.
+  Every internal README and site that used them was migrated to
+  `/api/v1/mark/*` in the same program: 24 repositories plus the
+  `SylphxAI/.github` org profile. From this release on, decision 3 applies
+  in full: a URL that works today keeps working.
+- **Name and host.** The repository is `SylphxAI/readme-mark`. The host
+  stays `https://mark.sylphx.com`: it is free, short, matches the name, and
+  already sits behind the edge cache. A dedicated domain could be added
+  later alongside it.
+- **Live cards are a priority.** Stats, streak, top languages, repo pins,
+  and trophies are free for everyone, with no user token. A server-side
+  GitHub token in the platform secret `GITHUB_TOKEN` raises capacity when
+  set. Without it, the anonymous path (REST plus the public contributions
+  calendar) runs behind the cache.

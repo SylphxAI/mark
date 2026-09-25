@@ -12,6 +12,10 @@
 //!   are embedded in READMEs we do not control and must answer forever; their
 //!   bytes may change (a polish), their status and content type may not.
 //!
+//! - Cases named `contract-*` are URL shapes another product emits (for
+//!   example SylphxAI/repomap's `agent-ready` badge). Their path grammar is a
+//!   dependency: changing it needs the consumer updated in the same crossing.
+//!
 //! One file pair per case keeps parallel changes free of merge conflicts.
 
 use axum::body::Body;

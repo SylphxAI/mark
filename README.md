@@ -1,258 +1,270 @@
-# Mark
+<p align="center">
+  <a href="https://mark.sylphx.com">
+    <img src="https://mark.sylphx.com/api/v1/mark/hero.svg?type=waving&color=0:0F172A,50:5B8CFF,100:FF8A3D&height=240&text=readme-mark&desc=Beautiful%20README%20images%20from%20one%20URL" width="100%" alt="readme-mark — beautiful README images from one URL" />
+  </a>
+</p>
 
-Mark is the dependable image language for software identity: a maintainer expresses a complete mark in one public URL, embeds that URL in a README, site, or product surface, and receives a polished SVG without an account, asset build, or data dependency.
+<p align="center">
+  <a href="https://github.com/SylphxAI/readme-mark/stargazers"><img src="https://mark.sylphx.com/github/stars/SylphxAI/readme-mark.svg?style=flat-square&logo=github&color=5b8cff&labelColor=0f172a" alt="GitHub stars" /></a>
+  <a href="LICENSE"><img src="https://mark.sylphx.com/badge/license-MIT-ff8a3d.svg?style=flat-square&labelColor=0f172a" alt="MIT license" /></a>
+  <a href="https://mark.sylphx.com"><img src="https://mark.sylphx.com/badge/token-not_needed-3dd68c.svg?style=flat-square&labelColor=0f172a" alt="no token needed" /></a>
+  <img src="https://mark.sylphx.com/badge/built_with-Rust-dea584.svg?style=flat-square&logo=rust&labelColor=0f172a" alt="built with Rust" />
+</p>
 
-- Ordinary: https://mark.sylphx.com — product-declared customer host (`docs/vision.md` shipped terminal, `PUBLIC_BASE_URL`, `sylphx.toml`). A `200` is not the product contract.
-- Preview: `none` — this repository has no current honest preview URL. GitHub Pages and deployments are absent. `https://mark-web-prod.sylphx.app` is a stale platform auto host (404), not a preview.
-- Vision: [`docs/vision.md`](docs/vision.md)
-- Capabilities: [`docs/capabilities.md`](docs/capabilities.md)
+<p align="center">
+  <b>Animated banners · shields-compatible badges · typing text · 3,400+ tech icons · GitHub stats, streak &amp; trophy cards</b><br/>
+  Free. No token. No signup. One URL per image.<br/><br/>
+  <a href="https://mark.sylphx.com"><b>Open the studio →</b></a>
+</p>
 
-Embeddable **SVG** marks — hero banners, status pills, tech strips, profile cards, and “deployed on Sylphx” conversion marks — from **one grammar** and **one URL**, rendered deterministically. Built in **Rust** (`axum`). Stateless. No clock, no upstream, no account. CDN-friendly.
+---
 
-## Quick start
+Every image in this README is a live URL served by readme-mark. Paste a URL into
+any README, issue, or site and it renders — nothing to install, no account, no
+API key.
 
-```bash
-cargo run
-# → http://127.0.0.1:8787
+**Already using shields.io, capsule-render, skill-icons, readme-typing-svg or
+github-readme-stats?** Keep your URL and change only the host
+([dialects](#switch-by-changing-the-host)).
+
+## Gallery
+
+### Banners — 42 animated art types
+
+<img src="https://mark.sylphx.com/api/v1/mark/hero.svg?type=waving&color=0:1A1A2E,50:4A90E2,100:D87000&text=Hello%2C%20README&desc=Animated%20waves%2C%20your%20colors" width="100%" alt="waving banner" />
+<img src="https://mark.sylphx.com/api/v1/mark/hero.svg?type=constellation&color=0:0B1026,100:7C3AED&text=Open%20source&desc=Built%20in%20public&height=200" width="100%" alt="constellation banner" />
+<img src="https://mark.sylphx.com/api/v1/mark/hero.svg?type=aurora&theme=tokyonight&text=Aurora&desc=Soft%20light%20for%20your%20project&height=200" width="100%" alt="aurora banner" />
+
+```md
+![](https://mark.sylphx.com/api/v1/mark/hero?type=waving&text=Hello%2C%20README&desc=Animated%20waves)
 ```
 
-```bash
-cargo test
-cargo build --release
+### Badges — shields syntax, plus 3,400+ logos
+
+<p>
+  <img src="https://mark.sylphx.com/badge/build-passing-brightgreen.svg" alt="build passing" />
+  <img src="https://mark.sylphx.com/badge/license-MIT-blue.svg?style=flat-square" alt="license MIT" />
+  <img src="https://mark.sylphx.com/badge/made_with-Rust-dea584.svg?style=for-the-badge&logo=rust&labelColor=0d1117" alt="made with Rust" />
+  <img src="https://mark.sylphx.com/badge/docker-ready-2496ED.svg?logo=docker&logoColor=white" alt="docker ready" />
+  <img src="https://mark.sylphx.com/badge/chat-discord-5865F2.svg?style=social&logo=discord" alt="discord" />
+</p>
+
+```md
+![](https://mark.sylphx.com/badge/made_with-Rust-dea584?style=for-the-badge&logo=rust)
 ```
 
-```bash
-docker build --build-arg GIT_SHA="$(git rev-parse HEAD)" -t mark .
-docker run --rm -p 8787:8787 mark
+### Score badges
+
+<p>
+  <img src="https://mark.sylphx.com/api/v1/mark/score.svg?label=agent-ready&value=92" alt="agent-ready 92" />
+  <img src="https://mark.sylphx.com/api/v1/mark/score.svg?label=coverage&value=74&style=flat-square" alt="coverage 74" />
+  <img src="https://mark.sylphx.com/api/v1/mark/score.svg?label=quality&value=8&max=10&style=for-the-badge" alt="quality 8/10" />
+</p>
+
+A progress ring and automatic color grading (red → bright green) from `value` and `max`.
+
+### Typing text
+
+<img src="https://mark.sylphx.com/typing.svg?lines=Hi%20there%2C%20I%27m%20a%20developer;I%20build%20tools%20for%20the%20web;Welcome%20to%20my%20README&center=true&vCenter=true&width=520&height=50&color=5B8CFF" alt="typing text" />
+
+```md
+![](https://mark.sylphx.com/typing?lines=Hi%20there;I%20build%20tools&center=true)
 ```
 
-Env (see `.env.example`):
+### Tech icons — every Simple Icons brand
+
+<img src="https://mark.sylphx.com/icons.svg?i=rust,ts,react,nextjs,tailwind,docker,kubernetes,postgres,redis,go,python,bun" alt="tech icons" />
+<br/>
+<img src="https://mark.sylphx.com/icons.svg?i=figma,vim,linux,git,github,cloudflare,vercel,graphql,svelte,vue&theme=light" alt="tech icons, light" />
+
+```md
+![](https://mark.sylphx.com/icons?i=rust,ts,react,docker&theme=dark)
+```
+
+### GitHub stats — live, cached, no token
+
+<p>
+  <img src="https://mark.sylphx.com/api?username=torvalds&show_icons=true&theme=tokyonight" height="165" alt="GitHub stats" />
+  <img src="https://mark.sylphx.com/api/top-langs.svg?username=torvalds&layout=compact&theme=tokyonight" height="165" alt="top languages" />
+</p>
+<p>
+  <img src="https://mark.sylphx.com/streak.svg?user=torvalds&theme=tokyonight" height="165" alt="contribution streak" />
+  <img src="https://mark.sylphx.com/api/pin.svg?username=torvalds&repo=linux&theme=tokyonight" height="120" alt="repository card" />
+</p>
+
+<img src="https://mark.sylphx.com/trophy.svg?username=torvalds&theme=tokyonight&column=7" width="100%" alt="GitHub trophies" />
+
+```md
+![](https://mark.sylphx.com/api?username=YOUR_NAME&show_icons=true)
+![](https://mark.sylphx.com/api/top-langs?username=YOUR_NAME&layout=compact)
+![](https://mark.sylphx.com/streak?user=YOUR_NAME)
+![](https://mark.sylphx.com/trophy?username=YOUR_NAME)
+```
+
+Dynamic badges work the same way: `/github/stars/{owner}/{repo}`,
+`/github/v/release/{owner}/{repo}`, `/npm/v/{package}`, `/npm/dm/{package}`.
+
+### Profile cards
+
+<img src="https://mark.sylphx.com/api/v1/mark/profile.svg?text=Ada%20Lovelace&desc=Analytical%20engines%20and%20poetry&theme=tokyonight" width="49%" alt="profile card" />
+<img src="https://mark.sylphx.com/api/v1/mark/profile.svg?text=Alan%20Turing&desc=Machines%20that%20think&type=wave&theme=ocean" width="49%" alt="profile card with art" />
+
+## Switch by changing the host
+
+readme-mark reads the URL formats you already use. Keep the path and query,
+change the host:
+
+| You have | Change it to |
+| --- | --- |
+| `img.shields.io/badge/build-passing-brightgreen` | `mark.sylphx.com/badge/build-passing-brightgreen` |
+| `img.shields.io/github/stars/owner/repo` | `mark.sylphx.com/github/stars/owner/repo` |
+| `img.shields.io/npm/v/package` | `mark.sylphx.com/npm/v/package` |
+| `capsule-render.vercel.app/api?type=waving&text=Hi` | `mark.sylphx.com/api?type=waving&text=Hi` |
+| `skillicons.dev/icons?i=rust,ts` | `mark.sylphx.com/icons?i=rust,ts` |
+| `readme-typing-svg.demolab.com?lines=Hello;World` | `mark.sylphx.com/?lines=Hello;World` |
+| `github-readme-stats.vercel.app/api?username=you` | `mark.sylphx.com/api?username=you` |
+| `github-readme-stats.vercel.app/api/top-langs?username=you` | `mark.sylphx.com/api/top-langs?username=you` |
+| `github-readme-stats.vercel.app/api/pin?username=you&repo=r` | `mark.sylphx.com/api/pin?username=you&repo=r` |
+| `streak-stats.demolab.com?user=you` | `mark.sylphx.com/?user=you` |
+| `github-profile-trophy.vercel.app/?username=you` | `mark.sylphx.com/?username=you` |
+
+Or paste any of those URLs into the [studio](https://mark.sylphx.com) and edit it there.
+
+## Why readme-mark
+
+- **Free, with no token.** You never paste a personal access token. Live cards read public GitHub data on the server, with caching.
+- **Never a broken image.** Unknown parameters fall back to defaults. If GitHub is slow or rate limited, you get the last good card; if there is none yet, a calm "temporarily unavailable" card, never a broken-image icon.
+- **Fast.** Rendering takes microseconds, not milliseconds (see [Performance](#performance)). Static images are immutable and cacheable for a year, and `.svg` URLs are served from the edge. Live cards are cached for hours.
+- **Pretty by default.** Every default is designed. Themes work across banners, badges and cards.
+- **One host for everything** instead of five services with five different uptimes.
+- **Safe to embed.** All text is escaped, colors are validated, and every SVG response forbids scripts.
+- **Open source (MIT), one Rust binary.** Run your own instance with a single `docker run`.
+
+## Reference
+
+<details>
+<summary><b>Banner</b> — <code>/api/v1/mark/hero</code></summary>
+
+| Param | Values | Default |
+| --- | --- | --- |
+| `text`, `desc` | Title and subtitle. Use `-nl-` for a new line. | — |
+| `type` | Art: `waving` `wave` `aurora` `constellation` `mesh` `glass` `plasma` `holo` `neon` `silk` `orbit` `grid` `circuit` `terminal` `transparent` … ([all 42](https://mark.sylphx.com/api/v1/catalog)) | `waving` |
+| `theme` | `dark` `light` `tokyonight` `dracula` `nord` `monokai` `radical` `gruvbox` `ocean` `sunset` `forest` `neon` `github` | — |
+| `color` | A hex color, or stops like `0:1A1A2E,50:4A90E2,100:D87000` (used when no theme is set) | signature gradient |
+| `layout` | `default` `plate` `signal` `terminal` | `default` |
+| `animation` | `ambient` `none` `fade` `rise` `scale` `float` `glow` `breathe` `slide` `cascade` `shimmer` `glitch` `wave` `orbit` `neon` `bounce` `type` | `ambient` |
+| `font` | `sans` `mono` | `sans` |
+| `width`, `height` | Pixels, up to 1600 × 900. Type scales on large canvases (1280×640 makes a social preview). | `880`, `220` |
+
+</details>
+
+<details>
+<summary><b>Badge</b> — <code>/badge/{label}-{message}-{color}</code>, <code>/static/v1</code></summary>
+
+Uses shields.io static-badge syntax: `--` is a dash, `__` is an underscore, `_` is a space, and `{message}-{color}` alone drops the label.
+
+| Param | Values |
+| --- | --- |
+| `style` | `flat` `flat-square` `plastic` `for-the-badge` `social` |
+| `logo` | Any [Simple Icons](https://simpleicons.org) slug (`rust`, `github`, `npm`…) or a base64 `data:` image |
+| `logoColor`, `color`, `labelColor` | shields color names, hex, `rgb()`, `hsl()` |
+| `label` | Overrides the label from the path |
+
+</details>
+
+<details>
+<summary><b>Score</b> — <code>/api/v1/mark/score</code></summary>
+
+`label`, `value`, `max` (default 100), `style`, `logo`, `color` (overrides the automatic grade), `theme`.
+
+</details>
+
+<details>
+<summary><b>Typing</b> — <code>/typing</code> (also <code>/?lines=</code>)</summary>
+
+The same parameters as readme-typing-svg: `lines` (separated by `;`), `font`, `weight`, `size`, `color`, `background`, `center`, `vCenter`, `multiline`, `width`, `height`, `duration`, `pause`, `repeat`, `random`, `letterSpacing`, `separator`.
+
+</details>
+
+<details>
+<summary><b>Icons</b> — <code>/icons?i=</code></summary>
+
+`i` (or `icons`): comma-separated skill-icons ids or Simple Icons slugs. `theme` is `dark` or `light`. `perline` is 1–50 (default 15). The native row is `/api/v1/mark/strip?icons=…`.
+
+</details>
+
+<details>
+<summary><b>GitHub cards</b> — <code>/api</code>, <code>/api/top-langs</code>, <code>/streak</code>, <code>/api/pin</code>, <code>/trophy</code></summary>
+
+github-readme-stats parameters: `username`, `theme`, `show_icons`, `hide`, `hide_title`, `hide_rank`, `hide_border`, `border_radius`, `title_color`, `text_color`, `icon_color`, `bg_color`, `border_color`, `custom_title`, `card_width`, `layout` (`normal` `compact` `donut` `donut-vertical` `pie`), `langs_count`, `exclude_repo`. The native routes are `/api/v1/card/{stats|langs|streak|repo}`. Trophies (`/trophy`, or `/?username=`) take github-profile-trophy's `theme`, `column`, `row`, `margin-w`, `margin-h`, `no-bg`, `no-frame`, `title` and `rank`.
+
+Live cards are cached on the server (about 4 hours) and at the edge. They are served stale while they refresh, and stale when GitHub is unavailable.
+
+</details>
+
+<details>
+<summary><b>Profile card</b> and <b>deploy mark</b></summary>
+
+`/api/v1/mark/profile?text=Name&desc=Tagline`, with `theme`, `color`, `type` (an art background), `width` and `height`.
+`/api/v1/mark/deploy?service=name` renders a "deployed on Sylphx" badge.
+
+</details>
+
+Append `.svg` to any image path (`/badge/a-b-c.svg`, `/api/v1/mark/hero.svg?…`) and it is edge-cached by file type. The full vocabulary is at [`/api/v1/catalog`](https://mark.sylphx.com/api/v1/catalog).
+
+## Performance
+
+In-process render latency, measured by the [Bench workflow](.github/workflows/bench.yml) (release build, GitHub-hosted runner, 400 runs per URL):
+
+| Image | Size | p50 |
+| --- | ---: | ---: |
+| Badge (`/badge/build-passing-brightgreen`) | 0.8 KB | 6 µs |
+| Banner, waving, 880×220 | 8.2 KB | 29 µs |
+| Banner, constellation, 1200×320 | 13.4 KB | 31 µs |
+| Tech strip, 8 icons | 3.7 KB | 10 µs |
+| Profile card | 4.9 KB | 15 µs |
+
+Live readback on 2026-09-25 from a server in Europe with [`scripts/measure-live.sh`](scripts/measure-live.sh) (15 requests per URL, p50). "Wait" is the time from sending the request to the first byte, not counting DNS, TCP or TLS:
+
+| URL | Wait | cf-cache-status |
+| --- | ---: | --- |
+| `/badge/build-passing-brightgreen.svg` | 31 ms | `HIT` |
+| `/api/v1/mark/hero.svg?type=waving&text=…` | 32 ms | `HIT` |
+| `/badge/build-passing-brightgreen` | 63 ms | `DYNAMIC` (origin) |
+| `/api/v1/mark/strip?icons=rust,ts,docker` | 57 ms | `DYNAMIC` (origin) |
+
+Use the `.svg` form to be served from the edge. Both forms return identical bytes with a strong `ETag`, and `If-None-Match` returns `304`.
+
+## Self-hosting
+
+```bash
+docker build --build-arg GIT_SHA="$(git rev-parse HEAD)" -t readme-mark .
+docker run --rm -p 8787:8787 readme-mark        # → http://localhost:8787
+```
 
 | Variable | Default | Notes |
-|----------|---------|--------|
-| `PORT` | `8787` | |
-| `HOST` | `0.0.0.0` | |
-| `PUBLIC_BASE_URL` | derived | Canonical host `https://mark.sylphx.com`; used in docs / generator copy |
-| `DEFAULT_CREDIT` | `0` | Opt-in soft `mark` watermark (`credit=1`) |
+| --- | --- | --- |
+| `PORT` / `HOST` | `8787` / `0.0.0.0` | |
+| `PUBLIC_BASE_URL` | derived | The host the studio writes into copied URLs |
+| `GITHUB_TOKEN` or `GITHUB_TOKENS` | — | Optional. Raises the GitHub rate limit for live cards; comma-separate several tokens to rotate them. |
+| `DEFAULT_CREDIT` | `0` | `1` adds a small watermark |
 | `RUST_LOG` | `mark=info` | |
-| `GITHUB_TOKEN` / `GITHUB_TOKENS` | unset | Optional server token(s) for live cards (comma-separated rotate). Unset = anonymous GitHub REST + the public contributions calendar, cached for hours. Never a user token. |
 
----
+Development: `cargo run`, `cargo test`. After reviewing a visual change, refresh the snapshots with `UPDATE_SNAPSHOTS=1 cargo test --test visual_snapshots`.
 
-## The grammar
+## Credits
 
-**mark = form × art (`type`) × paint (`theme` / `color`, pill `labelColor`) × content (`text` / `desc` / `font`) × geometry (`width` / `height`, hero `layout`) × motion (`animation`)**
+readme-mark stands on ideas from [shields.io](https://github.com/badges/shields),
+[capsule-render](https://github.com/kyechan99/capsule-render),
+[readme-typing-svg](https://github.com/DenverCoder1/readme-typing-svg),
+[skill-icons](https://github.com/tandpfun/skill-icons),
+[github-readme-stats](https://github.com/anuraghazra/github-readme-stats) and
+[github-readme-streak-stats](https://github.com/DenverCoder1/github-readme-streak-stats),
+and speaks their URL formats so you can switch without rewriting.
+Brand icons come from [Simple Icons](https://simpleicons.org) (CC0). Brand names and logos are trademarks of their owners; their use here does not imply endorsement.
 
-One endpoint: `GET /api/v1/mark/{form}` — plus the shields static badge dialect `GET /badge/{label}-{message}-{color}` and `GET /static/v1`. Every image route also answers with `.svg` appended to its path (edge-cacheable by extension).
-
-| Form | What it is | Key params |
-|------|-----------|-----------|
-| `hero` | The flagship banner (42 art types, 4 layouts) | `type` `text` `desc` `layout` `height` `width` |
-| `pill` | Atomic status mark (shields-style) | `label` `message` `style` `labelColor` |
-| `strip` | Tech identity row (any brand icon) | `icons` `perline` |
-| `profile` | Name + tagline card (text-driven) | `text` `desc` `type` (art background) `width` `height` |
-| `deploy` | “deployed on Sylphx” conversion pill | `service` `style` |
-| `score` | Graded score pill with a progress ring | `label` `value` `max` `style` |
-
-Shared params on every form: `theme` · `color` · `animation` · `credit` · `font` (`sans` | `mono`).
-Anything outside this grammar is unknown input, never a second vocabulary: the
-retired predecessor knobs (`fontSize`, `descSize`, `fontColor`, align/rotate/
-`stroke`/`strokeWidth`, `textBg`, `section`, `reversal`) and retired ids/aliases
-(`badge`, `icons`, `card`, `deploymark`, layout aliases) are ignored.
-A theme pack defines the full palette; an explicit `color` is used when there is no theme pack. An unknown theme name is not a theme pack.
-Themes are **neutral design themes** — no personal or company names anywhere in the product.
-
-### Hero
-
-The default hero is the **restrained capsule-class look**: a deep ink canvas
-(theme base, never a full-color wash) with the color living only in the layered
-gradient waves and text — negative space first. `type=transparent` gives a
-fully transparent canvas for typing-line compositions.
-
-```markdown
-![header](https://mark.sylphx.com/api/v1/mark/hero?type=wave&color=0:1A1A2E,50:4A90E2,100:D87000&text=Ship%20your%20next%20release&desc=Multi-color%20art%20for%20your%20README&height=220&animation=ambient)
-```
-
-**Art types:** `plasma` `holo` `neon` `meteor` `liquid` `prism` `void` `firefly` `silk` `iridescent` `aurora` `mesh` `glass` `soft` `horizon` `dusk` `orbit` `beam` `wave` `waving` `terminal` `constellation` `grid` `blur` `ring` `circuit` `hud` `pulse` `noise` `rounded` `rect` `slice` `cylinder` `checkered` `egg` `shark` `venom` `speech` `product` `oss` `org` `transparent`
-
-**Layouts:** `default` · `plate` (left monogram product cover) · `signal` (centered hero) · `terminal` (left mono systems look)
-
-**Motion (`animation=`):** SMIL (works when the SVG is loaded as `<img>`): `none` · `ambient` (default) · `fade` · `rise` · `scale` · `float` · `glow` · `breathe` · `slide` · `cascade` · `shimmer` · `glitch` · `wave` · `orbit` · `neon` · `bounce` · `type`
-
-**Text:** use `-nl-` for newlines.
-
-### Pill (shields-compatible badges)
-
-Any img.shields.io static badge works by changing only the host — same
-syntax, same geometry, same widths:
-
-```markdown
-![build](https://mark.sylphx.com/badge/build-passing-brightgreen)
-![build-fat](https://mark.sylphx.com/badge/build-passing-brightgreen?style=for-the-badge)
-![escaped](https://mark.sylphx.com/badge/agent--ready-92%2F100-brightgreen.svg)
-![rust](https://mark.sylphx.com/badge/rust-1.80-orange?logo=rust)
-![legacy](https://mark.sylphx.com/static/v1?label=license&message=MIT&color=blueviolet)
-![license](https://mark.sylphx.com/api/v1/mark/pill?label=license&message=MIT&color=blue&style=for-the-badge&theme=github)
-```
-
-- Path: `label-message-color` or `message-color`; `--` → `-`, `__` → `_`, `_` or `%20` → space.
-- Query: `label` and `color` override the path; `labelColor`, `style`, `logo` (any Simple Icons slug or title, e.g. `logo=rust`, or a base64 `data:image/svg+xml`/`png` URI), `logoColor`, `logoWidth`; `cacheSeconds` and `link` are accepted and ignored.
-- Styles: `flat` · `flat-square` · `plastic` · `for-the-badge` · `social` · `pill`
-- Colors: shields names (`brightgreen` … `lightgrey`, `success` `important` `critical` `informational` `inactive`), 3/6-digit hex with or without `#`, CSS color names, `rgb()`/`hsl()`. A theme pack defines the palette and overrides `color`/`labelColor`. Motion applies at text level.
-
-### Score
-
-```markdown
-![agent-ready](https://mark.sylphx.com/api/v1/mark/score.svg?label=agent-ready&value=92)
-![quality](https://mark.sylphx.com/api/v1/mark/score.svg?label=quality&value=7.5&max=10&style=for-the-badge)
-```
-
-A progress ring plus the value; the color grades from `value / max` (below 50%
-red, 70% orange, 80% yellow, 90% green, then bright green) unless `color` or
-`theme` is set.
-
-### Strip
-
-```markdown
-![stack](https://mark.sylphx.com/api/v1/mark/strip?icons=rust,ts,docker,kubernetes,postgres&theme=dark)
-```
-
-`icons` takes any [Simple Icons](https://simpleicons.org) slug or title
-(`fastify`, `Node.js`, `bun`), plus every skill-icons id.
-
-### Icon tiles (skill-icons compatible)
-
-```markdown
-![skills](https://mark.sylphx.com/icons?i=js,ts,rust,go,react,docker,k8s,postgres)
-![skills](https://mark.sylphx.com/icons?i=py,pytorch,fastapi,redis&theme=light&perline=4)
-```
-
-A drop-in for `skillicons.dev`: swap the host and keep the URL. `i` (or
-`icons`) takes skill-icons ids or any Simple Icons slug; `theme` (or `t`) is
-`dark` (default) or `light`; `perline` is 1–50 (default 15); `i=all` renders
-the whole skill-icons set. Unknown ids are skipped.
-
-### Profile
-
-```markdown
-![profile](https://mark.sylphx.com/api/v1/mark/profile?text=Kyle%20Tse&desc=Infrastructure%20for%20AI%20agents&theme=tokyonight)
-![profile-art](https://mark.sylphx.com/api/v1/mark/profile?text=Kyle%20Tse&desc=AI-native%20platforms&type=wave&width=480)
-```
-
-The profile card is text-driven: the URL supplies the name (`text`) and tagline (`desc`) — nothing is baked into the product. Retired `identity` URLs render this card (they no longer silently fall back to hero).
-
-### Typing lines (mono)
-
-```markdown
-![typing](https://mark.sylphx.com/api/v1/mark/hero?type=transparent&font=mono&animation=type&layout=signal&color=4A90E2&text=MCP%20%26%20AI-agent%20tooling%20-nl-20%20years%20shipping%20at%20scale)
-```
-
-### Capsule banners (capsule-render compatible)
-
-```markdown
-![header](https://mark.sylphx.com/api?type=waving&color=gradient&height=300&section=header&text=Hello&fontSize=90&fontAlignY=38)
-![footer](https://mark.sylphx.com/api?type=waving&color=gradient&height=100&section=footer)
-```
-
-A drop-in for `capsule-render.vercel.app`: swap the host and keep the URL.
-All capsule-render types (`wave`, `waving`, `egg`, `shark`, `slice`, `rect`,
-`soft`, `rounded`, `cylinder`, `venom`, `speech`, `transparent`, `blur`,
-`pulse`, `checkered`), colors (hex, `0:EEFF00,100:a82da8`, `gradient`,
-`auto`, `random`, `timeAuto`, `timeGradient`, `customColorList`, `theme`), and
-typography knobs (`fontSize`, `fontColor`, `fontAlign`, `fontAlignY`,
-`fontFamily`, `desc`, `descSize`, `descAlign`, `descAlignY`, `rotate`,
-`stroke`, `strokeWidth`, `textBg`, `section`, `reversal`) keep their upstream
-defaults. Animations (`fadeIn`, `scaleIn`, `blink`, `blinking`, `twinkling`)
-are SMIL, so they run inside GitHub's image proxy. Colors that upstream picks
-at random or by the clock are picked from a hash of the URL instead: one URL,
-one image. These knobs exist only in this dialect; the native grammar
-(`/api/v1/mark/hero`) does not read them.
-
-### Typing SVG (readme-typing-svg compatible)
-
-```markdown
-![typing](https://mark.sylphx.com/?lines=First+line;Second+line&font=Fira+Code&center=true&width=435&height=50&color=36BCF7&vCenter=true&pause=1000&size=20)
-![typing](https://mark.sylphx.com/typing?lines=Hello;World&multiline=true&height=80)
-```
-
-A drop-in for `readme-typing-svg.demolab.com`: swap the host and keep the
-URL (`/?lines=` or `/typing?lines=`). Every upstream parameter works with its
-upstream default: `lines`, `separator`, `font`, `weight`, `size`, `color`,
-`background`, `center`, `vCenter`, `multiline`, `width`, `height`,
-`duration`, `pause`, `repeat`, `random`, `letterSpacing`. Mark never fetches
-webfonts: `font` is named first, then a system fallback stack (monospace for
-code fonts). `random=true` is deterministic: the order is derived from a hash
-of the URL, so one URL always renders one order. The native form is
-`/api/v1/mark/typing` (`text` works in place of `lines`).
-
-### Live GitHub cards and badges (github-readme-stats / streak-stats / shields compatible)
-
-No token, no signup: swap the host. Cards cache for hours, serve stale on upstream errors, and never render a broken image.
-
-```markdown
-![stats](https://mark.sylphx.com/api?username=octocat&theme=radical)
-![langs](https://mark.sylphx.com/api/top-langs?username=octocat&layout=compact)
-![streak](https://mark.sylphx.com/streak?user=octocat)
-![pin](https://mark.sylphx.com/api/pin?username=octocat&repo=Hello-World)
-![trophies](https://mark.sylphx.com/trophy?username=octocat&column=4)
-![stars](https://mark.sylphx.com/github/stars/octocat/Hello-World)
-![npm](https://mark.sylphx.com/npm/v/react)
-```
-
-Native: `/api/v1/card/{stats|langs|streak|repo|trophy}`. Trophies (github-profile-trophy compatible, also `/?username=`) take `theme`, `column`, `row`, `margin-w`, `margin-h`, `no-bg`, `no-frame`, `title`, `rank`. Badges: `/github/{stars,forks,license,last-commit}/{owner}/{repo}`, `/github/v/release/{owner}/{repo}`, `/npm/{v,dm,dw,dt,l}/{package}`. Without a server token, commits show as contributions in the last year and top languages weight each repository's primary language by its size.
-
-### Deploy
-
-```markdown
-![deploy](https://mark.sylphx.com/api/v1/mark/deploy?service=mark&style=for-the-badge)
-```
-
----
-
-## The contract
-
-- **Determinism:** same URL, same mark, forever. No clock-sampled fills, no upstream, no state, no secrets. (Retired: `timeAuto`/`timeGradient`, all legacy capability routes.) Live cards and badges are the one exception (ADR-0005): bounded upstream reads, hour-scale cache (`s-maxage=14400`, `stale-while-revalidate`, `stale-if-error`), a `200` fallback card.
-- **Totality:** rendering never fails. Unknown form → hero, unknown art → `waving` (the shipped default), invalid colors → fallback paint, unknown theme/layout/animation → the documented default.
-- **CSP + escaping:** SVG responses carry `Content-Security-Policy: script-src 'none'` + `X-Content-Type-Options: nosniff`; every user string is escaped; color-bearing attributes accept only validated hex/named tokens.
-- **Cache:** every mark URL pins its bytes (pure function of the URL, including SMIL-animated variants) and caches long as immutable (`max-age=31536000, s-maxage=31536000, immutable` + `ETag` + `CDN-Cache-Control`/`Cloudflare-CDN-Cache-Control`); conditional `If-None-Match` returns `304`. Origin headers are this product's write. Live edge `HIT` on dest extensionless `/api/v1/mark*` + `/badge/*` is Apps (Cloudflare for SaaS Custom Hostname + grey CNAME to `cname.sylphx.com`, plus Cache Everything / eligible-for-cache keyed on the full query string). Hands is generic kube origin only.
-
-## Input limits (public contract)
-
-| Surface | Cap | Behavior |
-|---------|-----|----------|
-| `text` (hero title / profile name) | 500 chars | truncated with `…` |
-| `desc` (hero / profile tagline) | 240 chars / 8 lines | truncated with `…` |
-| Pill `label` / `message` | 80 / 120 chars | truncated with `…` |
-| Strip icons | 60 | extra icons dropped |
-| Deploy `service` | 40 chars | truncated with `…` |
-| Hero width / height | 1600 / 900 | clamped |
-
----
-
-## Why this exists
-
-GitHub already runs on third-party image hosts (capsule-render, readme-stats, skillicons, shields). **Mark** is one Sylphx-owned host with more art, neutral themes, and platform-native deploy marks — every README hit is optional brand surface, and the service itself dogfoods Sylphx. Live data is deliberately not offered: a mark that can never break, go stale, or rate-limit is the moat.
-
----
-
-## Architecture
-
-One capability, one grammar.
-
-- `src/capabilities/mark/*` — the whole product: domain (spec, catalog, kernel, art, motion) · application (pure renderers) · interfaces (HTTP)
-- `src/interfaces/http` — HTTP composition root
-- `src/bootstrap.rs` — config + process shell
+Decisions: [`docs/vision.md`](docs/vision.md) · [`docs/capabilities.md`](docs/capabilities.md) · [ADR-0005](docs/adr/ADR-0005-readme-visuals-toolkit.md).
 
 ## License
 
-MIT — see product intent in `PROJECT.md`.
-
-Brand icons come from [Simple Icons](https://github.com/simple-icons/simple-icons)
-(path data CC0-1.0; version in `data/simple-icons.tsv`, refreshed by
-`scripts/update-simple-icons.py`). Brand names and logos are trademarks of
-their owners; showing one does not imply endorsement. See the Simple Icons
-[disclaimer](https://github.com/simple-icons/simple-icons/blob/develop/DISCLAIMER.md).
-
-## Destination
-
-Product destination: [`docs/vision.md`](docs/vision.md). Identity graph: [`docs/capabilities.md`](docs/capabilities.md). Historical north-star notes remain under [`docs/north-star/`](docs/north-star/) and are not dest.
+MIT © [Sylphx](https://sylphx.com)
