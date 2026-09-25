@@ -19,8 +19,7 @@ pub(crate) struct FixtureUpstream {
     pub token: bool,
 }
 
-const PROFILE: &str =
-    r#"{"login":"ada-dev","name":"Ada Lovelace","followers":318,"public_repos":6,"created_at":"2016-03-14T09:26:53Z"}"#;
+const PROFILE: &str = r#"{"login":"ada-dev","name":"Ada Lovelace","followers":318,"public_repos":6,"created_at":"2016-03-14T09:26:53Z"}"#;
 
 const REPOS: &str = r#"[
 {"name":"analytical-engine","language":"Rust","size":5200,"stargazers_count":1840,"fork":false},
