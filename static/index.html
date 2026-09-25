@@ -3,207 +3,234 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Mark — the README identity layer</title>
-<meta name="description" content="One URL. One image. Your brand. Neutral themes, one grammar: hero, pill, strip, profile, deploy." />
+<title>readme-mark — beautiful README images from one URL</title>
+<meta name="description" content="Animated banners, shields-compatible badges, typing text, tech icons and GitHub stats cards for your README. Free, no token, no signup — one URL." />
+<meta property="og:title" content="readme-mark — beautiful README images from one URL" />
+<meta property="og:description" content="Banners, badges, typing text, tech icons and GitHub stats cards. Free, no token, drop-in for shields, capsule-render, skill-icons, readme-typing-svg and github-readme-stats." />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3ClinearGradient id='g' x2='1' y2='1'%3E%3Cstop stop-color='%23ff8a3d'/%3E%3Cstop offset='1' stop-color='%235b8cff'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='32' height='32' rx='9' fill='url(%23g)'/%3E%3Cpath d='M8 22V10l8 7 8-7v12' fill='none' stroke='%23fff' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E" />
 <style>
   :root {
-    --bg:#07080c; --panel:#0c0f15; --elev:#12161f; --fg:#f2f4f8; --muted:#8b93a7;
-    --faint:#5c6478; --line:rgba(255,255,255,0.08); --line2:rgba(255,255,255,0.16);
-    --accent:#e08712; --accent2:#5b9dff; --ok:#3dd68c; --danger:#ff7b86;
-    --radius:14px; --font:ui-sans-serif,system-ui,sans-serif;
-    --mono:ui-monospace,monospace; --scroll:rgba(255,255,255,0.14);
+    --bg:#08090d; --panel:#0e1117; --elev:#151a23; --elev2:#1b2130; --fg:#eef1f6; --muted:#9aa3b6;
+    --faint:#667085; --line:rgba(255,255,255,0.07); --line2:rgba(255,255,255,0.14);
+    --accent:#ff8a3d; --accent2:#5b8cff; --ok:#3dd68c; --danger:#ff7b86;
+    --radius:16px; --font:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    color-scheme:dark;
+  }
+  @media (prefers-color-scheme: light) {
+    :root:not([data-theme="dark"]) {
+      --bg:#f6f7f9; --panel:#ffffff; --elev:#f2f4f7; --elev2:#e9edf3; --fg:#111827; --muted:#4b5563;
+      --faint:#8a94a6; --line:rgba(15,23,42,0.08); --line2:rgba(15,23,42,0.16); color-scheme:light;
+    }
   }
   * { box-sizing:border-box; }
-  html,body { height:100%; }
   html { overflow-x:clip; }
-  body {
-    margin:0; color:var(--fg); font-family:var(--font); overflow:hidden;
-    background:
-      radial-gradient(1100px 560px at 6% -18%, rgba(224,135,18,0.12), transparent 55%),
-      radial-gradient(900px 480px at 96% 0%, rgba(91,157,255,0.09), transparent 50%),
-      var(--bg);
-  }
+  body { margin:0; color:var(--fg); font-family:var(--font); background:var(--bg); min-height:100vh;
+    background-image:radial-gradient(900px 420px at 8% -10%, rgba(255,138,61,0.10), transparent 60%),
+      radial-gradient(800px 420px at 95% -5%, rgba(91,140,255,0.10), transparent 55%); }
   button,input,select,textarea { font:inherit; color:inherit; }
-  a { color:#8ec0ff; text-decoration:none; }
+  a { color:var(--accent2); text-decoration:none; }
   a:hover { text-decoration:underline; }
-  .scroll { scrollbar-width:thin; scrollbar-color:var(--scroll) transparent; }
-  .scroll::-webkit-scrollbar { width:8px; height:8px; }
-  .scroll::-webkit-scrollbar-thumb { background:var(--scroll); border-radius:99px; }
-  .app { height:100%; max-width:1400px; margin:0 auto; padding:.8rem 1.1rem;
-    display:grid; grid-template-rows:auto auto auto minmax(0,1fr) auto; gap:.6rem; min-width:0; }
-  .top { display:flex; align-items:center; justify-content:space-between; gap:.75rem; min-width:0; }
-  .brand { display:flex; align-items:center; gap:.55rem; font-weight:600; letter-spacing:-0.02em; }
-  .brand small { color:var(--faint); font-weight:400; font-size:.78rem; letter-spacing:0; }
-  .logo { width:26px; height:26px; border-radius:8px; flex-shrink:0;
-    background:linear-gradient(135deg,#e08712,#5b9dff); box-shadow:0 6px 18px rgba(224,135,18,0.26); }
-  .host { font-size:.74rem; color:var(--muted); border:1px solid var(--line); border-radius:999px;
-    padding:.26rem .65rem; background:rgba(255,255,255,0.02); font-family:var(--mono); }
-  .presets { display:flex; gap:.35rem; flex-wrap:wrap; }
-  .preset { border:1px solid var(--line2); background:var(--panel); color:var(--muted);
-    padding:.34rem .7rem; border-radius:9px; font-size:.78rem; cursor:pointer; transition:all .12s; }
-  .preset:hover { color:var(--fg); border-color:var(--line2); transform:translateY(-1px); }
-  .preset.on { border-color:var(--accent); color:var(--fg); box-shadow:inset 0 0 0 1px var(--accent); }
-  .forms { display:flex; gap:.25rem; padding:.22rem; border:1px solid var(--line); border-radius:11px;
-    background:rgba(255,255,255,0.02); width:fit-content; max-width:100%; overflow-x:auto; }
-  .forms button { border:0; background:transparent; color:var(--muted); padding:.42rem .85rem;
-    border-radius:8px; cursor:pointer; font-weight:500; font-size:.84rem; white-space:nowrap; transition:all .12s; }
-  .forms button:hover { color:var(--fg); }
-  .forms button.active { background:var(--elev); color:var(--fg); box-shadow:inset 0 0 0 1px var(--line2); }
-  .studio { display:grid; grid-template-columns:minmax(0,1.4fr) minmax(330px,400px);
-    gap:.75rem; min-height:0; }
-  .panel { background:var(--panel); border:1px solid var(--line); border-radius:var(--radius);
-    overflow:hidden; display:flex; flex-direction:column; min-height:0; }
-  .stage { flex:1; display:flex; align-items:center; justify-content:center; padding:1.2rem; min-height:0;
-    background:radial-gradient(600px 300px at 50% 30%, rgba(255,255,255,0.03), transparent 70%); }
-  .stage img { max-width:100%; max-height:100%; border-radius:12px;
-    background:repeating-conic-gradient(#10131a 0 25%, #0b0e14 0 50%) 0 0/18px 18px;
-    box-shadow:0 18px 50px rgba(0,0,0,0.5); }
-  .preview-status { display:flex; align-items:center; justify-content:space-between; gap:.75rem;
-    min-height:2.1rem; border-top:1px solid var(--line); padding:.42rem .9rem;
-    color:var(--muted); font-size:.73rem; }
-  .preview-status[data-state="ready"] { color:var(--ok); }
-  .preview-status[data-state="error"] { color:var(--danger); }
-  .preview-status button { color:inherit; border-color:currentColor; padding:.22rem .55rem; font-size:.72rem; }
-  .urlbar { display:flex; flex-wrap:wrap; gap:.5rem; align-items:center; border-top:1px solid var(--line); padding:.65rem .9rem; }
-  .urlbar input { flex:1; background:var(--elev); border:1px solid var(--line2); border-radius:9px;
-    padding:.42rem .65rem; font-family:var(--mono); font-size:.72rem; color:var(--muted); min-width:0; }
-  .urlbar button { background:var(--accent); color:#fff; border:0; border-radius:9px; padding:.42rem .95rem;
-    font-weight:600; font-size:.8rem; cursor:pointer; white-space:nowrap; }
-  .urlbar button.ghost { background:transparent; color:var(--muted); border:1px solid var(--line2); }
-  .urlbar button:disabled { opacity:.45; cursor:not-allowed; }
-  .urlbar button:active { transform:translateY(1px); }
-  .controls { overflow-y:auto; padding:1rem; display:flex; flex-direction:column; gap:1.05rem; }
-  .group h3 { margin:0 0 .55rem; font-size:.7rem; text-transform:uppercase; letter-spacing:.1em; color:var(--faint); font-weight:600; }
-  .field { margin-bottom:.6rem; }
-  .field label { display:block; font-size:.8rem; color:var(--muted); margin-bottom:.28rem; }
-  .field input[type=text], .field input[type=number], .field textarea {
-    width:100%; background:var(--elev); border:1px solid var(--line2); border-radius:9px;
-    padding:.45rem .6rem; font-size:.85rem; color:var(--fg); outline:none; transition:border .12s; }
-  .field input:focus, .field textarea:focus { border-color:var(--accent2); }
-  .field textarea { min-height:54px; resize:vertical; }
-  .field input[type=checkbox] { accent-color:var(--accent); }
-  .row { display:flex; gap:.5rem; }
-  .row .field { flex:1; }
-  .chips { display:flex; flex-wrap:wrap; gap:.3rem; }
-  .chip { border:1px solid var(--line2); background:var(--elev); color:var(--muted);
-    padding:.3rem .62rem; border-radius:8px; font-size:.76rem; cursor:pointer; transition:all .12s; }
+  .wrap { max-width:1440px; margin:0 auto; padding:0 16px; }
+  header.top { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:14px 0 6px; }
+  .brand { display:flex; align-items:center; gap:10px; font-weight:700; letter-spacing:-0.02em; font-size:1.05rem; }
+  .brand svg { flex-shrink:0; }
+  .brand small { color:var(--faint); font-weight:500; font-size:.8rem; letter-spacing:0; }
+  .toplinks { display:flex; align-items:center; gap:10px; font-size:.84rem; }
+  .toplinks a { color:var(--muted); }
+  .intro { padding:26px 0 18px; display:grid; gap:14px; }
+  .intro h1 { margin:0; font-size:clamp(1.6rem, 3.4vw, 2.5rem); letter-spacing:-0.035em; line-height:1.08; }
+  .intro h1 span { background:linear-gradient(90deg,var(--accent),#f15bb5 45%,var(--accent2)); -webkit-background-clip:text; background-clip:text; color:transparent; }
+  .intro p { margin:0; color:var(--muted); max-width:760px; line-height:1.55; }
+  .import { display:flex; gap:8px; max-width:880px; }
+  .import input { flex:1; min-width:0; background:var(--panel); border:1px solid var(--line2); border-radius:12px; padding:10px 12px; font-family:var(--mono); font-size:.8rem; outline:none; }
+  .import input:focus { border-color:var(--accent2); }
+  .btn { border:1px solid var(--line2); background:var(--elev); color:var(--fg); border-radius:10px; padding:8px 13px; font-weight:600; font-size:.82rem; cursor:pointer; white-space:nowrap; transition:transform .08s, background .12s, border-color .12s; }
+  .btn:hover { border-color:var(--faint); }
+  .btn:active { transform:translateY(1px); }
+  .btn.primary { background:var(--accent); border-color:var(--accent); color:#1a0d02; }
+  .btn:disabled { opacity:.45; cursor:not-allowed; }
+  .import-note { font-size:.76rem; color:var(--faint); min-height:1em; }
+  .kinds { display:flex; gap:6px; overflow-x:auto; padding:4px 0 12px; scrollbar-width:none; }
+  .kinds button { border:1px solid var(--line); background:var(--panel); color:var(--muted); padding:8px 14px; border-radius:999px; cursor:pointer; font-weight:600; font-size:.84rem; white-space:nowrap; display:flex; gap:7px; align-items:center; }
+  .kinds button:hover { color:var(--fg); }
+  .kinds button.on { color:var(--fg); border-color:var(--accent); box-shadow:inset 0 0 0 1px var(--accent); }
+  .kinds button i { font-style:normal; font-size:.72rem; color:var(--faint); font-weight:500; }
+  .studio { display:grid; grid-template-columns:minmax(0,1fr) 380px; gap:14px; align-items:start; }
+  .panel { background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); min-width:0; }
+  .stagebar { display:flex; align-items:center; justify-content:space-between; gap:8px; padding:10px 12px; border-bottom:1px solid var(--line); }
+  .stagebar .title { font-size:.8rem; color:var(--muted); font-weight:600; }
+  .seg { display:flex; gap:2px; background:var(--elev); border-radius:9px; padding:2px; }
+  .seg button { border:0; background:transparent; color:var(--muted); padding:5px 10px; border-radius:7px; font-size:.75rem; cursor:pointer; font-weight:600; }
+  .seg button.on { background:var(--panel); color:var(--fg); box-shadow:0 1px 2px rgba(0,0,0,.25); }
+  .stage { min-height:300px; display:flex; align-items:center; justify-content:center; padding:28px 18px; transition:background .2s; }
+  .stage[data-bg="dark"] { background:#0d1117; }
+  .stage[data-bg="light"] { background:#ffffff; }
+  .stage[data-bg="checker"] { background:repeating-conic-gradient(#1a1f29 0 25%, #12161e 0 50%) 0 0/18px 18px; }
+  .stage img { max-width:100%; height:auto; display:block; }
+  .status { display:flex; align-items:center; justify-content:space-between; gap:8px; padding:8px 12px; font-size:.76rem; color:var(--muted); border-top:1px solid var(--line); min-height:36px; }
+  .status[data-state="ready"] { color:var(--ok); }
+  .status[data-state="error"] { color:var(--danger); }
+  .status .btn { padding:3px 9px; font-size:.72rem; }
+  .output { border-top:1px solid var(--line); padding:12px; display:grid; gap:10px; }
+  .output .row { display:flex; gap:8px; align-items:center; flex-wrap:wrap; justify-content:space-between; }
+  .code { background:var(--elev); border:1px solid var(--line); border-radius:10px; padding:10px 12px; font-family:var(--mono); font-size:.76rem; line-height:1.5; color:var(--fg); white-space:pre-wrap; word-break:break-all; max-height:132px; overflow:auto; margin:0; }
+  .actions { display:flex; gap:6px; flex-wrap:wrap; }
+  .presets { padding:12px; border-top:1px solid var(--line); }
+  .presets h3, .controls h3 { margin:0 0 10px; font-size:.7rem; text-transform:uppercase; letter-spacing:.1em; color:var(--faint); font-weight:700; }
+  .preset-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); gap:8px; }
+  .preset { border:1px solid var(--line); background:var(--elev); border-radius:12px; padding:8px; cursor:pointer; display:grid; gap:6px; text-align:left; transition:border-color .12s, transform .08s; }
+  .preset:hover { border-color:var(--line2); transform:translateY(-1px); }
+  .preset.on { border-color:var(--accent); }
+  .preset .thumb { height:64px; display:flex; align-items:center; justify-content:center; background:#0d1117; border-radius:8px; overflow:hidden; }
+  .preset .thumb img { max-width:100%; max-height:64px; }
+  .preset span { font-size:.76rem; color:var(--muted); font-weight:600; }
+  .controls { padding:14px; display:grid; gap:16px; }
+  .field { display:grid; gap:5px; }
+  .field > label { font-size:.78rem; color:var(--muted); font-weight:600; display:flex; justify-content:space-between; gap:6px; }
+  .field > label em { font-style:normal; color:var(--faint); font-weight:500; font-family:var(--mono); font-size:.7rem; }
+  .field input[type=text], .field input[type=number], .field textarea, .field select {
+    width:100%; background:var(--elev); border:1px solid var(--line2); border-radius:9px; padding:8px 10px; font-size:.85rem; outline:none; }
+  .field input:focus, .field textarea:focus, .field select:focus { border-color:var(--accent2); }
+  .field textarea { min-height:70px; resize:vertical; font-family:var(--font); }
+  .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .chips { display:flex; flex-wrap:wrap; gap:5px; max-height:170px; overflow:auto; }
+  .chip { border:1px solid var(--line2); background:var(--elev); color:var(--muted); padding:5px 9px; border-radius:8px; font-size:.75rem; cursor:pointer; display:inline-flex; align-items:center; gap:6px; }
   .chip:hover { color:var(--fg); }
   .chip.on { border-color:var(--accent); color:var(--fg); box-shadow:inset 0 0 0 1px var(--accent); }
-  .theme { display:inline-flex; align-items:center; gap:.4rem; border:1px solid var(--line2);
-    background:var(--elev); color:var(--muted); padding:.28rem .55rem; border-radius:8px; font-size:.76rem; cursor:pointer; transition:all .12s; }
-  .theme.on { border-color:var(--line2); color:var(--fg); background:rgba(255,255,255,0.05); }
-  .theme .orb { width:10px; height:10px; border-radius:50%; flex-shrink:0; box-shadow:0 0 0 1px rgba(255,255,255,0.12); }
-  .foot { font-size:.72rem; color:var(--faint); display:flex; gap:1rem; justify-content:space-between; flex-wrap:wrap; }
+  .chip .dot { width:10px; height:10px; border-radius:50%; box-shadow:0 0 0 1px rgba(255,255,255,.15); }
+  .field > label.toggle { justify-content:flex-start; font-weight:500; }
+  .toggle { display:flex; align-items:center; gap:8px; font-size:.8rem; color:var(--muted); cursor:pointer; }
+  .toggle input { accent-color:var(--accent); width:16px; height:16px; }
   .hint { font-size:.74rem; color:var(--faint); line-height:1.45; }
-  .noscript-panel { padding:1rem 1.1rem; gap:.6rem; }
-  .noscript-panel h2 { margin:.1rem 0 .4rem; font-size:1rem; }
-  .noscript-panel p { margin:.4rem 0; color:var(--muted); font-size:.84rem; line-height:1.5; }
-  .noscript-panel ul { margin:.4rem 0; padding-left:1.1rem; color:var(--muted); font-size:.84rem; line-height:1.7; }
-  .noscript-panel img { max-width:100%; height:auto; border-radius:12px;
-    background:repeating-conic-gradient(#10131a 0 25%, #0b0e14 0 50%) 0 0/18px 18px; }
-  @media (max-width: 900px) {
-    body { overflow:auto; }
-    .app { height:auto; grid-template-rows:auto auto auto auto auto; }
+  .dialects { padding:28px 0 8px; display:grid; gap:12px; }
+  .dialects h2 { margin:0; font-size:1.1rem; letter-spacing:-0.02em; }
+  .dtable { width:100%; border-collapse:collapse; font-size:.8rem; }
+  .dtable td, .dtable th { border-bottom:1px solid var(--line); padding:8px 6px; text-align:left; vertical-align:top; }
+  .dtable th { color:var(--faint); font-weight:600; font-size:.72rem; text-transform:uppercase; letter-spacing:.06em; }
+  .dtable code { font-family:var(--mono); font-size:.74rem; color:var(--muted); word-break:break-all; }
+  footer { padding:24px 0 32px; font-size:.76rem; color:var(--faint); display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap; }
+  .toast { position:fixed; left:50%; bottom:22px; transform:translateX(-50%) translateY(20px); background:var(--fg); color:var(--bg); padding:9px 14px; border-radius:10px; font-size:.82rem; font-weight:600; opacity:0; pointer-events:none; transition:all .18s; }
+  .toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+  .noscript { padding:16px; }
+  @media (max-width: 980px) {
     .studio { grid-template-columns:1fr; }
-    .stage { min-height:280px; }
-    .controls { max-height:60vh; }
+    .intro { padding-top:14px; }
+  }
+  @media (max-width: 560px) {
+    .import { flex-direction:column; }
+    .grid2 { grid-template-columns:1fr; }
+    .toplinks .hide-sm { display:none; }
   }
 </style>
 </head>
 <body>
-<div class="app">
-  <div class="top">
-    <div class="brand"><div class="logo"></div> Mark <small>— the README identity layer</small></div>
-    <div class="host">mark.sylphx.com</div>
-  </div>
-  <div class="forms" id="forms"></div>
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <svg width="28" height="28" viewBox="0 0 32 32" aria-hidden="true"><defs><linearGradient id="lg" x2="1" y2="1"><stop stop-color="#ff8a3d"/><stop offset="1" stop-color="#5b8cff"/></linearGradient></defs><rect width="32" height="32" rx="9" fill="url(#lg)"/><path d="M8 22V10l8 7 8-7v12" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      readme-mark <small class="hide-sm">by Sylphx</small>
+    </div>
+    <nav class="toplinks">
+      <a class="hide-sm" href="/api/v1/catalog">Catalog</a>
+      <a href="https://github.com/SylphxAI/readme-mark">GitHub</a>
+    </nav>
+  </header>
+
+  <section class="intro">
+    <h1>Beautiful README images <span>from one URL.</span></h1>
+    <p>Animated banners, badges, typing text, tech icons and GitHub stats cards. Free, no token, no signup. Pick a preset, tweak it, copy the markdown.</p>
+    <form class="import" id="importForm" autocomplete="off">
+      <input id="importBox" type="text" spellcheck="false" aria-label="Paste an image URL to edit" placeholder="Paste any README image URL — shields.io, capsule-render, skillicons, readme-typing-svg, github-readme-stats…" />
+      <button class="btn" type="submit">Edit it here</button>
+    </form>
+    <div class="import-note" id="importNote"></div>
+  </section>
+
   <noscript>
-    <div class="panel noscript-panel">
-      <h2>Mark without JavaScript</h2>
-      <p>The interactive studio needs JavaScript to render controls. Every mark below is a plain link — same URL, same SVG, forever. No account, no clock, no upstream.</p>
-      <ul>
-        <li><a href="/api/v1/mark/hero?text=Hello&amp;desc=World&amp;type=wave&amp;animation=none&amp;width=880&amp;height=200">hero example</a></li>
-        <li><a href="/api/v1/mark/pill?label=build&amp;message=passing">pill example</a></li>
-        <li><a href="/api/v1/mark/strip?icons=rust,ts,docker&amp;theme=dark&amp;perline=12">strip example</a></li>
-        <li><a href="/api/v1/mark/profile?text=Your%20name&amp;desc=What%20you%20build&amp;theme=tokyonight&amp;width=640">profile example</a></li>
-        <li><a href="/api/v1/mark/deploy?service=app">deploy example</a></li>
-      </ul>
-      <p><a href="/api/v1/catalog">Catalog vocabulary</a> &#183; <a href="/api/v1">API index</a> &#183; <a href="/health">Health</a></p>
-      <img src="/api/v1/mark/hero?text=Hello&amp;desc=World&amp;type=wave&amp;animation=none&amp;width=880&amp;height=200" alt="Example hero mark reading Hello World" width="880" height="200" loading="lazy" />
+    <div class="panel noscript">
+      <p>The studio needs JavaScript. Every image is a plain URL, for example:</p>
+      <p><img src="/api/v1/mark/hero?type=waving&amp;text=Hello%20README&amp;desc=One%20URL%2C%20one%20image" alt="Example banner" width="880" height="220" loading="lazy" /></p>
+      <p><a href="/badge/build-passing-brightgreen">/badge/build-passing-brightgreen</a> · <a href="/api/v1/catalog">catalog</a></p>
     </div>
   </noscript>
-  <div class="studio">
-    <div class="panel">
-      <div class="stage" id="stage"><img id="previewImg" alt="mark preview" /></div>
-      <div class="preview-status" id="previewStatus" data-state="loading" role="status" aria-live="polite">
-        <span id="statusText">Rendering mark…</span>
-        <button class="ghost" id="retryBtn" type="button" hidden>Retry</button>
+
+  <nav class="kinds" id="kinds" aria-label="Image kind"></nav>
+
+  <main class="studio">
+    <section class="panel">
+      <div class="stagebar">
+        <span class="title" id="stageTitle">Preview</span>
+        <div class="seg" id="bgSeg" role="group" aria-label="Preview background">
+          <button type="button" data-bg="dark" class="on">GitHub dark</button>
+          <button type="button" data-bg="light">GitHub light</button>
+          <button type="button" data-bg="checker">Transparent</button>
+        </div>
       </div>
-      <div class="urlbar">
-        <input id="urlBox" readonly aria-label="Mark URL" spellcheck="false" />
-        <button class="ghost" id="openBtn" type="button">Open</button>
-        <button class="ghost" id="downloadBtn" type="button" disabled>Download SVG</button>
-        <button class="ghost" id="copyBtn" type="button">Copy URL</button>
-        <button id="mdBtn" type="button">Copy markdown</button>
+      <div class="stage" id="stage" data-bg="dark"><img id="previewImg" alt="Preview" /></div>
+      <div class="status" id="previewStatus" data-state="loading" role="status" aria-live="polite">
+        <span id="statusText">Rendering…</span>
+        <button class="btn" id="retryBtn" type="button" hidden>Retry</button>
       </div>
-    </div>
-    <div class="panel">
-      <div class="controls scroll" id="controls"></div>
-    </div>
-  </div>
-  <div class="foot">
-    <span>Neutral themes · one grammar · same URL, same mark, forever.</span>
-    <span>No live data, no clock, no account — the URL is the only input.</span>
-  </div>
+      <div class="output">
+        <div class="row">
+          <div class="seg" id="fmtSeg" role="group" aria-label="Embed format">
+            <button type="button" data-fmt="md" class="on">Markdown</button>
+            <button type="button" data-fmt="html">HTML</button>
+            <button type="button" data-fmt="url">URL</button>
+          </div>
+          <div class="actions">
+            <button class="btn" id="openBtn" type="button">Open</button>
+            <button class="btn" id="downloadBtn" type="button" disabled>Download SVG</button>
+            <button class="btn" id="copyBtn" type="button">Copy URL</button>
+            <button class="btn primary" id="mdBtn" type="button">Copy markdown</button>
+          </div>
+        </div>
+        <pre class="code" id="codeBox"></pre>
+      </div>
+      <div class="presets">
+        <h3>Presets</h3>
+        <div class="preset-grid" id="presetGrid"></div>
+      </div>
+    </section>
+    <aside class="panel">
+      <div class="controls" id="controls"></div>
+    </aside>
+  </main>
+
+  <section class="dialects">
+    <h2>Already using another service? Change only the host.</h2>
+    <table class="dtable">
+      <thead><tr><th>From</th><th>To</th></tr></thead>
+      <tbody id="dialectRows"></tbody>
+    </table>
+  </section>
+
+  <footer>
+    <span>MIT · stateless Rust · every URL is cached at the edge.</span>
+    <span>Brand icons from <a href="https://simpleicons.org">Simple Icons</a> (CC0).</span>
+  </footer>
 </div>
+<div class="toast" id="toast"></div>
 <script>
 const BASE = "{{BASE}}";
 window.__MARK_BOOT__ = {{BOOT}};
-let FORMS = ["hero","pill","strip","profile","deploy","score"];
-let THEMES = ["","dark","light","tokyonight","dracula","nord","monokai","radical","gruvbox","ocean","sunset","forest","neon","github"];
-let ART = ["wave","waving","aurora","soft","rounded","slice","glass","product","terminal","mesh","plasma","holo","neon","liquid","silk","orbit","constellation","grid","blur","ring","circuit","hud","pulse","noise","cylinder","checkered","egg","shark","venom","speech","org","transparent"];
+
+// ---- vocabulary (refined from /api/v1/catalog when it loads) --------------
+let THEMES = ["dark","light","tokyonight","dracula","nord","monokai","radical","gruvbox","ocean","sunset","forest","neon","github"];
+let ART = ["waving","wave","aurora","soft","rounded","slice","glass","product","terminal","mesh","plasma","holo","neon","liquid","silk","orbit","constellation","grid","blur","ring","circuit","hud","pulse","noise","cylinder","checkered","egg","shark","venom","speech","org","transparent"];
 let LAYOUTS = ["default","plate","signal","terminal"];
-let ANIMS = ["none","ambient","fade","rise","scale","float","glow","breathe","slide","cascade","shimmer","glitch","wave","orbit","neon","bounce","type"];
-let STYLES = ["flat","flat-square","plastic","for-the-badge","social","pill"];
-let ICONS = ["rust","go","ts","js","python","react","node","docker","kubernetes","linux","git","github","postgres","redis","aws","gcp","azure","nextjs","vue","svelte","bun","deno","css","html","graphql","tailwind","prisma","sqlite","nginx","cloudflare","vercel"];
-const RANDOM = ["667EEA,764BA2","4FACFE,00F2FE","43E97B,38F9D7","FA709A,FEE140","FF6B35,F15BB5","7C3AED,00F5D4","E03840,FF6B35","00F5D4,F15BB5","4338CA,F093FB","0EA5E9,A78BFA","F43F5E,FB923C","14B8A6,6366F1","D87000,4A90E2"];
-const SIG_GRAD = "0:1A1A2E,50:4A90E2,100:D87000";
-const SIG_REV = "0:D87000,50:4A90E2,100:1A1A2E";
-let previewToken = 0;
-let previewUrl = "";
-let previewReady = false;
-const HERO_H = 220;
-const HERO_W = 880;
+let ANIMS = ["ambient","none","fade","rise","scale","float","glow","breathe","slide","cascade","shimmer","glitch","wave","orbit","neon","bounce","type"];
+const THEME_DOT = { dark:"#0d1117", light:"#f6f8fa", tokyonight:"#7aa2f7", dracula:"#bd93f9", nord:"#88c0d0", monokai:"#f92672", radical:"#fe428e", gruvbox:"#fabd2f", ocean:"#00b4d8", sunset:"#ff7e5f", forest:"#2d6a4f", neon:"#00f5d4", github:"#2f81f7" };
+const BADGE_COLORS = ["brightgreen","green","yellowgreen","yellow","orange","red","blue","blueviolet","ff69b4","lightgrey","555555","0a0d07"];
+const NAMED = { brightgreen:"#4c1", green:"#97ca00", yellowgreen:"#a4a61d", yellow:"#dfb317", orange:"#fe7d37", red:"#e05d44", blue:"#007ec6", blueviolet:"#8a2be2", lightgrey:"#9f9f9f" };
+const STAT_THEMES = ["default","dark","radical","tokyonight","dracula","gruvbox","onedark","nord","monokai","synthwave","cobalt","github_dark","catppuccin_mocha","transparent"];
+const POPULAR_ICONS = ["rust","ts","js","python","go","react","nextjs","vue","svelte","nodejs","bun","deno","docker","kubernetes","postgres","redis","mongodb","graphql","tailwind","linux","git","github","aws","gcp","cloudflare","vercel","figma","vim"];
+const SWATCHES = ["0:1A1A2E,50:4A90E2,100:D87000","667EEA,764BA2","4FACFE,00F2FE","43E97B,38F9D7","FA709A,FEE140","7C3AED,00F5D4","F43F5E,FB923C","14B8A6,6366F1","0EA5E9,A78BFA","FF6B35,F15BB5"];
 
-const state = {
-  form:"hero", color:SIG_GRAD, theme:"", type:"waving", layout:"default", animation:"ambient",
-  font:"sans", text:"Your name", desc:"A short line about what you build",
-  height:HERO_H, width:HERO_W, credit:false,
-  pill:{label:"build", message:"passing", style:"flat", labelColor:""},
-  strip:{icons:["rust","ts","docker","kubernetes"], perline:12},
-  deploy:{service:"app", style:"flat"},
-  score:{value:"92", max:"100"}
-};
-
-const PRESETS = [
-  { name:"README header", apply(){ Object.assign(state,{form:"hero",color:SIG_GRAD,theme:"",type:"waving",layout:"default",animation:"ambient",font:"sans",text:"Your name",desc:"A short line about what you build",height:HERO_H,width:HERO_W}); } },
-  { name:"README footer", apply(){ Object.assign(state,{form:"hero",color:SIG_REV,theme:"",type:"waving",layout:"default",animation:"glow",font:"sans",text:"thanks for reading.",desc:"",height:120,width:880}); } },
-  { name:"Typing lines", apply(){ Object.assign(state,{form:"hero",color:"4A90E2",theme:"",type:"transparent",layout:"signal",animation:"type",font:"mono",text:"First line\nSecond line\nThird line",desc:"",height:150,width:880}); } },
-  { name:"Profile card", apply(){ Object.assign(state,{form:"profile",color:"",theme:"tokyonight",type:"",animation:"none",font:"sans",text:"Your name",desc:"What you build",width:640}); } },
-  { name:"Status pill", apply(){ Object.assign(state,{form:"pill",color:"brightgreen",theme:"",type:"",animation:"none",pill:{label:"build",message:"passing",style:"flat",labelColor:""}}); } },
-  { name:"Score badge", apply(){ Object.assign(state,{form:"score",color:"",theme:"",type:"",animation:"none",pill:{label:"agent-ready",message:"",style:"flat",labelColor:""},score:{value:"92",max:"100"}}); } },
-  { name:"Tech strip", apply(){ Object.assign(state,{form:"strip",color:"",theme:"dark",type:"",animation:"none",strip:{icons:["rust","ts","docker","kubernetes"],perline:12}}); } }
-];
-
-function isThemePack(name){
-  if (!name) return false;
-  const n = String(name).toLowerCase();
-  return THEMES.some(t => t && String(t).toLowerCase() === n);
-}
-
+// Same vocabulary as the server (domain/spec.rs::MarkForm::parse): unknown
+// input is the hero, and the retired `identity` id is the profile card.
 function parseForm(raw){
-  // Same vocabulary as the server (domain/spec.rs::MarkForm::parse): unknown
-  // input is the hero, and the retired `identity` id is the profile card.
   const s = String(raw == null ? "" : raw).trim().toLowerCase();
   if (s === "pill") return "pill";
   if (s === "strip") return "strip";
@@ -216,596 +243,576 @@ function parseForm(raw){
 
 function decodeText(s){ return String(s).replace(/-nl-/g, "\n"); }
 
-function splitBadgePath(tail){
-  // shields static badge (domain/shields.rs): split on single dashes of the
-  // raw path; `--` is a dash, `__` an underscore, a lone `_` a space.
-  const escapeFormat = t => t.replace(/_+/g, run => "_".repeat(run.length >> 1) + (run.length % 2 ? " " : "")).replace(/--/g, "-");
-  const decodeTok = t => {
-    let v = String(t);
-    try { v = decodeURIComponent(v); } catch {}
-    return escapeFormat(v);
-  };
-  tail = String(tail).replace(/\.svg$/, "");
-  const segs = [""];
-  for (let i = 0; i < tail.length; i++) {
-    if (tail[i] === "-") {
-      if (tail[i + 1] === "-") { segs[segs.length - 1] += "--"; i++; }
-      else segs.push("");
-    } else segs[segs.length - 1] += tail[i];
+// Shields path escaping: "-" -> "--", "_" -> "__", space -> "_".
+function shieldsEscape(s){
+  return encodeURIComponent(String(s).replace(/-/g,"--").replace(/_/g,"__").replace(/ /g,"_"));
+}
+function shieldsUnescape(s){
+  return decodeURIComponent(s).replace(/__/g,"\u0000").replace(/_/g," ").replace(/\u0000/g,"_").replace(/--/g,"-");
+}
+function splitBadge(content){
+  const parts = [];
+  let cur = "";
+  for (let i = 0; i < content.length; i++) {
+    if (content[i] === "-" && content[i+1] === "-") { cur += "--"; i++; continue; }
+    if (content[i] === "-") { parts.push(cur); cur = ""; continue; }
+    cur += content[i];
   }
-  if (segs.length === 1) return { label: "", message: decodeTok(tail), color: "" };
-  if (segs.length === 2) return { label: "", message: decodeTok(segs[0]), color: decodeTok(segs[1]) };
-  const color = decodeTok(segs.pop());
-  const label = decodeTok(segs.shift());
-  return { label, message: segs.map(decodeTok).join("-"), color };
+  parts.push(cur);
+  if (parts.length >= 3) return { label:shieldsUnescape(parts.slice(0,-2).join("-")), message:shieldsUnescape(parts[parts.length-2]), color:parts[parts.length-1] };
+  if (parts.length === 2) return { label:"", message:shieldsUnescape(parts[0]), color:parts[1] };
+  return { label:"", message:shieldsUnescape(parts[0] || ""), color:"" };
 }
 
-function peelOrigin(s){
-  const i = s.indexOf("://");
-  if (i < 0) return s;
-  const rest = s.slice(i + 3);
-  const slash = rest.indexOf("/");
-  if (slash >= 0) return rest.slice(slash);
-  const q = rest.search(/[?#]/);
-  return q >= 0 ? rest.slice(q) : "/";
+// ---- kinds -----------------------------------------------------------------
+// Every field key is the URL parameter name, so a pasted URL maps onto the
+// controls without a translation table.
+const F = {
+  text:(key,label,def,extra)=>Object.assign({key,label,type:"text",def},extra||{}),
+  area:(key,label,def,extra)=>Object.assign({key,label,type:"area",def},extra||{}),
+  num:(key,label,def,extra)=>Object.assign({key,label,type:"num",def},extra||{}),
+  chips:(key,label,def,opts,extra)=>Object.assign({key,label,type:"chips",def,opts},extra||{}),
+  select:(key,label,def,opts,extra)=>Object.assign({key,label,type:"select",def,opts},extra||{}),
+  toggle:(key,label,def,extra)=>Object.assign({key,label,type:"toggle",def},extra||{}),
+};
+
+const KINDS = {
+  banner: {
+    name:"Banner", note:"42 art types",
+    fields:()=>[
+      F.area("text","Title","Hello, README",{nl:true}),
+      F.text("desc","Subtitle","Beautiful images from one URL"),
+      F.chips("type","Art","waving",ART),
+      F.chips("theme","Theme","",[""].concat(THEMES),{dots:true,none:"custom"}),
+      F.text("color","Custom colors","0:1A1A2E,50:4A90E2,100:D87000",{swatches:SWATCHES,hint:"Hex stops like 0:1A1A2E,100:D87000. Used when no theme is picked.",unless:"theme"}),
+      F.chips("layout","Layout","default",LAYOUTS,{sd:"default"}),
+      F.select("animation","Motion","ambient",ANIMS,{sd:"ambient"}),
+      F.chips("font","Font","sans",["sans","mono"],{sd:"sans"}),
+      F.num("height","Height","220",{min:60,max:900,sd:"220"}),
+      F.num("width","Width","880",{min:200,max:1600,sd:"880"}),
+    ],
+    url:(s)=>"/api/v1/mark/hero?"+qs(s,["text","desc","type","theme","color","layout","animation","font","height","width"]),
+    presets:[
+      {name:"Header wave", s:{text:"Hello, README",desc:"Beautiful images from one URL",type:"waving",color:"0:1A1A2E,50:4A90E2,100:D87000"}},
+      {name:"Aurora", s:{text:"Aurora",desc:"Soft light for your project",type:"aurora",theme:"tokyonight",height:"240"}},
+      {name:"Constellation", s:{text:"Open source",desc:"Built in public",type:"constellation",color:"0:0B1026,100:7C3AED",height:"240"}},
+      {name:"Terminal", s:{text:"$ cargo install your-tool",desc:"Fast. Tiny. Yours.",type:"terminal",layout:"terminal",font:"mono",theme:"dark"}},
+      {name:"Product cover", s:{text:"Acme",desc:"The one-line pitch",type:"mesh",layout:"plate",color:"FA709A,FEE140"}},
+      {name:"Footer", s:{text:"thanks for reading",desc:"",type:"waving",color:"0:D87000,50:4A90E2,100:1A1A2E",height:"120",animation:"glow"}},
+    ],
+  },
+  badge: {
+    name:"Badge", note:"shields-compatible",
+    fields:()=>[
+      F.text("label","Label","build"),
+      F.text("message","Message","passing"),
+      F.chips("color","Color","brightgreen",BADGE_COLORS,{badgeDots:true,free:true,hint:"Named color or hex (without #)."}),
+      F.text("labelColor","Label color",""),
+      F.chips("style","Style","flat",["flat","flat-square","plastic","for-the-badge","social"],{sd:"flat"}),
+      F.text("logo","Logo","",{hint:"Any Simple Icons slug: rust, github, npm, docker…",suggest:POPULAR_ICONS}),
+      F.text("logoColor","Logo color",""),
+    ],
+    url:(s)=>{
+      const path = (s.label ? shieldsEscape(s.label)+"-" : "") + shieldsEscape(s.message||"") + "-" + encodeURIComponent(s.color||"blue");
+      return "/badge/"+path+optQs(qs(s,["labelColor","style","logo","logoColor"]));
+    },
+    presets:[
+      {name:"Build passing", s:{label:"build",message:"passing",color:"brightgreen"}},
+      {name:"License", s:{label:"license",message:"MIT",color:"blue",style:"flat-square"}},
+      {name:"Made with Rust", s:{label:"made with",message:"Rust",color:"dea584",logo:"rust",style:"for-the-badge",labelColor:"0d1117"}},
+      {name:"Docs", s:{label:"docs",message:"read",color:"5b8cff",logo:"readthedocs",style:"flat-square"}},
+      {name:"Social", s:{label:"follow",message:"@you",color:"blue",style:"social",logo:"github"}},
+    ],
+  },
+  score: {
+    name:"Score", note:"progress ring",
+    fields:()=>[
+      F.text("label","Label","agent-ready"),
+      F.num("value","Value","92",{min:0}),
+      F.num("max","Max","100",{min:1,sd:"100"}),
+      F.chips("style","Style","flat",["flat","flat-square","plastic","for-the-badge","social"],{sd:"flat"}),
+      F.text("logo","Logo",""),
+      F.text("color","Color override","",{hint:"Leave empty for automatic grading."}),
+    ],
+    url:(s)=>"/api/v1/mark/score?"+qs(s,["label","value","max","style","logo","color"]),
+    presets:[
+      {name:"Agent-ready", s:{label:"agent-ready",value:"92",max:"100"}},
+      {name:"Coverage", s:{label:"coverage",value:"74",max:"100",style:"flat-square"}},
+      {name:"Big score", s:{label:"quality",value:"8",max:"10",style:"for-the-badge"}},
+    ],
+  },
+  typing: {
+    name:"Typing", note:"animated text",
+    fields:()=>[
+      F.area("lines","Lines (one per line)","Hi there, I'm a developer\nI build tools for the web\nWelcome to my README",{lines:true}),
+      F.text("font","Font","Fira Code",{sd:"Fira Code"}),
+      F.grid([F.num("size","Size","20",{min:8,max:120,sd:"20"}), F.text("color","Color","36BCF7",{sd:"36BCF7"})]),
+      F.grid([F.num("width","Width","435",{min:50,sd:"435"}), F.num("height","Height","50",{min:20,sd:"50"})]),
+      F.grid([F.num("duration","Type (ms)","5000",{min:100,sd:"5000"}), F.num("pause","Pause (ms)","1000",{min:0,sd:"1000"})]),
+      F.toggle("center","Center horizontally",false,{sd:false}),
+      F.toggle("vCenter","Center vertically",false,{sd:false}),
+      F.toggle("multiline","Keep previous lines",false,{sd:false}),
+      F.toggle("repeat","Loop",true,{sd:true}),
+    ],
+    url:(s)=>"/typing?"+qs(s,["lines","font","size","color","width","height","duration","pause","center","vCenter","multiline","repeat"]),
+    presets:[
+      {name:"Intro", s:{lines:"Hi there, I'm a developer\nI build tools for the web\nWelcome to my README"}},
+      {name:"Centered", s:{lines:"Open source maintainer\nRust · TypeScript · Cloud",center:true,vCenter:true,width:"600",height:"60",color:"F15BB5",size:"24"}},
+      {name:"Terminal", s:{lines:"$ npm install your-tool\n$ your-tool --help",font:"JetBrains Mono",color:"3DD68C",multiline:true,height:"70"}},
+    ],
+  },
+  icons: {
+    name:"Icons", note:"3000+ brands",
+    fields:()=>[
+      F.text("i","Icons","rust,ts,react,docker,kubernetes,postgres",{suggest:POPULAR_ICONS,append:true,hint:"Comma-separated. skill-icons ids and Simple Icons slugs both work."}),
+      F.chips("theme","Theme","dark",["dark","light"],{sd:"dark"}),
+      F.num("perline","Per line","15",{min:1,max:50,sd:"15"}),
+    ],
+    url:(s)=>"/icons?"+qs(s,["i","theme","perline"]),
+    presets:[
+      {name:"Web", s:{i:"html,css,js,ts,react,nextjs,tailwind,vercel"}},
+      {name:"Systems", s:{i:"rust,go,cpp,linux,docker,kubernetes,nginx"}},
+      {name:"Data", s:{i:"python,postgres,redis,mongodb,kafka,grafana",theme:"light"}},
+    ],
+  },
+  stats: {
+    name:"GitHub stats", note:"live, cached",
+    fields:()=>[
+      F.chips("card","Card","stats",["stats","top-langs","streak","pin"],{local:true}),
+      F.text("username","GitHub user","torvalds"),
+      F.text("repo","Repository (pin card)","linux",{only:{card:"pin"}}),
+      F.select("theme","Theme","default",STAT_THEMES,{sd:"default"}),
+      F.chips("layout","Layout","normal",["normal","compact","donut","donut-vertical","pie"],{only:{card:"top-langs"},sd:"normal"}),
+      F.toggle("show_icons","Show icons",true,{only:{card:"stats"},sd:false}),
+      F.toggle("hide_border","Hide border",false,{sd:false}),
+    ],
+    url:(s)=>{
+      const card = s.card || "stats";
+      if (card === "streak") return "/streak?"+qs({user:s.username,theme:s.theme,hide_border:s.hide_border},["user","theme","hide_border"]);
+      if (card === "top-langs") return "/api/top-langs?"+qs(s,["username","theme","layout","hide_border"]);
+      if (card === "pin") return "/api/pin?"+qs(s,["username","repo","theme","hide_border"]);
+      return "/api?"+qs(s,["username","theme","show_icons","hide_border"]);
+    },
+    presets:[
+      {name:"Stats", s:{card:"stats",username:"torvalds",show_icons:true}},
+      {name:"Top languages", s:{card:"top-langs",username:"torvalds",layout:"compact",theme:"tokyonight"}},
+      {name:"Streak", s:{card:"streak",username:"torvalds",theme:"dark"}},
+      {name:"Repo pin", s:{card:"pin",username:"torvalds",repo:"linux",theme:"radical"}},
+    ],
+  },
+  profile: {
+    name:"Profile card", note:"name + tagline",
+    fields:()=>[
+      F.text("text","Name","Ada Lovelace"),
+      F.text("desc","Tagline","Analytical engines and poetry"),
+      F.chips("theme","Theme","tokyonight",[""].concat(THEMES),{dots:true,none:"custom"}),
+      F.text("color","Custom colors","",{swatches:SWATCHES,unless:"theme"}),
+      F.chips("type","Art background","",[""].concat(ART),{none:"none"}),
+      F.num("width","Width","640",{min:280,max:1200,sd:"640"}),
+      F.num("height","Height","200",{min:80,max:400,sd:"200"}),
+    ],
+    url:(s)=>"/api/v1/mark/profile?"+qs(s,["text","desc","theme","color","type","width","height"]),
+    presets:[
+      {name:"Night", s:{text:"Ada Lovelace",desc:"Analytical engines and poetry",theme:"tokyonight"}},
+      {name:"Light", s:{text:"Grace Hopper",desc:"Compilers, COBOL, and nanoseconds",theme:"light"}},
+      {name:"Wave art", s:{text:"Alan Turing",desc:"Machines that think",type:"wave",theme:"ocean"}},
+    ],
+  },
+  deploy: {
+    name:"Deploy", note:"deployed on Sylphx",
+    fields:()=>[
+      F.text("service","Service","app"),
+      F.chips("style","Style","flat",["flat","flat-square","plastic","for-the-badge","social"],{sd:"flat"}),
+    ],
+    url:(s)=>"/api/v1/mark/deploy?"+qs(s,["service","style"]),
+    presets:[
+      {name:"Flat", s:{service:"app"}},
+      {name:"For the badge", s:{service:"app",style:"for-the-badge"}},
+    ],
+  },
+};
+F.grid = (fields)=>({type:"grid",fields});
+
+const ORDER = ["banner","badge","typing","icons","stats","profile","score","deploy"];
+
+// ---- state -----------------------------------------------------------------
+const state = { kind:"banner", vals:{}, extra:{}, bg:"dark", fmt:"md" };
+let previewToken = 0, previewUrl = "", previewReady = false, renderTimer = 0;
+
+function flatFields(kind){
+  const out = [];
+  for (const f of KINDS[kind].fields()) { if (f.type === "grid") out.push(...f.fields); else out.push(f); }
+  return out;
+}
+function defaults(kind){
+  const d = {};
+  for (const f of flatFields(kind)) d[f.key] = f.def;
+  return d;
+}
+function setKind(kind, vals, extra){
+  state.kind = KINDS[kind] ? kind : "banner";
+  state.vals = Object.assign(defaults(state.kind), vals || {});
+  state.extra = extra || {};
+  renderKinds(); renderControls(); renderPresets(); refresh();
 }
 
-function splitPathQuery(raw){
-  let s = String(raw || "").trim();
-  if (!s) return null;
-  if (s.charAt(0) === "#") s = s.slice(1).trim();
-  if (!s) return null;
-  let after = peelOrigin(s);
-  let hash = "";
-  const hashAt = after.indexOf("#");
-  let before = after;
-  if (hashAt >= 0) {
-    hash = after.slice(hashAt + 1);
-    before = after.slice(0, hashAt);
+// Build a query from state values, dropping values equal to the field default
+// (shorter URLs) unless listed in `always`. Newlines in text become -nl-.
+function qs(vals, keys, opt){
+  opt = opt || {};
+  const sd = {};
+  for (const f of flatFields(state.kind)) if (f.sd !== undefined) sd[f.key] = f.sd;
+  Object.assign(sd, opt.sd || {});
+  const themed = !!vals.theme && (state.kind === "banner" || state.kind === "profile");
+  const q = new URLSearchParams();
+  for (const k of keys) {
+    let v = vals[k];
+    if (v === undefined || v === null || v === "") continue;
+    if (sd[k] !== undefined && String(v) === String(sd[k])) continue;
+    if (k === "color" && themed) continue;
+    if (k === "lines") v = String(v).split("\n").map(x => x.trim()).filter(Boolean).join(";");
+    else if (k === "text" && state.kind === "banner") v = String(v).replace(/\n/g, "-nl-");
+    q.set(k, String(v));
   }
-  const pathOnly = (before.split("?")[0] || "");
-  const studio = !pathOnly || pathOnly === "/";
-  const locatorLooks = hash && (/^\//.test(hash) || hash.indexOf("://") >= 0 || hash.indexOf("=") >= 0 || hash.indexOf("api/") === 0 || hash.indexOf("badge/") === 0);
-  const locator = (studio && locatorLooks) ? hash : before;
-  if (!locator) return { path: "/", query: "" };
-  const q = locator.indexOf("?");
-  if (q >= 0) return { path: locator.slice(0, q) || "/", query: locator.slice(q + 1) };
-  if (locator.charAt(0) === "/") return { path: locator, query: "" };
-  if (locator.indexOf("=") >= 0) return { path: "/", query: locator };
-  return { path: "/" + locator, query: "" };
+  for (const [k, v] of Object.entries(state.extra)) if (!q.has(k)) q.set(k, v);
+  return q.toString().replace(/%2C/g, ",").replace(/%3A/g, ":").replace(/%3B/g, ";");
 }
+function optQs(s){ return s ? "?" + s : ""; }
 
-function parsePublicMarkUrl(raw, depth){
-  if ((depth || 0) > 2) return null;
-  const loc = splitPathQuery(raw);
-  if (!loc) return null;
-  const params = new URLSearchParams(loc.query || "");
-  if ((depth || 0) < 2 && params.has("url")) {
-    const nested = parsePublicMarkUrl(params.get("url"), (depth || 0) + 1);
-    if (nested) {
-      const overlay = pairsToBoot(params, nested.form);
-      return Object.assign(nested, overlay, {
-        pill: Object.assign({}, nested.pill, overlay.pill),
-        strip: Object.assign({}, nested.strip, overlay.strip),
-        deploy: Object.assign({}, nested.deploy, overlay.deploy)
-      });
-    }
-  }
-  let form = "";
-  let badge = null;
-  const path = (loc.path || "/").replace(/\/+$/, "") || "/";
-  if (path.indexOf("/badge/") === 0) {
-    const tail = path.slice("/badge/".length);
-    if (tail) {
-      form = "pill";
-      badge = splitBadgePath(tail);
-    }
-  } else if (path === "/api/v1/mark") {
-    form = "hero";
-  } else if (path.indexOf("/api/v1/mark/") === 0) {
-    form = parseForm(path.slice("/api/v1/mark/".length).split("/")[0]);
-  } else if (params.has("form")) {
-    form = parseForm(params.get("form"));
-  }
-  const known = ["form","type","theme","color","labelColor","animation","font","text","desc","width","height","credit","layout","label","message","style","icons","perline","service"];
-  let has = !!form;
-  params.forEach((_, k) => { if (known.indexOf(k) >= 0) has = true; });
-  if (!has) return null;
-  form = form || "hero";
-  const boot = pairsToBoot(params, form);
-  boot.form = form;
-  if (badge) {
-    boot.pill = boot.pill || {};
-    boot.pill.label = badge.label;
-    boot.pill.message = badge.message;
-    if (!isThemePack(boot.theme) && badge.color) boot.color = badge.color;
-  }
-  return boot;
+function buildPath(){ return KINDS[state.kind].url(state.vals); }
+function buildURL(){ return BASE + buildPath(); }
+function altText(){
+  const v = state.vals;
+  const badge = v.label && (v.message || v.value) ? v.label + ": " + (v.message || v.value) : "";
+  return String(badge || v.text || v.message || v.lines || v.username || v.i || KINDS[state.kind].name).split("\n")[0].replace(/[\[\]]/g, "").slice(0, 60);
 }
+function buildMarkdown(){ return "![" + altText() + "](" + buildURL() + ")"; }
+function buildHtml(){ return '<img src="' + buildURL().replace(/&/g, "&amp;") + '" alt="' + altText().replace(/"/g, "&quot;") + '" />'; }
 
-function pairsToBoot(params, form){
-  const boot = {};
-  if (params.has("form")) boot.form = parseForm(params.get("form"));
-  if (params.get("theme") && isThemePack(params.get("theme"))) {
-    boot.theme = params.get("theme");
-    boot.color = "";
-  } else if (params.has("color")) {
-    boot.color = params.get("color");
+// ---- rendering -------------------------------------------------------------
+function el(tag, attrs, children){
+  const n = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs || {})) {
+    if (k === "class") n.className = v; else if (k === "text") n.textContent = v;
+    else if (k.startsWith("on")) n.addEventListener(k.slice(2), v); else n.setAttribute(k, v);
   }
-  if (params.has("type")) boot.type = params.get("type");
-  if (params.has("layout")) boot.layout = params.get("layout");
-  if (params.has("animation")) boot.animation = params.get("animation");
-  if (params.has("font")) boot.font = params.get("font");
-  if (params.has("text")) boot.text = decodeText(params.get("text"));
-  if (params.has("desc")) boot.desc = decodeText(params.get("desc"));
-  if (params.has("width") && Number(params.get("width"))) boot.width = Number(params.get("width"));
-  if (params.has("height") && Number(params.get("height"))) boot.height = Number(params.get("height"));
-  if (params.has("credit")) boot.credit = /^(1|true|yes|on)$/i.test(params.get("credit") || "");
-  const f = boot.form || form;
-  if (f === "score") {
-    boot.score = {};
-    if (params.has("value")) boot.score.value = params.get("value");
-    if (params.has("max")) boot.score.max = params.get("max");
-  }
-  if (f === "pill" || f === "score") {
-    boot.pill = {};
-    if (params.has("label")) boot.pill.label = params.get("label");
-    if (params.has("message")) boot.pill.message = params.get("message");
-    if (params.has("style")) boot.pill.style = params.get("style");
-    if (isThemePack(boot.theme)) boot.pill.labelColor = "";
-    else if (params.has("labelColor")) boot.pill.labelColor = params.get("labelColor");
-  } else if (f === "strip") {
-    boot.strip = {};
-    if (params.has("icons")) boot.strip.icons = params.get("icons").split(",").map(s => s.trim()).filter(Boolean);
-    if (params.has("perline") && Number(params.get("perline"))) boot.strip.perline = Number(params.get("perline"));
-  } else if (f === "deploy") {
-    boot.deploy = {};
-    if (params.has("service")) boot.deploy.service = params.get("service");
-    if (params.has("style")) boot.deploy.style = params.get("style");
-  }
-  return boot;
+  for (const c of children || []) if (c) n.appendChild(c);
+  return n;
 }
-
-function blankState(form){
-  return {
-    form: form || "hero",
-    color: "",
-    theme: "",
-    type: "",
-    layout: "default",
-    animation: "none",
-    font: "sans",
-    text: "",
-    desc: "",
-    height: HERO_H,
-    width: form === "profile" ? 640 : HERO_W,
-    credit: false,
-    pill: {label:"", message:"ok", style:"flat", labelColor:""},
-    strip: {icons:[], perline:12},
-    deploy: {service:"", style:"flat"},
-    score: {value:"", max:"100"}
-  };
+function renderKinds(){
+  const nav = document.getElementById("kinds");
+  nav.innerHTML = "";
+  for (const k of ORDER) {
+    const b = el("button", { type:"button", class: k === state.kind ? "on" : "", onclick:()=>setKind(k, KINDS[k].presets[0].s) });
+    b.appendChild(document.createTextNode(KINDS[k].name));
+    b.appendChild(el("i", { text: KINDS[k].note }));
+    nav.appendChild(b);
+  }
 }
-
-function applyBoot(boot){
-  if (!boot || typeof boot !== "object") return false;
-  const form = parseForm(boot.form);
-  const next = blankState(form);
-  if (boot.color != null) next.color = String(boot.color);
-  if (boot.theme != null) next.theme = isThemePack(boot.theme) ? String(boot.theme) : "";
-  if (boot.type != null) next.type = String(boot.type);
-  if (boot.layout != null) next.layout = String(boot.layout);
-  if (boot.animation != null) next.animation = String(boot.animation);
-  if (boot.font != null) next.font = String(boot.font);
-  if (boot.text != null) next.text = String(boot.text);
-  if (boot.desc != null) next.desc = String(boot.desc);
-  if (boot.width != null && Number(boot.width)) next.width = Number(boot.width);
-  if (boot.height != null && Number(boot.height)) next.height = Number(boot.height);
-  if (typeof boot.credit === "boolean") next.credit = boot.credit;
-  if (boot.pill && typeof boot.pill === "object") {
-    if (boot.pill.label != null) next.pill.label = String(boot.pill.label);
-    if (boot.pill.message != null) next.pill.message = String(boot.pill.message);
-    if (boot.pill.style != null) next.pill.style = String(boot.pill.style);
-    if (boot.pill.labelColor != null) next.pill.labelColor = String(boot.pill.labelColor);
-  }
-  if (boot.strip && typeof boot.strip === "object") {
-    if (Array.isArray(boot.strip.icons)) next.strip.icons = boot.strip.icons.map(String);
-    else if (typeof boot.strip.icons === "string") next.strip.icons = boot.strip.icons.split(",").map(s => s.trim()).filter(Boolean);
-    if (boot.strip.perline != null && Number(boot.strip.perline)) next.strip.perline = Number(boot.strip.perline);
-  }
-  if (boot.score && typeof boot.score === "object") {
-    if (boot.score.value != null) next.score.value = String(boot.score.value);
-    if (boot.score.max != null) next.score.max = String(boot.score.max);
-  }
-  if (boot.deploy && typeof boot.deploy === "object") {
-    if (boot.deploy.service != null) next.deploy.service = String(boot.deploy.service);
-    if (boot.deploy.style != null) next.deploy.style = String(boot.deploy.style);
-  }
-  if (isThemePack(next.theme)) {
-    next.color = "";
-    next.pill.labelColor = "";
-  }
-  Object.assign(state, next);
-  state.pill = next.pill;
-  state.strip = next.strip;
-  state.deploy = next.deploy;
-  state.score = next.score;
-  state._preset = undefined;
+function visible(f){
+  if (f.only) for (const [k, v] of Object.entries(f.only)) if (state.vals[k] !== v) return false;
+  if (f.unless && state.vals[f.unless]) return false;
   return true;
 }
-
-function recoverFromLocation(){
-  if (window.__MARK_BOOT__ && typeof window.__MARK_BOOT__ === "object") return window.__MARK_BOOT__;
-  if (location.hash && location.hash.length > 1) {
-    const fromHash = parsePublicMarkUrl(location.hash);
-    if (fromHash) return fromHash;
+function update(key, value, rerender){
+  state.vals[key] = value;
+  if (rerender) renderControls();
+  markPreset(); scheduleRefresh();
+}
+function fieldNode(f){
+  const wrap = el("div", { class:"field" });
+  if (f.type !== "toggle") wrap.appendChild(el("label", {}, [document.createTextNode(f.label), f.local ? null : el("em", { text: f.key })]));
+  const v = state.vals[f.key];
+  if (f.type === "text" || f.type === "num") {
+    const input = el("input", { type: f.type === "num" ? "number" : "text", spellcheck:"false" });
+    if (f.min !== undefined) input.min = f.min;
+    if (f.max !== undefined) input.max = f.max;
+    input.value = v == null ? "" : v;
+    input.addEventListener("input", () => update(f.key, input.value));
+    wrap.appendChild(input);
+    if (f.swatches) {
+      const chips = el("div", { class:"chips" });
+      for (const sw of f.swatches) {
+        const stops = sw.split(",").map(x => "#" + x.split(":").pop());
+        const c = el("button", { type:"button", class:"chip" + (v === sw ? " on" : ""), title: sw, onclick:()=>update(f.key, sw, true) });
+        c.appendChild(el("span", { class:"dot", style:"width:38px;border-radius:5px;background:linear-gradient(90deg," + stops.join(",") + ")" }));
+        chips.appendChild(c);
+      }
+      const surprise = el("button", { type:"button", class:"chip", text:"Surprise me", onclick:()=>update(f.key, f.swatches[Math.floor(Math.random()*f.swatches.length)], true) });
+      chips.appendChild(surprise);
+      wrap.appendChild(chips);
+    }
+    if (f.suggest) {
+      const chips = el("div", { class:"chips" });
+      for (const s of f.suggest) chips.appendChild(el("button", { type:"button", class:"chip", text:s, onclick:()=>{
+        if (f.append) {
+          const list = String(state.vals[f.key] || "").split(",").map(x => x.trim()).filter(Boolean);
+          const i = list.indexOf(s); if (i >= 0) list.splice(i, 1); else list.push(s);
+          update(f.key, list.join(","), true);
+        } else update(f.key, s, true);
+      } }));
+      wrap.appendChild(chips);
+    }
+  } else if (f.type === "area") {
+    const ta = el("textarea", { spellcheck:"false" });
+    ta.value = v == null ? "" : v;
+    ta.addEventListener("input", () => update(f.key, ta.value));
+    wrap.appendChild(ta);
+  } else if (f.type === "select") {
+    const sel = el("select");
+    for (const o of f.opts) { const op = el("option", { value:o, text:o }); if (String(v) === o) op.selected = true; sel.appendChild(op); }
+    sel.addEventListener("change", () => update(f.key, sel.value));
+    wrap.appendChild(sel);
+  } else if (f.type === "chips") {
+    const chips = el("div", { class:"chips" });
+    for (const o of f.opts) {
+      const c = el("button", { type:"button", class:"chip" + (String(v) === String(o) ? " on" : ""), onclick:()=>update(f.key, o, true) });
+      if (f.dots && o) c.appendChild(el("span", { class:"dot", style:"background:" + (THEME_DOT[o] || "#888") }));
+      if (f.badgeDots) c.appendChild(el("span", { class:"dot", style:"background:" + (NAMED[o] || "#" + o) }));
+      c.appendChild(document.createTextNode(o || f.none || "none"));
+      chips.appendChild(c);
+    }
+    wrap.appendChild(chips);
+    if (f.free) {
+      const input = el("input", { type:"text", spellcheck:"false", placeholder:"or any hex, e.g. 8A2BE2" });
+      input.value = f.opts.indexOf(v) >= 0 ? "" : (v || "");
+      input.addEventListener("input", () => update(f.key, input.value.replace(/^#/, "")));
+      wrap.appendChild(input);
+    }
+  } else if (f.type === "toggle") {
+    const lab = el("label", { class:"toggle" });
+    const cb = el("input", { type:"checkbox" });
+    cb.checked = v === true || v === "true";
+    cb.addEventListener("change", () => update(f.key, cb.checked));
+    lab.appendChild(cb); lab.appendChild(document.createTextNode(f.label));
+    wrap.appendChild(lab);
   }
-  if (location.search && location.search.length > 1) {
-    return parsePublicMarkUrl("/" + location.search);
-  }
-  return null;
+  if (f.hint) wrap.appendChild(el("div", { class:"hint", text:f.hint }));
+  return wrap;
 }
-
-function grammarParams(){
-  const s = state, q = new URLSearchParams();
-  if (s.theme) q.set("theme", s.theme);
-  else if (s.color) q.set("color", s.color);
-  if (s.animation && s.animation !== "none") q.set("animation", s.animation);
-  if (s.font === "mono") q.set("font", "mono");
-  if (s.credit) q.set("credit", "1");
-  if (s.form === "hero") {
-    if (s.type) q.set("type", s.type);
-    if (s.layout && s.layout !== "default") q.set("layout", s.layout);
-    if (s.text) q.set("text", s.text.replace(/\n/g,"-nl-"));
-    if (s.desc) q.set("desc", s.desc);
-    if (s.height !== 220) q.set("height", String(s.height));
-    if (s.width !== 880) q.set("width", String(s.width));
-  } else if (s.form === "profile") {
-    if (s.text) q.set("text", s.text);
-    if (s.desc) q.set("desc", s.desc);
-    if (s.type) q.set("type", s.type);
-    if (s.width !== 640) q.set("width", String(s.width));
-  } else if (s.form === "pill") {
-    if (s.pill.label) q.set("label", s.pill.label);
-    q.set("message", s.pill.message || "ok");
-    if (s.pill.style !== "flat") q.set("style", s.pill.style);
-    if (!isThemePack(s.theme) && s.pill.labelColor) q.set("labelColor", s.pill.labelColor);
-  } else if (s.form === "score") {
-    if (s.pill.label) q.set("label", s.pill.label);
-    if (s.score.value !== "") q.set("value", s.score.value);
-    if (s.score.max && s.score.max !== "100") q.set("max", s.score.max);
-    if (s.pill.style !== "flat") q.set("style", s.pill.style);
-    if (!isThemePack(s.theme) && s.pill.labelColor) q.set("labelColor", s.pill.labelColor);
-  } else if (s.form === "strip") {
-    q.set("icons", s.strip.icons.join(","));
-    if (s.strip.perline !== 12) q.set("perline", String(s.strip.perline));
-  } else if (s.form === "deploy") {
-    if (s.deploy.service) q.set("service", s.deploy.service);
-    if (s.deploy.style !== "flat") q.set("style", s.deploy.style);
-  }
-  return q;
-}
-
-function markdownAlt(){
-  const s = state;
-  if (s.form === "pill") return [s.pill.label, s.pill.message].filter(Boolean).join(" ") || "pill";
-  if (s.form === "score") return [s.pill.label || "score", s.score.value].filter(Boolean).join(" ");
-  if (s.form === "strip") return s.strip.icons.join(" ") || "strip";
-  if (s.form === "deploy") return s.deploy.service ? s.deploy.service + " deployed on Sylphx" : "deployed on Sylphx";
-  const text = String(s.text || "").split("\n")[0].trim();
-  return text || s.form;
-}
-
-function buildMarkdown(){
-  const alt = markdownAlt().replace(/\\/g, "\\\\").replace(/\]/g, "\\]");
-  return "![" + alt + "](" + buildURL() + ")";
-}
-
-function studioLocation(){
-  const q = grammarParams();
-  const params = new URLSearchParams();
-  params.set("form", state.form);
-  q.forEach((v, k) => { if (k !== "form") params.set(k, v); });
-  return "/?" + params.toString();
-}
-
-function syncStudioUrl(){
-  try {
-    const next = studioLocation();
-    if (location.pathname + location.search !== next) history.replaceState(null, "", next);
-  } catch (_) { /* not a browser history context */ }
-}
-
-function copyText(text){
-  const box = document.getElementById("urlBox");
-  const fallback = () => {
-    const prev = box.value;
-    box.value = text;
-    box.removeAttribute("readonly");
-    box.select();
-    document.execCommand("copy");
-    box.value = prev;
-    box.setAttribute("readonly", "");
-  };
-  if (navigator.clipboard && navigator.clipboard.writeText) {
-    return navigator.clipboard.writeText(text).catch(fallback);
-  }
-  fallback();
-  return Promise.resolve();
-}
-
-function esc(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
-
-function buildURL(){
-  const qs = grammarParams().toString();
-  return `${BASE}/api/v1/mark/${state.form}${qs ? "?" + qs : ""}`;
-}
-function setPreviewStatus(kind, message, retry = false){
-  const status = document.getElementById("previewStatus");
-  const text = document.getElementById("statusText");
-  const retryBtn = document.getElementById("retryBtn");
-  const downloadBtn = document.getElementById("downloadBtn");
-  status.dataset.state = kind;
-  text.textContent = message;
-  retryBtn.hidden = !retry;
-  downloadBtn.disabled = kind !== "ready";
-}
-
-function loadPreview(url){
-  const img = document.getElementById("previewImg");
-  const token = ++previewToken;
-  previewUrl = url;
-  previewReady = false;
-  setPreviewStatus("loading", "Rendering mark…");
-  img.onload = () => {
-    if (token !== previewToken) return;
-    previewReady = true;
-    setPreviewStatus("ready", "Ready — copy the markdown embed, copy the URL, or download the SVG.");
-  };
-  img.onerror = () => {
-    if (token !== previewToken) return;
-    previewReady = false;
-    setPreviewStatus("error", "Mark unavailable — check the URL or retry.", true);
-  };
-  img.removeAttribute("src");
-  img.src = url;
-}
-
-function refresh(){
-  const url = buildURL();
-  document.getElementById("urlBox").value = url;
-  loadPreview(url);
-  syncStudioUrl();
-  document.querySelectorAll("#forms button").forEach(b => b.classList.toggle("active", b.dataset.f === state.form));
-  renderControls();
-}
-
-function chips(values, selected, onClick){
-  return `<div class="chips">${values.map(v => {
-    const on = v === selected ? " on" : "";
-    return `<button type="button" class="chip${on}" data-v="${esc(v)}">${esc(v)}</button>`;
-  }).join("")}</div>`;
-}
-
-function themePills(selected){
-  return `<div class="chips">${THEMES.map(t => {
-    const on = t === selected ? " on" : "";
-    const orb = t ? `<span class="orb" style="background:${themeColor(t)}"></span>` : "";
-    return `<button type="button" class="theme${on}" data-v="${esc(t)}">${orb}${t || "custom"}</button>`;
-  }).join("")}</div>`;
-}
-
-function themeColor(name){
-  const m = { dark:"#0D1117", light:"#E6EDF3", tokyonight:"#BB9AF7", dracula:"#BD93F9", nord:"#81A1C1",
-    monokai:"#F92672", radical:"#FE428E", gruvbox:"#FABD2F", ocean:"#00B4D8", sunset:"#FF6B35",
-    forest:"#2D6A4F", neon:"#00F5D4", github:"#1F6FEB" };
-  return m[name] || "#58A6FF";
-}
-
-function surprise(){
-  state.color = RANDOM[Math.floor(Math.random()*RANDOM.length)];
-  state.theme = "";
-  refresh();
-}
-
 function renderControls(){
-  const c = document.getElementById("controls");
-  const s = state;
-  let html = `<div class="group"><h3>Templates</h3>
-    <div class="chips">${PRESETS.map((p,i) =>
-      `<button type="button" class="chip${state._preset === i ? " on" : ""}" data-tpl="${i}">${esc(p.name)}</button>`).join("")}</div>
-  </div>
-  <div class="group"><h3>Content</h3>`;
-  if (s.form === "hero") {
-    html += `<div class="field"><label>Title</label><textarea id="textInput">${esc(s.text)}</textarea></div>
-      <div class="field"><label>Description</label><textarea id="descInput">${esc(s.desc)}</textarea></div>`;
-  } else if (s.form === "profile") {
-    html += `<div class="field"><label>Name</label><input type="text" id="textInput" value="${esc(s.text)}" /></div>
-      <div class="field"><label>Tagline</label><input type="text" id="descInput" value="${esc(s.desc)}" /></div>`;
-  } else if (s.form === "pill") {
-    html += `<div class="row"><div class="field"><label>Label</label><input type="text" id="pillLabel" value="${esc(s.pill.label)}" /></div>
-      <div class="field"><label>Message</label><input type="text" id="pillMessage" value="${esc(s.pill.message)}" /></div></div>`;
-  } else if (s.form === "score") {
-    html += `<div class="row"><div class="field"><label>Label</label><input type="text" id="pillLabel" value="${esc(s.pill.label)}" /></div>
-      <div class="field"><label>Value</label><input type="number" id="scoreValue" value="${esc(s.score.value)}" /></div>
-      <div class="field"><label>Max</label><input type="number" id="scoreMax" min="1" value="${esc(s.score.max)}" /></div></div>
-      <p class="hint">Color grades from the fraction unless a theme or color is set.</p>`;
-  } else if (s.form === "strip") {
-    html += `<div class="field"><label>Icons</label><div class="chips" id="iconChips"></div></div>
-      <div class="field"><label>Per line</label><input type="number" id="perlineInput" min="1" max="60" value="${s.strip.perline}" /></div>`;
-  } else if (s.form === "deploy") {
-    html += `<div class="field"><label>Service</label><input type="text" id="serviceInput" value="${esc(s.deploy.service)}" /></div>
-      <p class="hint">Renders “deployed on Sylphx” — the conversion mark.</p>`;
+  const box = document.getElementById("controls");
+  box.innerHTML = "";
+  box.appendChild(el("h3", { text: KINDS[state.kind].name + " options" }));
+  for (const f of KINDS[state.kind].fields()) {
+    if (f.type === "grid") {
+      const g = el("div", { class:"grid2" });
+      for (const sub of f.fields) if (visible(sub)) g.appendChild(fieldNode(sub));
+      box.appendChild(g);
+    } else if (visible(f)) box.appendChild(fieldNode(f));
   }
-  html += `</div>`;
-
-  html += `<div class="group"><h3>Palette</h3>
-    <div class="field"><label>Theme (neutral design themes)</label>${themePills(s.theme)}</div>
-    <div class="field"><label>Custom color (used when no theme)</label>
-      <div class="row"><input type="text" id="colorInput" placeholder="gradient | auto | hex | 0:EEFF00,100:a82da8" value="${esc(s.color)}" />
-      <button type="button" class="chip" id="surpriseBtn">Surprise</button></div></div>
-    ${s.form === "pill" || s.form === "score" ? `<div class="field"><label>Label color (used when no theme)</label>
-      <input type="text" id="pillLabelColor" placeholder="gray | hex | red" value="${esc(s.pill.labelColor || "")}" /></div>` : ""}
-  </div>`;
-
-  if (s.form === "hero" || s.form === "profile") {
-    html += `<div class="group"><h3>Style</h3>`;
-    if (s.form === "hero") {
-      html += `<div class="field"><label>Art</label><div id="artChips">${chips(ART, s.type, null)}</div></div>
-        <div class="field"><label>Layout</label><div id="layoutChips">${chips(LAYOUTS, s.layout, null)}</div></div>`;
-    } else {
-      html += `<div class="field"><label>Art background (optional)</label><div id="artChips">${chips(["none", ...ART], s.type || "none", null)}</div></div>`;
-    }
-    html += `<div class="field"><label>Typography</label><div id="fontChips">${chips(["sans","mono"], s.font, null)}</div></div>
-      <div class="field"><label>Motion</label><div id="animChips">${chips(ANIMS, s.animation, null)}</div></div>
-      <div class="row">
-        <div class="field"><label>Width</label><input type="number" id="widthInput" min="200" max="1600" value="${s.width}" /></div>
-        <div class="field"><label>Height</label><input type="number" id="heightInput" min="40" max="900" value="${s.height}" /></div>
-      </div>
-    </div>`;
-  } else if (s.form === "pill" || s.form === "deploy" || s.form === "score") {
-    html += `<div class="group"><h3>Style</h3>
-      <div class="field"><label>Style</label><div id="styleChips">${chips(STYLES, s.pill.style || s.deploy.style, null)}</div></div>
-      <div class="field"><label>Motion</label><div id="animChips">${chips(ANIMS, s.animation, null)}</div></div>
-    </div>`;
-  } else if (s.form === "strip") {
-    html += `<div class="group"><h3>Style</h3>
-      <div class="field"><label>Motion</label><div id="animChips">${chips(ANIMS, s.animation, null)}</div></div>
-    </div>`;
+  const extras = Object.keys(state.extra);
+  if (extras.length) box.appendChild(el("div", { class:"hint", text:"Kept from your pasted URL: " + extras.join(", ") }));
+}
+function presetUrl(kind, s){
+  const saved = { kind: state.kind, vals: state.vals, extra: state.extra };
+  state.kind = kind; state.vals = Object.assign(defaults(kind), s); state.extra = {};
+  const u = BASE + KINDS[kind].url(state.vals);
+  state.kind = saved.kind; state.vals = saved.vals; state.extra = saved.extra;
+  return u;
+}
+function renderPresets(){
+  const grid = document.getElementById("presetGrid");
+  grid.innerHTML = "";
+  for (const p of KINDS[state.kind].presets) {
+    const b = el("button", { type:"button", class:"preset", onclick:()=>setKind(state.kind, p.s) });
+    b.dataset.url = presetUrl(state.kind, p.s);
+    const t = el("div", { class:"thumb" });
+    t.appendChild(el("img", { src: b.dataset.url, alt: p.name, loading:"lazy" }));
+    b.appendChild(t); b.appendChild(el("span", { text:p.name }));
+    grid.appendChild(b);
   }
-
-  html += `<div class="group"><h3>Mark</h3>
-    <div class="field"><label><input type="checkbox" id="creditCb" ${s.credit?"checked":""}/> soft “mark” watermark</label></div>
-  </div>`;
-  c.innerHTML = html;
-
-  const bind = (id, fn) => { const el = document.getElementById(id); if (el) el.addEventListener("input", fn); };
-  bind("textInput", e => { state.text = e.target.value; refresh(); });
-  bind("descInput", e => { state.desc = e.target.value; refresh(); });
-  bind("widthInput", e => { state.width = Number(e.target.value) || state.width; refresh(); });
-  bind("heightInput", e => { state.height = Number(e.target.value) || state.height; refresh(); });
-  bind("pillLabel", e => { state.pill.label = e.target.value; refresh(); });
-  bind("pillMessage", e => { state.pill.message = e.target.value; refresh(); });
-  bind("scoreValue", e => { state.score.value = e.target.value; refresh(); });
-  bind("scoreMax", e => { state.score.max = e.target.value; refresh(); });
-  bind("perlineInput", e => { state.strip.perline = Number(e.target.value) || 12; refresh(); });
-  bind("serviceInput", e => { state.deploy.service = e.target.value; refresh(); });
-  bind("colorInput", e => { state.color = e.target.value.trim(); if (state.color) state.theme = ""; refresh(); });
-  bind("pillLabelColor", e => { state.pill.labelColor = e.target.value.trim(); if (state.pill.labelColor) state.theme = ""; refresh(); });
-  const cb = document.getElementById("creditCb"); if (cb) cb.addEventListener("change", e => { state.credit = e.target.checked; refresh(); });
-  const sb = document.getElementById("surpriseBtn"); if (sb) sb.addEventListener("click", surprise);
-  const wireChips = (id, fn) => {
-    const box = document.getElementById(id);
-    if (!box) return;
-    box.querySelectorAll(".chip").forEach(el => el.addEventListener("click", () => fn(el.dataset.v)));
+  markPreset();
+}
+function markPreset(){
+  const cur = buildURL();
+  document.querySelectorAll(".preset").forEach(b => b.classList.toggle("on", b.dataset.url === cur));
+}
+function setPreviewStatus(kind, text, retry){
+  const box = document.getElementById("previewStatus");
+  box.dataset.state = kind;
+  document.getElementById("statusText").textContent = text;
+  document.getElementById("retryBtn").hidden = !retry;
+}
+function loadPreview(url){
+  const token = ++previewToken;
+  previewReady = false;
+  document.getElementById("downloadBtn").disabled = true;
+  setPreviewStatus("loading", "Rendering…");
+  const img = document.getElementById("previewImg");
+  const probe = new Image();
+  probe.onload = () => {
+    if (token !== previewToken) return;
+    // Badges are ~20px tall: show small images at 2x so they can be judged.
+    const small = probe.naturalWidth > 0 && probe.naturalWidth < 360 && probe.naturalHeight < 120;
+    img.style.width = small ? (probe.naturalWidth * 2) + "px" : "";
+    img.src = url; previewUrl = url; previewReady = true;
+    document.getElementById("downloadBtn").disabled = false;
+    setPreviewStatus("ready", "Ready — copy the markdown into your README.");
   };
-  if (s.form === "hero" || s.form === "profile") {
-    wireChips("artChips", v => { state.type = v === "none" ? "" : v; refresh(); });
-    wireChips("fontChips", v => { state.font = v; refresh(); });
-    wireChips("animChips", v => { state.animation = v; refresh(); });
-    if (s.form === "hero") wireChips("layoutChips", v => { state.layout = v; refresh(); });
-  } else if (s.form === "pill" || s.form === "deploy" || s.form === "score") {
-    wireChips("styleChips", v => { if (s.form !== "deploy") state.pill.style = v; else state.deploy.style = v; refresh(); });
-    wireChips("animChips", v => { state.animation = v; refresh(); });
-  } else if (s.form === "strip") {
-    wireChips("animChips", v => { state.animation = v; refresh(); });
+  probe.onerror = () => {
+    if (token !== previewToken) return;
+    setPreviewStatus("error", "Preview failed to load — check your connection and retry.", true);
+  };
+  probe.src = url;
+}
+function renderCode(){
+  const code = state.fmt === "html" ? buildHtml() : state.fmt === "url" ? buildURL() : buildMarkdown();
+  document.getElementById("codeBox").textContent = code;
+}
+function refresh(){
+  document.getElementById("stageTitle").textContent = KINDS[state.kind].name + " preview";
+  renderCode();
+  loadPreview(buildURL());
+  try { history.replaceState(null, "", "#" + buildPath()); } catch (_) {}
+}
+function scheduleRefresh(){ clearTimeout(renderTimer); renderCode(); renderTimer = setTimeout(refresh, 220); }
+
+// ---- import: our URLs and the other services' URLs ------------------------
+const HOSTS = [
+  { re:/(^|\.)shields\.io$/, name:"shields.io" },
+  { re:/^capsule-render\.vercel\.app$/, name:"capsule-render" },
+  { re:/^skillicons\.dev$/, name:"skill-icons" },
+  { re:/^readme-typing-svg\./, name:"readme-typing-svg", root:"/typing" },
+  { re:/^github-readme-stats/, name:"github-readme-stats" },
+  { re:/^(github-readme-)?streak-stats\./, name:"streak stats", root:"/streak" },
+];
+function importUrl(raw){
+  let u;
+  const text = String(raw || "").trim().replace(/^!\[[^\]]*\]\(/, "").replace(/\)$/, "");
+  try { u = new URL(text, BASE); } catch (_) { return null; }
+  if (u.searchParams.has("url") && (u.pathname === "/" || u.pathname === "")) { try { u = new URL(u.searchParams.get("url"), BASE); } catch (_) {} }
+  if (u.hash && u.hash.startsWith("#/")) { try { u = new URL(u.hash.slice(1), BASE); } catch (_) {} }
+  let from = null;
+  for (const h of HOSTS) if (h.re.test(u.hostname)) { from = h; break; }
+  let path = u.pathname.replace(/\.svg$/, "");
+  if (from && from.root && (path === "/" || path === "")) path = from.root;
+  const p = u.searchParams;
+  const take = (kind, keys) => {
+    const vals = {}, extra = {};
+    const known = flatFields(kind).map(f => f.key);
+    p.forEach((v, k) => { if (known.indexOf(k) >= 0 || (keys||[]).indexOf(k) >= 0) vals[k] = v; else extra[k] = v; });
+    for (const f of flatFields(kind)) if (f.type === "toggle" && vals[f.key] !== undefined) vals[f.key] = vals[f.key] === "true" || vals[f.key] === "1";
+    return { vals, extra };
+  };
+  let kind, r;
+  if (path.startsWith("/badge/")) {
+    const b = splitBadge(path.slice(7));
+    kind = "badge"; r = take(kind);
+    r.vals.label = b.label; r.vals.message = b.message; r.vals.color = p.get("color") || b.color || "blue";
+  } else if (path === "/static/v1") { kind = "badge"; r = take(kind); }
+  else if (path === "/typing" || (path === "/" && p.has("lines"))) {
+    kind = "typing"; r = take(kind);
+    if (r.vals.lines) r.vals.lines = r.vals.lines.split(p.get("separator") || ";").join("\n");
   }
-  if (s.form === "strip") {
-    const box = document.getElementById("iconChips");
-    box.innerHTML = ICONS.map(i => `<button type="button" class="chip ${s.strip.icons.includes(i) ? "on" : ""}" data-i="${esc(i)}">${esc(i)}</button>`).join("");
-    box.querySelectorAll("button").forEach(b => b.addEventListener("click", () => {
-      const set = new Set(state.strip.icons);
-      if (set.has(b.dataset.i)) set.delete(b.dataset.i); else set.add(b.dataset.i);
-      state.strip.icons = [...set].slice(0, 60);
-      refresh();
-    }));
-  }
-  c.querySelectorAll("[data-tpl]").forEach(el => el.addEventListener("click", () => {
-    PRESETS[Number(el.dataset.tpl)].apply();
-    state._preset = Number(el.dataset.tpl);
-    refresh();
-  }));
-  // wire theme chips (they carry data-v but need special handling)
-  c.querySelectorAll(".theme").forEach(el => el.addEventListener("click", () => {
-    state.theme = el.dataset.v;
-    if (state.theme) { state.color = ""; state.pill.labelColor = ""; }
-    refresh();
-  }));
+  else if (path === "/icons") { kind = "icons"; r = take(kind); if (!r.vals.i && p.has("icons")) { r.vals.i = p.get("icons"); delete r.extra.icons; } }
+  else if (path === "/streak" || (path === "/" && p.has("user"))) { kind = "stats"; r = take(kind); r.vals.card = "streak"; r.vals.username = p.get("user") || ""; delete r.extra.user; }
+  else if (path === "/api/top-langs" || path === "/api/top-langs/") { kind = "stats"; r = take(kind); r.vals.card = "top-langs"; }
+  else if (path === "/api/pin" || path === "/api/pin/") { kind = "stats"; r = take(kind); r.vals.card = "pin"; }
+  else if ((path === "/api" || path === "/api/") && p.has("username")) { kind = "stats"; r = take(kind); r.vals.card = "stats"; }
+  else if (path === "/api" || path === "/api/") { kind = "banner"; r = take(kind); }
+  else if (path.startsWith("/api/v1/mark")) {
+    const form = parseForm(path.split("/")[4]);
+    const map = { hero:"banner", pill:"badge", strip:"icons", profile:"profile", deploy:"deploy", typing:"typing", score:"score" };
+    kind = map[form];
+    r = take(kind);
+    if (kind === "banner" && r.vals.text) r.vals.text = decodeText(r.vals.text);
+    if (form === "strip" && p.has("icons")) { r.vals.i = p.get("icons"); delete r.extra.icons; }
+  } else return null;
+  // Host-swapped dialect URLs keep their unknown params verbatim so the render
+  // matches the original; our own URLs never need them.
+  return { kind, vals:r.vals, extra:r.extra, from: from ? from.name : null };
+}
+function bootLegacy(boot){
+  // Server-recovered composer state for /?form=… and /?url=… studio links.
+  const form = parseForm(boot.form);
+  const v = {};
+  for (const k of ["text","desc","theme","color","layout","animation","font","width","height"]) if (boot[k] != null) v[k] = String(boot[k]);
+  if (boot.type) v.type = boot.type;
+  if (form === "pill" && boot.pill) { Object.assign(v, boot.pill); return { kind:"badge", vals:v }; }
+  if (form === "strip" && boot.strip) return { kind:"icons", vals:{ i:(boot.strip.icons||[]).join(","), theme: boot.theme === "light" ? "light" : "dark" } };
+  if (form === "deploy" && boot.deploy) return { kind:"deploy", vals:Object.assign({}, boot.deploy) };
+  if (form === "profile") return { kind:"profile", vals:v };
+  if (form === "score" || form === "typing") return { kind:form, vals:v };
+  return { kind:"banner", vals:v };
 }
 
-function applyCatalog(v){
-  if (!v || typeof v !== "object") return;
-  if (Array.isArray(v.forms) && v.forms.length) FORMS = v.forms;
-  if (Array.isArray(v.themes) && v.themes.length) THEMES = [""].concat(v.themes);
-  if (Array.isArray(v.layouts) && v.layouts.length) LAYOUTS = v.layouts;
-  if (Array.isArray(v.animations) && v.animations.length) ANIMS = v.animations;
-  if (Array.isArray(v.badge_styles) && v.badge_styles.length) STYLES = v.badge_styles;
-  if (Array.isArray(v.icons) && v.icons.length) ICONS = v.icons;
-  const all = Array.isArray(v.art_types) ? v.art_types : [];
-  const featured = Array.isArray(v.featured_art_types) ? v.featured_art_types : [];
-  if (all.length || featured.length) {
-    const seen = new Set();
-    ART = [];
-    for (const t of featured.concat(all)) {
-      if (!t || seen.has(t)) continue;
-      seen.add(t);
-      ART.push(t);
-    }
-  }
+// ---- wiring ----------------------------------------------------------------
+function toast(msg){
+  const t = document.getElementById("toast");
+  t.textContent = msg; t.classList.add("show");
+  clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove("show"), 1600);
 }
-
+async function copyText(s){
+  try { await navigator.clipboard.writeText(s); }
+  catch (_) { const ta = el("textarea"); ta.value = s; document.body.appendChild(ta); ta.select(); document.execCommand("copy"); ta.remove(); }
+}
+function renderDialects(){
+  const rows = [
+    ["img.shields.io/badge/build-passing-brightgreen", "/badge/build-passing-brightgreen"],
+    ["capsule-render.vercel.app/api?type=waving&text=Hello", "/api?type=waving&text=Hello"],
+    ["skillicons.dev/icons?i=rust,ts,docker", "/icons?i=rust,ts,docker"],
+    ["readme-typing-svg.demolab.com?lines=Hello;World", "/?lines=Hello;World"],
+    ["github-readme-stats.vercel.app/api?username=you", "/api?username=you"],
+    ["github-readme-stats.vercel.app/api/top-langs?username=you", "/api/top-langs?username=you"],
+    ["streak-stats.demolab.com?user=you", "/?user=you"],
+  ];
+  const host = BASE.replace(/^https?:\/\//, "");
+  document.getElementById("dialectRows").innerHTML = rows.map(([a, b]) =>
+    "<tr><td><code>" + a.replace(/&/g,"&amp;") + "</code></td><td><code>" + (host + b).replace(/&/g,"&amp;") + "</code></td></tr>").join("");
+}
+function applyCatalog(cat){
+  if (Array.isArray(cat.themes) && cat.themes.length) THEMES = cat.themes.map(t => typeof t === "string" ? t : t.id).filter(Boolean);
+  if (Array.isArray(cat.art_types) && cat.art_types.length) ART = cat.art_types.slice();
+  if (Array.isArray(cat.layouts) && cat.layouts.length) LAYOUTS = cat.layouts.slice();
+  if (Array.isArray(cat.animations) && cat.animations.length) ANIMS = cat.animations.slice();
+}
 async function loadCatalog(){
-  try {
-    const r = await fetch("/api/v1/catalog");
-    if (!r.ok) return;
-    applyCatalog(await r.json());
-  } catch (_) { /* keep fallback vocabulary */ }
+  try { const r = await fetch("/api/v1/catalog"); if (r.ok) applyCatalog(await r.json()); } catch (_) {}
 }
-
 function init(){
   document.getElementById("retryBtn").addEventListener("click", () => loadPreview(buildURL()));
-  document.getElementById("copyBtn").addEventListener("click", async () => {
-    await copyText(document.getElementById("urlBox").value);
-    if (previewReady) setPreviewStatus("ready", "URL copied — use it again to repeat this mark.");
-  });
-  document.getElementById("mdBtn").addEventListener("click", async () => {
-    await copyText(buildMarkdown());
-    if (previewReady) setPreviewStatus("ready", "Markdown copied — paste it into a README.");
-  });
-  document.getElementById("openBtn").addEventListener("click", () => {
-    window.open(document.getElementById("urlBox").value, "_blank");
-  });
+  document.getElementById("copyBtn").addEventListener("click", async () => { await copyText(buildURL()); toast("URL copied"); });
+  document.getElementById("mdBtn").addEventListener("click", async () => { await copyText(buildMarkdown()); toast("Markdown copied — paste it into your README"); });
+  document.getElementById("openBtn").addEventListener("click", () => window.open(buildURL(), "_blank", "noopener"));
   document.getElementById("downloadBtn").addEventListener("click", async () => {
     if (!previewReady) return;
-    const url = previewUrl;
     setPreviewStatus("loading", "Preparing SVG export…");
     try {
-      const response = await fetch(url);
-      const contentType = response.headers.get("content-type") || "";
-      if (!response.ok || !contentType.includes("svg")) throw new Error("SVG response unavailable");
-      const blobUrl = URL.createObjectURL(await response.blob());
-      const link = document.createElement("a");
-      link.href = blobUrl;
-      link.download = `mark-${state.form}.svg`;
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
-      previewReady = true;
-      setPreviewStatus("ready", "SVG downloaded — copy the URL to repeat this mark.");
-    } catch {
-      previewReady = false;
-      setPreviewStatus("error", "SVG export unavailable — retry the render before downloading.", true);
-    }
+      const res = await fetch(previewUrl);
+      if (!res.ok || !(res.headers.get("content-type") || "").includes("svg")) throw new Error("not svg");
+      const href = URL.createObjectURL(await res.blob());
+      const a = el("a", { href, download: "readme-mark-" + state.kind + ".svg" });
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(href), 1000);
+      setPreviewStatus("ready", "SVG downloaded.");
+    } catch (_) { setPreviewStatus("error", "SVG export unavailable — retry the render first.", true); }
   });
+  document.querySelectorAll("#bgSeg button").forEach(b => b.addEventListener("click", () => {
+    document.querySelectorAll("#bgSeg button").forEach(x => x.classList.toggle("on", x === b));
+    document.getElementById("stage").dataset.bg = b.dataset.bg;
+    document.querySelectorAll(".preset .thumb").forEach(t => t.style.background = b.dataset.bg === "light" ? "#fff" : "#0d1117");
+  }));
+  document.querySelectorAll("#fmtSeg button").forEach(b => b.addEventListener("click", () => {
+    document.querySelectorAll("#fmtSeg button").forEach(x => x.classList.toggle("on", x === b));
+    state.fmt = b.dataset.fmt; renderCode();
+  }));
+  document.getElementById("importForm").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const r = importUrl(document.getElementById("importBox").value);
+    const note = document.getElementById("importNote");
+    if (!r) { note.textContent = "That URL isn't one we recognize yet — try a badge, banner, icons, typing or stats URL."; return; }
+    note.textContent = r.from ? "Imported from " + r.from + " — same image, only the host changed." : "Loaded into the studio.";
+    setKind(r.kind, r.vals, r.extra);
+  });
+  renderDialects();
   loadCatalog().then(() => {
-    document.getElementById("forms").innerHTML = FORMS.map(f =>
-      `<button type="button" data-f="${f}">${f}</button>`).join("");
-    document.querySelectorAll("#forms button").forEach(b => b.addEventListener("click", () => {
-      state.form = b.dataset.f; state._preset = undefined; refresh();
-    }));
-    applyBoot(recoverFromLocation());
-    refresh();
+    let start = null;
+    if (window.__MARK_BOOT__ && typeof window.__MARK_BOOT__ === "object") start = bootLegacy(window.__MARK_BOOT__);
+    else if (location.hash.length > 2) start = importUrl(location.hash.slice(1));
+    else if (location.search.length > 1) start = importUrl("/" + location.search);
+    if (start) setKind(start.kind, start.vals, start.extra);
+    else setKind("banner", KINDS.banner.presets[0].s);
   });
 }
 init();

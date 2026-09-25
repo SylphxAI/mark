@@ -351,11 +351,11 @@ async fn studio_page_has_no_webfont_origin() {
         );
     }
     assert!(
-        body.contains("--font:ui-sans-serif,system-ui,sans-serif"),
+        body.contains("--font:ui-sans-serif,system-ui,"),
         "studio page must use a system sans stack"
     );
     assert!(
-        body.contains("--mono:ui-monospace,monospace"),
+        body.contains("--mono:ui-monospace,"),
         "studio page must use a system mono stack"
     );
 }
