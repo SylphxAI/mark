@@ -19,8 +19,7 @@ pub(crate) struct FixtureUpstream {
     pub token: bool,
 }
 
-const PROFILE: &str =
-    r#"{"login":"ada-dev","name":"Ada Lovelace","followers":318,"public_repos":6}"#;
+const PROFILE: &str = r#"{"login":"ada-dev","name":"Ada Lovelace","followers":318,"public_repos":6,"created_at":"2016-03-14T09:26:53Z"}"#;
 
 const REPOS: &str = r#"[
 {"name":"analytical-engine","language":"Rust","size":5200,"stargazers_count":1840,"fork":false},
@@ -36,11 +35,11 @@ const REPO: &str = r#"{"name":"mark","owner":{"login":"SylphxAI"},
 "language":"Rust","stargazers_count":1523,"forks_count":87,"size":2048,"fork":false,"archived":false,"is_template":false,
 "license":{"spdx_id":"MIT"},"pushed_at":"2026-09-22T10:00:00Z"}"#;
 
-const GQL_STATS: &str = r#"{"data":{"user":{"name":"Ada Lovelace","login":"ada-dev","followers":{"totalCount":318},
+const GQL_STATS: &str = r#"{"data":{"user":{"name":"Ada Lovelace","login":"ada-dev","createdAt":"2016-03-14T09:26:53Z","followers":{"totalCount":318},
 "contributionsCollection":{"totalCommitContributions":1204,"totalPullRequestReviewContributions":88},
 "repositoriesContributedTo":{"totalCount":41},"pullRequests":{"totalCount":142},
 "openIssues":{"totalCount":7},"closedIssues":{"totalCount":30},
-"repositories":{"nodes":[{"name":"analytical-engine","stargazers":{"totalCount":1840}},{"name":"notes-on-bernoulli","stargazers":{"totalCount":642}}]}}}}"#;
+"repositories":{"totalCount":5,"nodes":[{"name":"analytical-engine","stargazers":{"totalCount":1840}},{"name":"notes-on-bernoulli","stargazers":{"totalCount":642}}]}}}}"#;
 
 const GQL_LANGS: &str = r##"{"data":{"user":{"repositories":{"nodes":[
 {"name":"analytical-engine","languages":{"edges":[{"size":520000,"node":{"color":"#dea584","name":"Rust"}},{"size":40000,"node":{"color":"#89e051","name":"Shell"}}]}},

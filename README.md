@@ -194,11 +194,12 @@ No token, no signup: swap the host. Cards cache for hours, serve stale on upstre
 ![langs](https://mark.sylphx.com/api/top-langs?username=octocat&layout=compact)
 ![streak](https://mark.sylphx.com/streak?user=octocat)
 ![pin](https://mark.sylphx.com/api/pin?username=octocat&repo=Hello-World)
+![trophies](https://mark.sylphx.com/trophy?username=octocat&column=4)
 ![stars](https://mark.sylphx.com/github/stars/octocat/Hello-World)
 ![npm](https://mark.sylphx.com/npm/v/react)
 ```
 
-Native: `/api/v1/card/{stats|langs|streak|repo}`. Badges: `/github/{stars,forks,license,last-commit}/{owner}/{repo}`, `/github/v/release/{owner}/{repo}`, `/npm/{v,dm,dw,dt,l}/{package}`. Without a server token, commits show as contributions in the last year and top languages weight each repository's primary language by its size.
+Native: `/api/v1/card/{stats|langs|streak|repo|trophy}`. Trophies (github-profile-trophy compatible, also `/?username=`) take `theme`, `column`, `row`, `margin-w`, `margin-h`, `no-bg`, `no-frame`, `title`, `rank`. Badges: `/github/{stars,forks,license,last-commit}/{owner}/{repo}`, `/github/v/release/{owner}/{repo}`, `/npm/{v,dm,dw,dt,l}/{package}`. Without a server token, commits show as contributions in the last year and top languages weight each repository's primary language by its size.
 
 ### Deploy
 

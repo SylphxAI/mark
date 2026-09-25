@@ -35,6 +35,7 @@ pub(crate) const IMAGE_ROUTE_PREFIXES: &[&str] = &[
     "/api/top-langs",
     "/api/pin",
     "/streak",
+    "/trophy",
     "/github",
     "/npm",
 ];
@@ -101,6 +102,7 @@ fn routes(state: AppState) -> Router {
         .route("/api/top-langs", get(live_http::top_langs_handler))
         .route("/api/pin", get(live_http::pin_handler))
         .route("/streak", get(live_http::streak_handler))
+        .route("/trophy", get(live_http::trophy_handler))
         .route(
             "/github/v/release/{owner}/{repo}",
             get(live_http::release_badge),

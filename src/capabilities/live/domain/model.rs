@@ -17,6 +17,10 @@ pub(crate) struct UserStats {
     pub name: Option<String>,
     pub stars: Option<u64>,
     pub followers: u64,
+    /// Public (REST) or non-fork owned (GraphQL) repositories.
+    pub repos: Option<u64>,
+    /// Account creation timestamp (`YYYY-MM-DDTHH:MM:SSZ`).
+    pub created_at: Option<String>,
     pub commits: Option<(u64, CommitSource)>,
     pub prs: Option<u64>,
     pub issues: Option<u64>,

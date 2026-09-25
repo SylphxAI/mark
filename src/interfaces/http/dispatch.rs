@@ -5,7 +5,8 @@
 //! order and falls back to the page the path had before: the studio at `/`,
 //! the JSON index at `/api`. Adding a dialect is one more arm.
 //!
-//! - `/`: readme-typing-svg (`?lines=`), github-readme-streak-stats (`?user=`).
+//! - `/`: readme-typing-svg (`?lines=`), github-readme-streak-stats (`?user=`),
+//!   github-profile-trophy (`?username=`).
 //! - `/api`: github-readme-stats (`?username=`), capsule-render (`?type=`).
 
 use std::collections::HashMap;
@@ -17,10 +18,11 @@ use axum::response::{IntoResponse, Response};
 use super::response::{if_none_match, parse_bool, svg_response_conditional};
 use super::{catalog, studio};
 use crate::bootstrap::AppState;
-use crate::capabilities::live::interfaces::{stats_card, streak_card, CardQuery};
+use crate::capabilities::live::interfaces::{stats_card, streak_card, trophy_card, CardQuery};
 use crate::capabilities::mark::interfaces::dialects::{capsule, typing};
 
-/// `GET /`: readme-typing-svg (`?lines=`), streak-stats (`?user=`), else
+/// `GET /`: readme-typing-svg (`?lines=`), streak-stats (`?user=`),
+/// profile-trophy (`?username=`), else
 /// the studio.
 pub(crate) async fn root(
     state: State<AppState>,
@@ -36,6 +38,9 @@ pub(crate) async fn root(
     }
     if card.user.is_some() {
         return streak_card(&state, &card, &headers).await;
+    }
+    if card.username.is_some() {
+        return trophy_card(&state, &card, &headers).await;
     }
     studio::index_page(state, uri).await
 }

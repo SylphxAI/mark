@@ -58,30 +58,37 @@ pub(crate) fn n2(v: f32) -> String {
     fmt(v as f64)
 }
 
+/// Background paint: (`<defs>` to emit, `fill` value). A gradient becomes
+/// `#cardbg`.
+pub(crate) fn background(bg: &Background) -> (String, String) {
+    match bg {
+        Background::Solid(c) => (String::new(), c.clone()),
+        Background::Gradient { angle, stops } => {
+            let mut defs = format!(
+                "<defs><linearGradient id=\"cardbg\" gradientTransform=\"rotate({})\" gradientUnits=\"userSpaceOnUse\">",
+                n2(*angle)
+            );
+            let last = stops.len().saturating_sub(1).max(1) as f32;
+            for (i, c) in stops.iter().enumerate() {
+                defs.push_str(&format!(
+                    "<stop offset=\"{}%\" stop-color=\"{c}\"/>",
+                    n2(i as f32 / last * 100.0)
+                ));
+            }
+            defs.push_str("</linearGradient></defs>");
+            (defs, "url(#cardbg)".to_string())
+        }
+    }
+}
+
 /// Whole card: frame, optional title, and `body` (already positioned).
 pub(crate) fn frame(style: &CardStyle, width: u32, height: u32, title: &str, body: &str) -> String {
     let p = &style.palette;
     let (w, h) = (width as f32, height as f32);
     let mut out = String::with_capacity(body.len() + 1024);
     out.push_str(&format!("<title>{}</title>", esc(title)));
-    let fill = match &p.bg {
-        Background::Solid(c) => c.clone(),
-        Background::Gradient { angle, stops } => {
-            out.push_str(&format!(
-                "<defs><linearGradient id=\"cardbg\" gradientTransform=\"rotate({})\" gradientUnits=\"userSpaceOnUse\">",
-                n2(*angle)
-            ));
-            let last = stops.len().saturating_sub(1).max(1) as f32;
-            for (i, c) in stops.iter().enumerate() {
-                out.push_str(&format!(
-                    "<stop offset=\"{}%\" stop-color=\"{c}\"/>",
-                    n2(i as f32 / last * 100.0)
-                ));
-            }
-            out.push_str("</linearGradient></defs>");
-            "url(#cardbg)".to_string()
-        }
-    };
+    let (defs, fill) = background(&p.bg);
+    out.push_str(&defs);
     let stroke = if style.hide_border {
         "stroke-opacity=\"0\"".to_string()
     } else {

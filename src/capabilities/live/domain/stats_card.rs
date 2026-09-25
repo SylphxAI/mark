@@ -179,6 +179,8 @@ mod tests {
             name: Some("Octo Cat".into()),
             stars: Some(1234),
             followers: 20,
+            repos: Some(6),
+            created_at: None,
             commits: Some((400, CommitSource::ContributionsLastYear)),
             prs: Some(30),
             issues: Some(5),

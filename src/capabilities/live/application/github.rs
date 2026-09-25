@@ -20,6 +20,8 @@ pub(crate) struct Profile {
     pub login: String,
     pub name: Option<String>,
     pub followers: u64,
+    pub public_repos: u64,
+    pub created_at: Option<String>,
 }
 
 /// The slice of an owned repository the stats and languages cards need.
@@ -43,6 +45,8 @@ pub(crate) struct GqlStats {
     pub issues: u64,
     pub reviews: u64,
     pub contributed_to: u64,
+    pub repo_count: u64,
+    pub created_at: Option<String>,
     /// (repository name, stars) for owned repositories.
     pub repos: Vec<(String, u64)>,
 }
@@ -119,6 +123,8 @@ pub(crate) async fn profile(
             login: text(&v, "login").unwrap_or_else(|| login.to_string()),
             name: text(&v, "name").filter(|n| !n.trim().is_empty()),
             followers: num(&v, "followers"),
+            public_repos: num(&v, "public_repos"),
+            created_at: text(&v, "created_at"),
         }))
 }
 
@@ -271,12 +277,12 @@ pub(crate) async fn last_commit(
     Ok(Some(date))
 }
 
-const STATS_QUERY: &str = "query($login:String!){user(login:$login){name login \
+const STATS_QUERY: &str = "query($login:String!){user(login:$login){name login createdAt \
 followers{totalCount} \
 contributionsCollection{totalCommitContributions totalPullRequestReviewContributions} \
 repositoriesContributedTo(first:1,contributionTypes:[COMMIT,ISSUE,PULL_REQUEST,REPOSITORY]){totalCount} \
 pullRequests(first:1){totalCount} openIssues:issues(states:OPEN){totalCount} closedIssues:issues(states:CLOSED){totalCount} \
-repositories(first:100,ownerAffiliations:OWNER,isFork:false,orderBy:{direction:DESC,field:STARGAZERS}){nodes{name stargazers{totalCount}}}}}";
+repositories(first:100,ownerAffiliations:OWNER,isFork:false,orderBy:{direction:DESC,field:STARGAZERS}){totalCount nodes{name stargazers{totalCount}}}}}";
 
 pub(crate) async fn gql_stats(
     up: &dyn Upstream,
@@ -307,6 +313,8 @@ pub(crate) async fn gql_stats(
         issues: count(&u, &["openIssues"]) + count(&u, &["closedIssues"]),
         reviews: num(&cc, "totalPullRequestReviewContributions"),
         contributed_to: count(&u, &["repositoriesContributedTo"]),
+        repo_count: count(&u, &["repositories"]),
+        created_at: text(&u, "createdAt"),
         repos,
     }))
 }
