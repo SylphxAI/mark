@@ -17,6 +17,7 @@ ENV SYLPHX_GIT_SHA=${SYLPHX_GIT_SHA}
 WORKDIR /app
 COPY Cargo.toml Cargo.lock build.rs ./
 COPY src ./src
+COPY data ./data
 COPY static ./static
 COPY tests ./tests
 RUN set -eu; \
