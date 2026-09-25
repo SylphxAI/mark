@@ -378,7 +378,7 @@ const KINDS = {
   stats: {
     name:"GitHub stats", note:"live, cached",
     fields:()=>[
-      F.chips("card","Card","stats",["stats","top-langs","streak","pin"],{local:true}),
+      F.chips("card","Card","stats",["stats","top-langs","streak","pin","trophy"],{local:true}),
       F.text("username","GitHub user","torvalds"),
       F.text("repo","Repository (pin card)","linux",{only:{card:"pin"}}),
       F.select("theme","Theme","default",STAT_THEMES,{sd:"default"}),
@@ -390,6 +390,7 @@ const KINDS = {
       const card = s.card || "stats";
       if (card === "streak") return "/streak?"+qs({user:s.username,theme:s.theme,hide_border:s.hide_border},["user","theme","hide_border"]);
       if (card === "top-langs") return "/api/top-langs?"+qs(s,["username","theme","layout","hide_border"]);
+      if (card === "trophy") return "/trophy?"+qs(s,["username","theme"]);
       if (card === "pin") return "/api/pin?"+qs(s,["username","repo","theme","hide_border"]);
       return "/api?"+qs(s,["username","theme","show_icons","hide_border"]);
     },
@@ -398,6 +399,7 @@ const KINDS = {
       {name:"Top languages", s:{card:"top-langs",username:"torvalds",layout:"compact",theme:"tokyonight"}},
       {name:"Streak", s:{card:"streak",username:"torvalds",theme:"dark"}},
       {name:"Repo pin", s:{card:"pin",username:"torvalds",repo:"linux",theme:"radical"}},
+      {name:"Trophies", s:{card:"trophy",username:"torvalds",theme:"tokyonight"}},
     ],
   },
   profile: {
@@ -676,6 +678,7 @@ const HOSTS = [
   { re:/^readme-typing-svg\./, name:"readme-typing-svg", root:"/typing" },
   { re:/^github-readme-stats/, name:"github-readme-stats" },
   { re:/^(github-readme-)?streak-stats\./, name:"streak stats", root:"/streak" },
+  { re:/^github-profile-trophy\./, name:"github-profile-trophy", root:"/trophy" },
 ];
 function importUrl(raw){
   let u;
@@ -707,6 +710,7 @@ function importUrl(raw){
   }
   else if (path === "/icons") { kind = "icons"; r = take(kind); if (!r.vals.i && p.has("icons")) { r.vals.i = p.get("icons"); delete r.extra.icons; } }
   else if (path === "/streak" || (path === "/" && p.has("user"))) { kind = "stats"; r = take(kind); r.vals.card = "streak"; r.vals.username = p.get("user") || ""; delete r.extra.user; }
+  else if (path === "/trophy" || (path === "/" && p.has("username"))) { kind = "stats"; r = take(kind); r.vals.card = "trophy"; }
   else if (path === "/api/top-langs" || path === "/api/top-langs/") { kind = "stats"; r = take(kind); r.vals.card = "top-langs"; }
   else if (path === "/api/pin" || path === "/api/pin/") { kind = "stats"; r = take(kind); r.vals.card = "pin"; }
   else if ((path === "/api" || path === "/api/") && p.has("username")) { kind = "stats"; r = take(kind); r.vals.card = "stats"; }
@@ -756,6 +760,7 @@ function renderDialects(){
     ["github-readme-stats.vercel.app/api?username=you", "/api?username=you"],
     ["github-readme-stats.vercel.app/api/top-langs?username=you", "/api/top-langs?username=you"],
     ["streak-stats.demolab.com?user=you", "/?user=you"],
+    ["github-profile-trophy.vercel.app/?username=you", "/?username=you"],
   ];
   const host = BASE.replace(/^https?:\/\//, "");
   document.getElementById("dialectRows").innerHTML = rows.map(([a, b]) =>
