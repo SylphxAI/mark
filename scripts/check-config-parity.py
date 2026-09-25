@@ -122,6 +122,29 @@ def form_vocabulary(workspace: Path) -> list[str]:
     return findings
 
 
+def image_inputs(workspace: Path) -> list[str]:
+    """Every compile-time input directory reaches the image build context.
+
+    CI builds with the whole checkout, the platform builds the Dockerfile: an
+    `include_str!` of a directory the Dockerfile never copies passes CI and
+    fails the production image build.
+    """
+    docker = (workspace / "Dockerfile").read_text()
+    copied = set(re.findall(r"^COPY\s+(?!--from)(\S+)", docker, re.M))
+    copied = {c.rstrip("/").split("/")[0] for c in copied}
+    watch = (workspace / "sylphx.toml").read_text()
+    findings: list[str] = []
+    for rs in sorted((workspace / "src").rglob("*.rs")):
+        for rel in re.findall(r'include_(?:str|bytes)!\("([^"]+)"\)', rs.read_text()):
+            target = (rs.parent / rel).resolve().relative_to(workspace.resolve())
+            top = target.parts[0]
+            if top not in copied:
+                findings.append(f"image inputs: {rs.relative_to(workspace)} includes {target}, but the Dockerfile never copies {top}/")
+            if f'"{top}/**"' not in watch:
+                findings.append(f"image inputs: sylphx.toml watch_paths lacks \"{top}/**\" (a change there would not redeploy)")
+    return findings
+
+
 def main() -> int:
     sources = {
         "process defaults": process_defaults(ROOT / "src" / "bootstrap.rs"),
@@ -150,6 +173,7 @@ def main() -> int:
             findings.append(f"{key}: defaults disagree: {detail}")
 
     findings += form_vocabulary(ROOT)
+    findings += image_inputs(ROOT)
 
     if findings:
         for finding in findings:
