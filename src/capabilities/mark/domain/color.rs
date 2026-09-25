@@ -394,9 +394,43 @@ pub(crate) fn contrast_ratio(a: &str, b: &str) -> f64 {
     (hi + 0.05) / (lo + 0.05)
 }
 
+/// Title ink that stays legible over a bright art wash.
+///
+/// A theme's foreground is designed for its base, but full-bleed art paints
+/// the field toward the accent. The field is estimated as base mixed halfway
+/// to accent; when the theme ink falls under 3:1 against it, the ink moves to
+/// the same side (light ink → near-white, dark ink → near-black), never across,
+/// so text on a deep ink canvas cannot flip to dark.
+pub(crate) fn legible_ink(fg: &str, base: &str, accent: &str) -> String {
+    let field = mix_hex(strip_hash(base), strip_hash(accent), 0.5);
+    if contrast_ratio(fg, &field) >= 3.0 {
+        return strip_hash(fg).to_string();
+    }
+    let side = if relative_luminance(fg) >= 0.18 {
+        "F8FAFC"
+    } else {
+        "0F172A"
+    };
+    if contrast_ratio(side, &field) > contrast_ratio(fg, &field) {
+        side.to_string()
+    } else {
+        strip_hash(fg).to_string()
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn legible_ink_lifts_muted_theme_ink_over_bright_art() {
+        // tokyonight: lavender ink over a base→blue wash reads ~1.5:1.
+        assert_eq!(legible_ink("A9B1D6", "1A1B27", "7AA2F7"), "F8FAFC");
+        // Already legible ink is kept.
+        assert_eq!(legible_ink("FFFFFF", "0D1117", "1F6FEB"), "FFFFFF");
+        // Dark ink never flips to light.
+        assert_ne!(legible_ink("24292F", "FFFFFF", "0969DA"), "F8FAFC");
+    }
 
     #[test]
     fn theme_plan_has_chroma_roles() {

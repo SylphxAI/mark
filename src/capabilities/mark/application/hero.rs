@@ -4,7 +4,7 @@
 //! forever — no clock, no upstream, no state.
 
 use crate::capabilities::mark::domain::art::Art;
-use crate::capabilities::mark::domain::color::{resolve_fill, FillPlan};
+use crate::capabilities::mark::domain::color::{legible_ink, resolve_fill, FillPlan};
 use crate::capabilities::mark::domain::motion::{ambient_gain, text_children, text_open_attrs};
 use crate::capabilities::mark::domain::shapes::{shape_background, shape_defs};
 use crate::capabilities::mark::domain::svg::{credit_mark, ensure_hash, esc, svg_doc};
@@ -158,7 +158,11 @@ pub fn render(spec: &MarkSpec) -> String {
 
     // Strict color grammar: ink is derived from the resolved palette, so only
     // canonical hex tokens reach SVG attributes.
-    let font_color = ensure_hash(&fill.fg);
+    let font_color = if art == Art::Transparent {
+        ensure_hash(&fill.fg)
+    } else {
+        ensure_hash(&legible_ink(&fill.fg, &fill.base, &fill.accent))
+    };
     let font_family = content_family(spec.font.as_deref());
 
     let text = cap_text(spec.text.as_deref().unwrap_or(""), MAX_TEXT_CHARS);
