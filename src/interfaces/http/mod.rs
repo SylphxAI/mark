@@ -20,7 +20,8 @@ use crate::capabilities::mark::interfaces as mark_http;
 pub fn app(state: AppState) -> Router {
     Router::new()
         .route("/health", get(health::health))
-        .route("/api", get(catalog::api_index))
+        // `/api` is also capsule-render's image path (ADR-0005 dialects).
+        .route("/api", get(dispatch::api))
         .route("/api/v1", get(catalog::api_index))
         .route("/api/v1/catalog", get(catalog::catalog))
         // One surface (ADR-0003): /api/v1/mark/{form} is the whole grammar,

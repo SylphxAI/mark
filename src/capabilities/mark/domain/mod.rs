@@ -27,6 +27,7 @@ pub(crate) use catalog::{
 pub(crate) use motion::normalize_animation;
 pub(crate) use pill::PillStyle;
 pub(crate) use recovery::split_badge_path;
+pub(crate) use spec::{HeroOverrides, PlacedText};
 pub(crate) use svg::normalize_hex_token;
 
 // Kernel surface consumed by the contract tests (see tests/*.rs). Recovery and

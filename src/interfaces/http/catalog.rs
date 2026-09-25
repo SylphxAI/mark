@@ -20,6 +20,7 @@ pub(crate) async fn api_index(State(st): State<AppState>) -> impl IntoResponse {
             "/icons?i={ids}",
             "/typing?lines={a};{b}",
             "/?lines={a};{b}",
+            "/api?type={art}&text={text}",
             "/api/v1/catalog",
             "/health"
         ]

@@ -553,3 +553,37 @@ async fn root_is_the_studio_unless_the_query_is_a_typing_url() {
     let (_, _, native) = get("/typing?lines=Hello;World&center=true").await;
     assert_eq!(body, native, "host swap and /typing are one render");
 }
+
+#[tokio::test]
+async fn api_is_the_json_index_unless_the_query_is_a_capsule_url() {
+    for path in ["/api", "/api?theme=radical", "/api?unknown=1"] {
+        let (status, ctype, body) = get(path).await;
+        assert_eq!(status, StatusCode::OK, "{path}");
+        assert!(ctype.starts_with("application/json"), "{path}: {ctype}");
+        let v: serde_json::Value = serde_json::from_str(&body).expect("json index");
+        assert!(v["endpoints"].is_array(), "{path}");
+    }
+    let (status, ctype, body) = get("/api?type=waving&text=Hello&section=header").await;
+    assert_eq!(status, StatusCode::OK);
+    assert!(
+        ctype.starts_with("image/svg+xml"),
+        "capsule dialect: {ctype}"
+    );
+    assert!(body.contains(">Hello</tspan>"));
+}
+
+#[tokio::test]
+async fn capsule_typography_keys_stay_off_the_native_grammar() {
+    // The same knobs on the native hero are unknown input (ADR-0003/0005):
+    // they change nothing there.
+    let plain = get("/api/v1/mark/hero?type=wave&text=Hi&animation=none")
+        .await
+        .2;
+    let knobs = get(
+        "/api/v1/mark/hero?type=wave&text=Hi&animation=none&fontSize=90&fontColor=ff0000\
+         &fontAlignY=10&section=footer&reversal=true&rotate=20&textBg=true",
+    )
+    .await
+    .2;
+    assert_eq!(plain, knobs);
+}

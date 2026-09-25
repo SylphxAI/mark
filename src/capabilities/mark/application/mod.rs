@@ -2,6 +2,7 @@
 
 mod deploy;
 mod hero;
+mod hero_placed;
 mod pill;
 mod profile;
 mod render;
@@ -9,4 +10,5 @@ mod strip;
 pub mod tiles;
 mod typing;
 
+pub(crate) use hero_placed::render_placed;
 pub use render::render;

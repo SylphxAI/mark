@@ -58,6 +58,7 @@ impl MarkForm {
     }
 }
 
+use super::shapes::capsule::Silhouette;
 pub use super::typing::TypingSpec;
 
 /// Hero geometry: the layout family only.
@@ -69,6 +70,50 @@ pub use super::typing::TypingSpec;
 #[derive(Debug, Clone, Default)]
 pub struct HeroSpec {
     pub layout: Option<String>,
+}
+
+/// Placed typography for one text role of a dialect hero.
+#[derive(Debug, Clone)]
+pub(crate) struct PlacedText {
+    pub size: u32,
+    /// Canonical `#hex` token.
+    pub color: String,
+    pub weight: u32,
+    /// Horizontal center per line, % of width (missing lines reuse the first).
+    pub x: Vec<f32>,
+    /// Vertical center per line, % of height (missing lines step down).
+    pub y: Vec<f32>,
+    /// Line step in em when a line has no `y` of its own.
+    pub step_em: f32,
+}
+
+/// Dialect-only hero overrides: the typography, placement, and silhouette
+/// knobs of the capsule-render dialect (ADR-0005 decision 4).
+///
+/// Crate-private and absent from [`MarkSpec`], so the native grammar
+/// (`/api/v1/mark/…`) cannot reach them: only the capsule dialect module
+/// builds one, and `hero::render_placed` paints it.
+#[derive(Debug, Clone)]
+pub(crate) struct HeroOverrides {
+    pub title: PlacedText,
+    pub desc: PlacedText,
+    /// A `font-family` value already built by `text::requested_family`.
+    pub family: String,
+    /// Text rotation about the canvas center, degrees.
+    pub rotate: f32,
+    /// Title outline: canonical `#hex` color and width.
+    pub stroke: Option<(String, f32)>,
+    /// Rounded plate behind the first title line: canonical `#hex`.
+    pub text_bg: Option<String>,
+    /// Rotate the silhouette 180° (a footer banner).
+    pub flip: bool,
+    /// Mirror the silhouette horizontally.
+    pub mirror: bool,
+    /// Text motion: a published animation id or a dialect-only one.
+    pub motion: &'static str,
+    pub silhouette: Silhouette,
+    /// Paint stops `(offset %, color)`; one stop is a solid.
+    pub paint: Vec<(f32, String)>,
 }
 
 /// Pill geometry (badge).
