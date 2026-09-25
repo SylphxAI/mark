@@ -182,6 +182,14 @@ pub fn render(spec: &MarkSpec) -> String {
             "middle",
         ),
     };
+    // Large canvases (social previews, tall headers) scale type with the
+    // canvas; the default 880×220 banner and anything narrower or shorter keep
+    // the layout's sizes exactly.
+    let scale = (width as f32 / 700.0)
+        .min(height as f32 / 220.0)
+        .clamp(1.0, 2.4);
+    let default_fs = (default_fs as f32 * scale).round() as u32;
+    let desc_size = (desc_size as f32 * scale).round() as u32;
     let font_size = if text.is_empty() { 40 } else { default_fs };
 
     // Plate lifts title below monogram row

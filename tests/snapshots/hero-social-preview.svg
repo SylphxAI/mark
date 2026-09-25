@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?><svg xmlns="http://www.w3.org/2000/svg" width="1280" height="640" viewBox="0 0 1280 640" role="img"><defs><linearGradient id="mg" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#0A0D07"/><stop offset="100%" stop-color="#C3F53C"/></linearGradient><radialGradient id="mgBloom" cx="74%" cy="16%" r="72%">
+          <stop offset="0%" stop-color="#C7F648" stop-opacity="0.55"/>
+          <stop offset="42%" stop-color="#C3F53C" stop-opacity="0.22"/>
+          <stop offset="100%" stop-color="#080B06" stop-opacity="0"/>
+        </radialGradient>
+        <radialGradient id="mgBloom2" cx="18%" cy="78%" r="65%">
+          <stop offset="0%" stop-color="#D8EE3D" stop-opacity="0.34"/>
+          <stop offset="55%" stop-color="#C3F53C" stop-opacity="0.1"/>
+          <stop offset="100%" stop-color="#080B06" stop-opacity="0"/>
+        </radialGradient>
+        <linearGradient id="mgSheen" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stop-color="#DBF98A" stop-opacity="0.2"/>
+          <stop offset="42%" stop-color="#C7F648" stop-opacity="0.04"/>
+          <stop offset="100%" stop-color="#080B06" stop-opacity="0"/>
+        </linearGradient>
+        <radialGradient id="mgVig" cx="50%" cy="38%" r="78%">
+          <stop offset="0%" stop-color="#DBF98A" stop-opacity="0"/>
+          <stop offset="70%" stop-color="#080B06" stop-opacity="0.08"/>
+          <stop offset="100%" stop-color="#080B06" stop-opacity="0.38"/>
+        </radialGradient>
+        <linearGradient id="mgHolo" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#C7F648" stop-opacity="0"/>
+          <stop offset="28%" stop-color="#C3F53C" stop-opacity="0.42"/>
+          <stop offset="52%" stop-color="#D8EE3D" stop-opacity="0.34"/>
+          <stop offset="74%" stop-color="#C7F648" stop-opacity="0.28"/>
+          <stop offset="100%" stop-color="#C3F53C" stop-opacity="0"/>
+        </linearGradient>
+        <linearGradient id="mgDrift" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" stop-color="#C7F648" stop-opacity="0">
+          </stop>
+          <stop offset="45%" stop-color="#D8EE3D" stop-opacity="0.22">
+          </stop>
+          <stop offset="100%" stop-color="#C3F53C" stop-opacity="0">
+          </stop>
+        </linearGradient>
+        <linearGradient id="mgWaveA" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stop-color="#C7F648" stop-opacity="0.55"/>
+          <stop offset="100%" stop-color="#C3F53C" stop-opacity="0.22"/>
+        </linearGradient>
+        <linearGradient id="mgWaveB" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stop-color="#D8EE3D" stop-opacity="0.5"/>
+          <stop offset="100%" stop-color="#C3F53C" stop-opacity="0.18"/>
+        </linearGradient>
+        <linearGradient id="mgWaveC" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stop-color="#DBF98A" stop-opacity="0.42"/>
+          <stop offset="100%" stop-color="#678122" stop-opacity="0.14"/>
+        </linearGradient><filter id="softGlow" x="-30%" y="-30%" width="160%" height="160%">
+          <feGaussianBlur stdDeviation="26" result="b"/>
+          <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+        <filter id="blurf"><feGaussianBlur stdDeviation="34"/></filter>
+        <filter id="neonGlow" x="-40%" y="-40%" width="180%" height="180%">
+          <feGaussianBlur stdDeviation="6" result="b"/>
+          <feMerge><feMergeNode in="b"/><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+        <filter id="softBloom" x="-25%" y="-25%" width="150%" height="150%">
+          <feGaussianBlur stdDeviation="18" result="b"/>
+          <feColorMatrix in="b" type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 0.85 0" result="c"/>
+          <feMerge><feMergeNode in="c"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter><linearGradient id="shine" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stop-color="#ffffff" stop-opacity="0.06"/>
+          <stop offset="45%" stop-color="#ffffff" stop-opacity="0"/>
+        </linearGradient>
+        <radialGradient id="vignette" cx="50%" cy="40%" r="75%">
+          <stop offset="0%" stop-color="#ffffff" stop-opacity="0"/>
+          <stop offset="100%" stop-color="#000000" stop-opacity="0.18"/>
+        </radialGradient>
+        <linearGradient id="holoSweep" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#ffffff" stop-opacity="0"/>
+          <stop offset="50%" stop-color="#ffffff" stop-opacity="0.08"/>
+          <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
+        </linearGradient></defs><rect width="1280" height="640" fill="url(#mg)"/><rect width="1280" height="640" fill="url(#mgBloom)" opacity="0.85"/><rect width="1280" height="640" fill="url(#mgBloom2)" opacity="0.7"/><line x1="897" y1="124" x2="719" y2="154" stroke="#ffffff" stroke-opacity="0.14" stroke-width="1"/><line x1="845" y1="72" x2="1039" y2="42" stroke="#ffffff" stroke-opacity="0.14" stroke-width="1"/><line x1="825" y1="116" x2="67" y2="566" stroke="#ffffff" stroke-opacity="0.14" stroke-width="1"/><line x1="473" y1="284" x2="1115" y2="38" stroke="#ffffff" stroke-opacity="0.14" stroke-width="1"/><line x1="633" y1="508" x2="1067" y2="74" stroke="#ffffff" stroke-opacity="0.14" stroke-width="1"/><line x1="809" y1="132" x2="115" y2="414" stroke="#ffffff" stroke-opacity="0.14" stroke-width="1"/><line x1="289" y1="68" x2="843" y2="138" stroke="#ffffff" stroke-opacity="0.14" stroke-width="1"/><circle cx="843" cy="138" r="2" fill="#ffffff" fill-opacity="0.85"/><circle cx="843" cy="138" r="6" fill="#ffffff" fill-opacity="0.08"/><circle cx="897" cy="124" r="2" fill="#ffffff" fill-opacity="0.85"/><circle cx="897" cy="124" r="6" fill="#ffffff" fill-opacity="0.08"/><circle cx="91" cy="142" r="2" fill="#ffffff" fill-opacity="0.85"/><circle cx="91" cy="142" r="6" fill="#ffffff" fill-opacity="0.08"/><circle cx="845" cy="72" r="2" fill="#ffffff" fill-opacity="0.85"/><circle cx="845" cy="72" r="6" fill="#ffffff" fill-opacity="0.08"/><circle cx="719" cy="154" r="2" fill="#ffffff" fill-opacity="0.85"/><circle cx="719" cy="154" r="6" fill="#ffffff" fill-opacity="0.08"/><circle cx="825" cy="116" r="2" fill="#ffffff" fill-opacity="0.85"/><circle cx="825" cy="116" r="6" fill="#ffffff" fill-opacity="0.08"/><circle cx="1039" cy="42" r="2" fill="#ffffff" fill-opacity="0.85"/><circle cx="1039" cy="42" r="6" fill="#ffffff" fill-opacity="0.08"/><circle cx="473" cy="284" r="2" fill="#ffffff" fill-opacity="0.85"/><circle cx="473" cy="284" r="6" fill="#ffffff" fill-opacity="0.08"/><circle cx="67" cy="566" r="2" fill="#ffffff" fill-opacity="0.85"/><circle cx="67" cy="566" r="6" fill="#ffffff" fill-opacity="0.08"/><circle cx="633" cy="508" r="2" fill="#ffffff" fill-opacity="0.85"/><circle cx="633" cy="508" r="6" fill="#ffffff" fill-opacity="0.08"/><circle cx="1115" cy="38" r="2" fill="#ffffff" fill-opacity="0.85"/><circle cx="1115" cy="38" r="6" fill="#ffffff" fill-opacity="0.08"/><circle cx="809" cy="132" r="2" fill="#ffffff" fill-opacity="0.85"/><circle cx="809" cy="132" r="6" fill="#ffffff" fill-opacity="0.08"/><circle cx="1067" cy="74" r="2" fill="#ffffff" fill-opacity="0.85"/><circle cx="1067" cy="74" r="6" fill="#ffffff" fill-opacity="0.08"/><circle cx="289" cy="68" r="2" fill="#ffffff" fill-opacity="0.85"/><circle cx="289" cy="68" r="6" fill="#ffffff" fill-opacity="0.08"/><circle cx="115" cy="414" r="2" fill="#ffffff" fill-opacity="0.85"/><circle cx="115" cy="414" r="6" fill="#ffffff" fill-opacity="0.08"/><circle cx="793" cy="436" r="2" fill="#ffffff" fill-opacity="0.85"/><circle cx="793" cy="436" r="6" fill="#ffffff" fill-opacity="0.08"/><rect width="1280" height="640" fill="url(#mgSheen)" opacity="0.75"/><rect width="1280" height="640" fill="url(#mgBloom)" opacity="0.4"/><rect width="1280" height="640" fill="url(#mgVig)"/><text x="640" y="281.6" text-anchor="middle" dominant-baseline="middle" font-family="ui-sans-serif,system-ui,-apple-system,Segoe UI,Helvetica,sans-serif" font-weight="650" letter-spacing="-0.02em" font-size="88" fill="#FFFFFF">anymd</text><text x="640" y="435.2" text-anchor="middle" dominant-baseline="middle" font-family="ui-sans-serif,system-ui,-apple-system,Segoe UI,Helvetica,sans-serif" font-size="33" font-weight="450" letter-spacing="0.01em" fill="#FFFFFF" fill-opacity="0.82">Any file to clean Markdown for AI agents</text></svg>
