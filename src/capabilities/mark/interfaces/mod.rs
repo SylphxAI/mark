@@ -5,4 +5,5 @@ mod http;
 
 pub(crate) use http::{
     badge_path, icons_handler, mark_default_handler, mark_handler, static_v1, typing_handler,
+    MarkQuery,
 };

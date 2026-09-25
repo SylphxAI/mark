@@ -11,6 +11,44 @@ use crate::capabilities::mark::domain::svg::{SVG_CACHE, SVG_EDGE_CACHE};
 const CACHE_CONTROL: HeaderValue = HeaderValue::from_static(SVG_CACHE);
 const EDGE_CACHE_CONTROL: HeaderValue = HeaderValue::from_static(SVG_EDGE_CACHE);
 
+/// Live routes (ADR-0005, `MARK-CDN`): hours, not forever. Browsers keep a
+/// card for 30 minutes, the edge for 4 hours; the edge may serve a stale copy
+/// for a day while it revalidates and for a week while the origin errors.
+const LIVE_CACHE: &str =
+    "public, max-age=1800, s-maxage=14400, stale-while-revalidate=86400, stale-if-error=604800";
+const LIVE_EDGE_CACHE: &str =
+    "public, s-maxage=14400, stale-while-revalidate=86400, stale-if-error=604800";
+/// A fallback card (upstream failed, nothing cached, or subject not found)
+/// must be replaced soon: five minutes everywhere.
+const FALLBACK_CACHE: &str = "public, max-age=300, s-maxage=300";
+
+/// How long an SVG body may be reused.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub(crate) enum CachePolicy {
+    /// Static marks: a pure function of the URL, cached for a year.
+    Immutable,
+    /// Live cards and badges rendered from upstream data.
+    Live,
+    /// Live stand-in when there is no data to render.
+    Fallback,
+}
+
+impl CachePolicy {
+    fn directives(self) -> (HeaderValue, HeaderValue) {
+        match self {
+            Self::Immutable => (CACHE_CONTROL, EDGE_CACHE_CONTROL),
+            Self::Live => (
+                HeaderValue::from_static(LIVE_CACHE),
+                HeaderValue::from_static(LIVE_EDGE_CACHE),
+            ),
+            Self::Fallback => (
+                HeaderValue::from_static(FALLBACK_CACHE),
+                HeaderValue::from_static(FALLBACK_CACHE),
+            ),
+        }
+    }
+}
+
 pub(crate) fn parse_bool(v: Option<&str>, default: bool) -> bool {
     match v {
         None => default,
@@ -22,6 +60,7 @@ pub(crate) fn decode_text(s: String) -> String {
     let decoded = urlencoding::decode(&s).map(|c| c.into_owned()).unwrap_or(s);
     decoded.replace("-nl-", "\n")
 }
+
 /// The raw `If-None-Match` request header, if any.
 pub(crate) fn if_none_match(headers: &HeaderMap) -> Option<&str> {
     headers
@@ -45,8 +84,9 @@ pub(crate) fn etag_header(svg: &str) -> HeaderValue {
     HeaderValue::from_str(&tag).expect("hex digest tag is a valid header value")
 }
 
-fn cache_headers(headers: &mut HeaderMap, etag: &HeaderValue) {
-    headers.insert(header::CACHE_CONTROL, CACHE_CONTROL.clone());
+fn cache_headers(headers: &mut HeaderMap, etag: &HeaderValue, policy: CachePolicy) {
+    let (browser, edge) = policy.directives();
+    headers.insert(header::CACHE_CONTROL, browser);
     // Explicit edge TTL: Cloudflare honors Cloudflare-CDN-Cache-Control >
     // CDN-Cache-Control > Cache-Control for edge. Origin headers are this
     // product's write; they cannot flip cf-cache-status on dest extensionless
@@ -55,11 +95,11 @@ fn cache_headers(headers: &mut HeaderMap, etag: &HeaderValue) {
     // directive must be present so that rule has TTL to honor.
     headers.insert(
         header::HeaderName::from_static("cdn-cache-control"),
-        EDGE_CACHE_CONTROL.clone(),
+        edge.clone(),
     );
     headers.insert(
         header::HeaderName::from_static("cloudflare-cdn-cache-control"),
-        EDGE_CACHE_CONTROL.clone(),
+        edge,
     );
     headers.insert(header::ETAG, etag.clone());
 }
@@ -119,13 +159,23 @@ fn etag_matches(if_none_match: Option<&str>, etag: &HeaderValue) -> bool {
 /// identical bytes. Security headers (CSP/nosniff/CORP) are preserved on 200;
 /// 304 carries cache + ETag per RFC 7232 (no body, no content-type).
 ///
-/// Every SVG body is immutable by URL contract (`MARK-CDN`), so the cache
-/// policy lives here, beside the header write, instead of being threaded in.
+/// Static SVG bodies are immutable by URL contract (`MARK-CDN`); live routes
+/// use [`svg_response_cached`] with their own policy.
 pub(crate) fn svg_response_conditional(svg: &str, if_none_match: Option<&str>) -> Response {
+    svg_response_cached(svg, if_none_match, CachePolicy::Immutable)
+}
+
+/// SVG response under an explicit cache policy (live routes), with the same
+/// ETag, `304`, and security headers as the static routes.
+pub(crate) fn svg_response_cached(
+    svg: &str,
+    if_none_match: Option<&str>,
+    policy: CachePolicy,
+) -> Response {
     let etag = etag_header(svg);
     if etag_matches(if_none_match, &etag) {
         let mut headers = HeaderMap::new();
-        cache_headers(&mut headers, &etag);
+        cache_headers(&mut headers, &etag, policy);
         return (StatusCode::NOT_MODIFIED, headers).into_response();
     }
     let mut headers = HeaderMap::new();
@@ -133,7 +183,7 @@ pub(crate) fn svg_response_conditional(svg: &str, if_none_match: Option<&str>) -
         header::CONTENT_TYPE,
         HeaderValue::from_static("image/svg+xml; charset=utf-8"),
     );
-    cache_headers(&mut headers, &etag);
+    cache_headers(&mut headers, &etag, policy);
     security_headers(&mut headers);
     (headers, svg.to_string()).into_response()
 }

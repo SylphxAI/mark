@@ -3,30 +3,36 @@
 //! Binds stable ports to adapters and owns process lifecycle. Domain modules
 //! never locate dependencies through this module.
 
+use crate::capabilities::live::LiveService;
 use crate::interfaces::http::app;
 use std::net::SocketAddr;
-use std::sync::OnceLock;
+use std::sync::{Arc, OnceLock};
 use tracing_subscriber::EnvFilter;
 
 /// Process-level shell state shared with HTTP handlers.
 ///
-/// Mark is stateless by design (ADR-0003): the only process state is product
-/// defaults and the canonical base URL. There is no upstream, no cache, no
-/// secret — every mark is a pure function of its URL.
+/// Static marks are stateless (ADR-0003): a pure function of their URL. The
+/// only upstream state is the live capability (ADR-0005): a bounded cache in
+/// front of GitHub/npm, used by live routes alone.
 #[derive(Clone)]
 pub struct AppState {
     pub default_credit: bool,
     pub public_base: String,
+    pub live: Arc<LiveService>,
 }
 
 impl AppState {
     /// Process state for in-process contract tests: no credit, a local base
     /// URL. New process fields get their test default here, once, instead of
     /// in every test file.
+    ///
+    /// Live routes read offline fixtures: `cargo test` never touches the
+    /// network.
     pub fn for_tests() -> Self {
         Self {
             default_credit: false,
             public_base: "http://test.local".into(),
+            live: Arc::new(LiveService::for_tests()),
         }
     }
 }
@@ -64,6 +70,7 @@ impl Config {
         AppState {
             default_credit: self.default_credit,
             public_base: self.public_base.clone(),
+            live: Arc::new(LiveService::from_env()),
         }
     }
 
@@ -86,8 +93,11 @@ pub fn maybe_print_cli_and_exit() -> bool {
             build_revision()
         );
         println!("Usage: mark");
-        println!("  Serves embeddable SVG marks (hero, pill, strip, profile, deploy).");
+        println!("  Serves README images: marks, badges, and live GitHub/npm cards.");
         println!("  Env: PORT HOST PUBLIC_BASE_URL DEFAULT_CREDIT RUST_LOG");
+        println!(
+            "  Optional: GITHUB_TOKEN or GITHUB_TOKENS (comma-separated) raise live rate limits."
+        );
         return true;
     }
     false

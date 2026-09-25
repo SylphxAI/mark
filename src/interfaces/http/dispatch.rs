@@ -4,6 +4,9 @@
 //! lands here. Each dispatcher asks the dialects that claim the query in
 //! order and falls back to the page the path had before: the studio at `/`,
 //! the JSON index at `/api`. Adding a dialect is one more arm.
+//!
+//! - `/`: readme-typing-svg (`?lines=`), github-readme-streak-stats (`?user=`).
+//! - `/api`: github-readme-stats (`?username=`), capsule-render (`?type=`).
 
 use std::collections::HashMap;
 
@@ -14,12 +17,15 @@ use axum::response::{IntoResponse, Response};
 use super::response::{if_none_match, parse_bool, svg_response_conditional};
 use super::{catalog, studio};
 use crate::bootstrap::AppState;
+use crate::capabilities::live::interfaces::{stats_card, streak_card, CardQuery};
 use crate::capabilities::mark::interfaces::dialects::{capsule, typing};
 
-/// `GET /`: readme-typing-svg (`?lines=`), else the studio.
+/// `GET /`: readme-typing-svg (`?lines=`), streak-stats (`?user=`), else
+/// the studio.
 pub(crate) async fn root(
     state: State<AppState>,
     Query(pairs): Query<HashMap<String, String>>,
+    Query(card): Query<CardQuery>,
     RawQuery(raw): RawQuery,
     uri: Uri,
     headers: HeaderMap,
@@ -28,19 +34,25 @@ pub(crate) async fn root(
     if typing::claims(&pairs) {
         return svg_response_conditional(&typing::svg(&pairs, query), if_none_match(&headers));
     }
+    if card.user.is_some() {
+        return streak_card(&state, &card, &headers).await;
+    }
     studio::index_page(state, uri).await
 }
 
-/// `GET /api`: capsule-render (`?type=`, `?text=`, …), else the JSON index.
-///
-/// github-readme-stats also serves `/api?username=`; its dialect claims
-/// before capsule-render when it lands (both accept `theme`).
+/// `GET /api`: github-readme-stats (`?username=`), capsule-render (`?type=`,
+/// `?text=`, …), else the JSON index. `username` claims first: both dialects
+/// accept `theme`, only github-readme-stats names a user.
 pub(crate) async fn api(
     State(st): State<AppState>,
     Query(pairs): Query<HashMap<String, String>>,
+    Query(card): Query<CardQuery>,
     RawQuery(raw): RawQuery,
     headers: HeaderMap,
 ) -> Response {
+    if card.username.is_some() {
+        return stats_card(&st, &card, &headers).await;
+    }
     let query = raw.as_deref().unwrap_or("");
     if capsule::claims(&pairs) {
         let credit = parse_bool(pairs.get("credit").map(String::as_str), st.default_credit);

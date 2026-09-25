@@ -18,13 +18,26 @@ use tower_http::services::ServeDir;
 use tower_http::trace::{DefaultMakeSpan, DefaultOnResponse, TraceLayer};
 
 use crate::bootstrap::AppState;
+use crate::capabilities::live::interfaces as live_http;
 use crate::capabilities::mark::interfaces as mark_http;
 
 /// Image route prefixes. Each also answers with `.svg` appended to its path
 /// (ADR-0005 decision 7: Cloudflare caches by extension). A new image route
 /// family adds its prefix here and gets the suffix for free.
-pub(crate) const IMAGE_ROUTE_PREFIXES: &[&str] =
-    &["/api/v1/mark", "/badge", "/static/v1", "/icons", "/typing"];
+pub(crate) const IMAGE_ROUTE_PREFIXES: &[&str] = &[
+    "/api/v1/mark",
+    "/badge",
+    "/static/v1",
+    "/icons",
+    "/typing",
+    // Live cards and dynamic badges (MARK-LIVE).
+    "/api/v1/card",
+    "/api/top-langs",
+    "/api/pin",
+    "/streak",
+    "/github",
+    "/npm",
+];
 
 /// `/badge/a-b-c.svg` → `/badge/a-b-c`; only image routes are rewritten, so
 /// real `.svg` files under `static/` keep being served as files.
@@ -82,7 +95,27 @@ fn routes(state: AppState) -> Router {
         .route("/icons", get(mark_http::icons_handler))
         .route("/static/v1", get(mark_http::static_v1))
         .route("/typing", get(mark_http::typing_handler))
-        // `/` is the studio, and readme-typing-svg's image path (`?lines=`).
+        // Live data (ADR-0005, MARK-LIVE): hour-scale cache, never a broken
+        // image. github-readme-stats / streak-stats / shields paths swap hosts.
+        .route("/api/v1/card/{kind}", get(live_http::card_handler))
+        .route("/api/top-langs", get(live_http::top_langs_handler))
+        .route("/api/pin", get(live_http::pin_handler))
+        .route("/streak", get(live_http::streak_handler))
+        .route(
+            "/github/v/release/{owner}/{repo}",
+            get(live_http::release_badge),
+        )
+        .route(
+            "/github/last-commit/{owner}/{repo}/{branch}",
+            get(live_http::last_commit_branch),
+        )
+        .route(
+            "/github/{kind}/{owner}/{repo}",
+            get(live_http::github_badge),
+        )
+        .route("/npm/{kind}/{*package}", get(live_http::npm_badge))
+        // `/` is the studio, readme-typing-svg's image path (`?lines=`), and
+        // github-readme-streak-stats' (`?user=`).
         .route("/", get(dispatch::root))
         .fallback_service(ServeDir::new("static"))
         // Public SVG GET is origin-independent (`ACAO: *`, no credentials).
