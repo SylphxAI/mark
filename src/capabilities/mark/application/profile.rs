@@ -6,7 +6,7 @@
 //! motion, native width × height.
 
 use crate::capabilities::mark::domain::art::Art;
-use crate::capabilities::mark::domain::color::{contrasting_fg, resolve_fill};
+use crate::capabilities::mark::domain::color::{contrasting_fg, ink_canvas, resolve_fill};
 use crate::capabilities::mark::domain::motion::{text_children, text_open_attrs};
 use crate::capabilities::mark::domain::shapes::{shape_background, shape_defs};
 use crate::capabilities::mark::domain::svg::{credit_mark, ensure_hash, esc, svg_doc};
@@ -60,6 +60,9 @@ pub fn render(spec: &MarkSpec) -> String {
     let tag_open = text_open_attrs(anim, 1, w, h);
     let tag_children = text_children(anim, 1, w, h);
 
+    // Without art the card is a calm ink canvas with two soft palette glows:
+    // a full gradient wash fights the name for contrast on light stops.
+    let canvas = ink_canvas(&fill.base);
     let field = if let Some(ty) = art {
         format!(
             "<clipPath id=\"pc\"><rect width=\"{w}\" height=\"{h}\" rx=\"{radius}\"/></clipPath>\
@@ -67,9 +70,27 @@ pub fn render(spec: &MarkSpec) -> String {
             shape_background(ty, w, h, &fill, 0.0),
         )
     } else {
+        let accent = ensure_hash(&fill.accent);
+        let warm = ensure_hash(&fill.warm);
+        let edge = ensure_hash(&contrasting_fg(&canvas));
         format!(
-            "<rect width=\"{w}\" height=\"{h}\" rx=\"{radius}\" fill=\"{}\"/>",
-            fill.fill
+            "<defs>\
+               <radialGradient id=\"pg1\" cx=\"88%\" cy=\"0%\" r=\"85%\">\
+                 <stop offset=\"0%\" stop-color=\"{accent}\" stop-opacity=\"0.38\"/>\
+                 <stop offset=\"100%\" stop-color=\"{accent}\" stop-opacity=\"0\"/>\
+               </radialGradient>\
+               <radialGradient id=\"pg2\" cx=\"4%\" cy=\"100%\" r=\"70%\">\
+                 <stop offset=\"0%\" stop-color=\"{warm}\" stop-opacity=\"0.2\"/>\
+                 <stop offset=\"100%\" stop-color=\"{warm}\" stop-opacity=\"0\"/>\
+               </radialGradient>\
+             </defs>\
+             <rect width=\"{w}\" height=\"{h}\" rx=\"{radius}\" fill=\"{canvas}\"/>\
+             <rect width=\"{w}\" height=\"{h}\" rx=\"{radius}\" fill=\"url(#pg1)\"/>\
+             <rect width=\"{w}\" height=\"{h}\" rx=\"{radius}\" fill=\"url(#pg2)\"/>\
+             <rect x=\"0.5\" y=\"0.5\" width=\"{bw}\" height=\"{bh}\" rx=\"{radius}\" fill=\"none\" \
+               stroke=\"{edge}\" stroke-opacity=\"0.1\"/>",
+            bw = wf - 1.0,
+            bh = hf - 1.0,
         )
     };
 
@@ -83,21 +104,27 @@ pub fn render(spec: &MarkSpec) -> String {
     } else {
         tagline
     };
-    let muted = ensure_hash(&fill.fg);
+    // Text ink contrasts with what it sits on: the ink canvas without art, the
+    // palette foreground over art.
+    let ink = if art.is_some() {
+        fill.fg_hash()
+    } else {
+        ensure_hash(&contrasting_fg(&canvas))
+    };
+    let muted = ink.clone();
     let accent = ensure_hash(&fill.accent);
     let warm = ensure_hash(&fill.warm);
     let mono_ink = ensure_hash(&contrasting_fg(&fill.accent));
     let tag_node = if has_tag {
         format!(
             "<text x=\"{text_x}\" y=\"{tag_y}\" font-family=\"{font_family}\" font-size=\"{tag_size}\" \
-             font-weight=\"450\" fill=\"{muted}\" fill-opacity=\"0.72\"{tag_open}>{tagline}{tag_children}</text>",
+             font-weight=\"450\" fill=\"{muted}\" fill-opacity=\"0.68\"{tag_open}>{tagline}{tag_children}</text>",
             tagline = esc(&tagline),
         )
     } else {
         String::new()
     };
 
-    let ink = fill.fg_hash();
     let body = format!(
         "<defs>{fill_defs}{art_defs}\
            <linearGradient id=\"pm\" x1=\"0%\" y1=\"0%\" x2=\"100%\" y2=\"100%\">\
