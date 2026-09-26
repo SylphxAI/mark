@@ -29,6 +29,9 @@ pub(crate) enum Resource {
     Web,
     /// npm registry and downloads API.
     Npm,
+    /// Other public registries (pub.dev, Packagist, Bundlephobia, Chrome Web
+    /// Store); no token, no tracked quota.
+    Registry,
 }
 
 #[derive(Debug, Clone)]
@@ -37,6 +40,9 @@ pub(crate) struct Call {
     pub url: String,
     /// GraphQL request body; `None` for GETs.
     pub body: Option<String>,
+    /// A GitHub media type other than the default JSON one (e.g. the
+    /// stargazer timestamps of `application/vnd.github.star+json`).
+    pub accept: Option<&'static str>,
 }
 
 impl Call {
@@ -45,7 +51,13 @@ impl Call {
             resource,
             url,
             body: None,
+            accept: None,
         }
+    }
+
+    pub(crate) fn accepting(mut self, media_type: &'static str) -> Self {
+        self.accept = Some(media_type);
+        self
     }
 }
 
@@ -218,7 +230,7 @@ impl HttpUpstream {
     /// left, else anonymous (REST only), else rate limited.
     fn pick(&self, resource: Resource) -> Result<Option<usize>, UpstreamError> {
         let now = unix_now();
-        if matches!(resource, Resource::Web | Resource::Npm) {
+        if matches!(resource, Resource::Web | Resource::Npm | Resource::Registry) {
             return Ok(None);
         }
         let n = self.tokens.len();
@@ -293,7 +305,10 @@ impl HttpUpstream {
         };
         if matches!(call.resource, Resource::Core | Resource::Search) {
             req = req
-                .header("accept", "application/vnd.github+json")
+                .header(
+                    "accept",
+                    call.accept.unwrap_or("application/vnd.github+json"),
+                )
                 .header("x-github-api-version", "2022-11-28");
         }
         if let Some(i) = slot {

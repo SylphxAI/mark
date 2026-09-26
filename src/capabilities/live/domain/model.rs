@@ -70,3 +70,55 @@ pub(crate) struct NpmPackage {
     pub version: String,
     pub license: Option<String>,
 }
+
+/// A pub.dev package's score document.
+#[derive(Debug, Clone, PartialEq)]
+pub(crate) struct PubScore {
+    pub likes: u64,
+    pub points: u64,
+    pub max_points: u64,
+    pub downloads_30d: u64,
+}
+
+/// Packagist download counters.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub(crate) struct PackagistDownloads {
+    pub total: u64,
+    pub monthly: u64,
+    pub daily: u64,
+}
+
+/// A bundle's size in bytes, minified and minified + gzipped.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub(crate) struct BundleSize {
+    pub min: u64,
+    pub gzip: u64,
+}
+
+/// A Chrome Web Store listing.
+#[derive(Debug, Clone, PartialEq)]
+pub(crate) struct ChromeItem {
+    pub version: Option<String>,
+    pub users: u64,
+    pub rating: f64,
+    pub rating_count: u64,
+}
+
+/// The newest run of a GitHub Actions workflow.
+#[derive(Debug, Clone, PartialEq)]
+pub(crate) struct WorkflowRun {
+    /// The workflow's display name (shields' default label).
+    pub name: String,
+    /// `queued`, `in_progress`, `completed`, …
+    pub status: String,
+    /// `success`, `failure`, `cancelled`, … once completed.
+    pub conclusion: Option<String>,
+}
+
+/// Sampled star counts over time: `(unix seconds, stars)`, oldest first.
+#[derive(Debug, Clone, PartialEq)]
+pub(crate) struct StarHistory {
+    pub owner: String,
+    pub repo: String,
+    pub points: Vec<(i64, u64)>,
+}

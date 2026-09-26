@@ -9,7 +9,7 @@ use serde_json::{json, Value};
 
 use super::upstream::{read_body, read_json, Call, Resource, Upstream, UpstreamError};
 use crate::capabilities::live::domain::calendar::{parse_calendar_html, Calendar};
-use crate::capabilities::live::domain::model::RepoInfo;
+use crate::capabilities::live::domain::model::{RepoInfo, WorkflowRun};
 
 const API: &str = "https://api.github.com";
 /// Owned-repository pages read anonymously (100 per page, most recently pushed).
@@ -91,6 +91,7 @@ async fn graphql(
         resource: Resource::Graphql,
         url: format!("{API}/graphql"),
         body: Some(body),
+        accept: None,
     };
     let Some(v) = read_json(up, call).await? else {
         return Ok(None);
@@ -275,6 +276,58 @@ pub(crate) async fn last_commit(
         .and_then(Value::as_str)
         .map(str::to_string);
     Ok(Some(date))
+}
+
+/// The newest completed run of one workflow file (optionally on a branch or for an
+/// event); the inner `None` means the workflow has never run.
+pub(crate) async fn workflow_run(
+    up: &dyn Upstream,
+    owner: &str,
+    name: &str,
+    file: &str,
+    branch: Option<&str>,
+    event: Option<&str>,
+) -> Result<Option<Option<WorkflowRun>>, UpstreamError> {
+    let mut url = format!(
+        "{API}/repos/{owner}/{name}/actions/workflows/{}/runs?per_page=1&status=completed&exclude_pull_requests=true",
+        urlencoding::encode(file)
+    );
+    for (key, value) in [("branch", branch), ("event", event)] {
+        if let Some(v) = value {
+            url.push_str(&format!("&{key}={}", urlencoding::encode(v)));
+        }
+    }
+    let Some(v) = read(up, Resource::Core, url).await? else {
+        return Ok(None);
+    };
+    let run = v.pointer("/workflow_runs/0").map(|r| WorkflowRun {
+        name: text(r, "name").unwrap_or_else(|| file.trim_end_matches(".yml").to_string()),
+        status: text(r, "status").unwrap_or_default(),
+        conclusion: text(r, "conclusion"),
+    });
+    Ok(Some(run))
+}
+
+/// When each stargazer on one page (100 per page, oldest first) starred the
+/// repository. Empty when the page is empty or GitHub does not share it.
+pub(crate) async fn stargazer_page(
+    up: &dyn Upstream,
+    owner: &str,
+    name: &str,
+    page: u64,
+) -> Result<Vec<String>, UpstreamError> {
+    let url = format!("{API}/repos/{owner}/{name}/stargazers?per_page=100&page={page}");
+    let call = Call::read(Resource::Core, url).accepting("application/vnd.github.star+json");
+    // GitHub lists stargazers only to readers it allows (a signed-in reader
+    // with access to the repository); anyone else is refused.
+    let v = match read_json(up, call).await {
+        Err(UpstreamError::Status(401 | 403)) => return Ok(Vec::new()),
+        other => other?,
+    };
+    Ok(v.as_ref()
+        .and_then(Value::as_array)
+        .map(|items| items.iter().filter_map(|i| text(i, "starred_at")).collect())
+        .unwrap_or_default())
 }
 
 const STATS_QUERY: &str = "query($login:String!){user(login:$login){name login createdAt \

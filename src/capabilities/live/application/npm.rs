@@ -19,10 +19,9 @@ pub(crate) fn valid_package(name: &str) -> bool {
     valid_part(body) && name.len() <= 214
 }
 
-fn valid_part(p: &str) -> bool {
-    !p.is_empty()
-        && !p.starts_with('.')
-        && p.chars().all(|c| {
+pub(crate) fn valid_part(p: &str) -> bool {
+    !p.starts_with('.')
+        && super::registries::token(p, 214, |c| {
             c.is_ascii_lowercase() || c.is_ascii_digit() || matches!(c, '-' | '.' | '_' | '~')
         })
 }

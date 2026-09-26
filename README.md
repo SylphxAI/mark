@@ -112,8 +112,26 @@ A progress ring and automatic color grading (red → bright green) from `value` 
 ![](https://mark.sylphx.com/trophy?username=YOUR_NAME)
 ```
 
-Dynamic badges work the same way: `/github/stars/{owner}/{repo}`,
-`/github/v/release/{owner}/{repo}`, `/npm/v/{package}`, `/npm/dm/{package}`.
+Dynamic badges use shields' paths:
+
+| Source | Paths |
+| --- | --- |
+| GitHub | `/github/{stars,forks,license,last-commit}/{owner}/{repo}`, `/github/v/release/{owner}/{repo}`, `/github/actions/workflow/status/{owner}/{repo}/{file}` (`?branch=`, `?event=`) |
+| npm | `/npm/{v,dm,dw,dt,l}/{package}` (scoped too) |
+| pub.dev | `/pub/{v,likes,points,dm}/{package}` |
+| Packagist | `/packagist/{v,dm,dd,dt}/{vendor}/{package}` |
+| Bundlephobia | `/bundlephobia/{min,minzip}/{package}` |
+| Chrome Web Store | `/chrome-web-store/{v,users,rating,stars,rating-count}/{id}` |
+
+### Star history
+
+<img src="https://mark.sylphx.com/svg?repos=SylphxAI/firestore_odm" width="100%" alt="star history" />
+
+```md
+![](https://mark.sylphx.com/svg?repos=owner/repo&theme=dark)
+```
+
+A star-history.com URL works with only the host changed. GitHub shares star dates only with the people who can manage a repository, so the chart draws a curve for repositories Mark's server can read; for any other repository it shows today's total.
 
 ### Profile cards
 
@@ -138,6 +156,7 @@ change the host:
 | `github-readme-stats.vercel.app/api/pin?username=you&repo=r` | `mark.sylphx.com/api/pin?username=you&repo=r` |
 | `streak-stats.demolab.com?user=you` | `mark.sylphx.com/?user=you` |
 | `github-profile-trophy.vercel.app/?username=you` | `mark.sylphx.com/?username=you` |
+| `api.star-history.com/svg?repos=owner/repo` | `mark.sylphx.com/svg?repos=owner/repo` |
 
 Or paste any of those URLs into the [studio](https://mark.sylphx.com) and edit it there.
 
@@ -209,7 +228,7 @@ The same parameters as readme-typing-svg: `lines` (separated by `;`), `font`, `w
 <details>
 <summary><b>GitHub cards</b> — <code>/api</code>, <code>/api/top-langs</code>, <code>/streak</code>, <code>/api/pin</code>, <code>/trophy</code></summary>
 
-github-readme-stats parameters: `username`, `theme`, `show_icons`, `hide`, `hide_title`, `hide_rank`, `hide_border`, `border_radius`, `title_color`, `text_color`, `icon_color`, `bg_color`, `border_color`, `custom_title`, `card_width`, `layout` (`normal` `compact` `donut` `donut-vertical` `pie`), `langs_count`, `exclude_repo`. The native routes are `/api/v1/card/{stats|langs|streak|repo}`. Trophies (`/trophy`, or `/?username=`) take github-profile-trophy's `theme`, `column`, `row`, `margin-w`, `margin-h`, `no-bg`, `no-frame`, `title` and `rank`.
+github-readme-stats parameters: `username`, `theme`, `show_icons`, `hide`, `hide_title`, `hide_rank`, `hide_border`, `border_radius`, `title_color`, `text_color`, `icon_color`, `bg_color`, `border_color`, `custom_title`, `card_width`, `layout` (`normal` `compact` `donut` `donut-vertical` `pie`), `langs_count`, `exclude_repo`. The native routes are `/api/v1/card/{stats|langs|streak|repo|stars}`. Trophies (`/trophy`, or `/?username=`) take github-profile-trophy's `theme`, `column`, `row`, `margin-w`, `margin-h`, `no-bg`, `no-frame`, `title` and `rank`.
 
 Live cards are cached on the server (about 4 hours) and at the edge. They are served stale while they refresh, and stale when GitHub is unavailable.
 

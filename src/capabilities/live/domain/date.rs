@@ -6,7 +6,7 @@
 /// A proleptic Gregorian day number (days since 1970-01-01).
 pub(crate) type Day = i64;
 
-const MONTHS: [&str; 12] = [
+pub(crate) const MONTHS: [&str; 12] = [
     "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
 ];
 
