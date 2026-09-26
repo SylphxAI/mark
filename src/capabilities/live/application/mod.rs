@@ -4,6 +4,7 @@ pub(crate) mod cache;
 mod fixtures;
 mod github;
 pub(crate) mod npm;
+pub(crate) mod registries;
 mod service;
 mod upstream;
 

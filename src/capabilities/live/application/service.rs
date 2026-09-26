@@ -19,6 +19,7 @@ use super::cache::{Lookup, Ttl, TtlCache};
 use super::fixtures::{fixture_now, FixtureUpstream};
 use super::github::{self, GqlLang, GqlStats, Profile, RepoLite};
 use super::npm;
+use super::registries;
 use super::upstream::{unix_now, HttpUpstream, Upstream, UpstreamError};
 
 /// How long a stats card waits for an optional part (stars, commits, PRs,
@@ -27,7 +28,8 @@ const OPTIONAL_WAIT: Duration = Duration::from_millis(3000);
 use crate::capabilities::live::domain::calendar::{summarize, Calendar, StreakSummary};
 use crate::capabilities::live::domain::languages::aggregate;
 use crate::capabilities::live::domain::model::{
-    CommitSource, LangSource, NpmPackage, RepoInfo, TopLangs, UserStats,
+    BundleSize, ChromeItem, CommitSource, LangSource, NpmPackage, PackagistDownloads, PubScore,
+    RepoInfo, StarHistory, TopLangs, UserStats, WorkflowRun,
 };
 
 /// Process-wide live data: the upstream port, a clock, and bounded caches.
@@ -45,6 +47,13 @@ pub struct LiveService {
     commits: TtlCache<Option<String>>,
     packages: TtlCache<NpmPackage>,
     downloads: TtlCache<u64>,
+    versions: TtlCache<String>,
+    pub_scores: TtlCache<PubScore>,
+    packagist: TtlCache<PackagistDownloads>,
+    bundles: TtlCache<BundleSize>,
+    chrome: TtlCache<ChromeItem>,
+    workflows: TtlCache<Option<WorkflowRun>>,
+    star_history: TtlCache<StarHistory>,
 }
 
 impl LiveService {
@@ -63,6 +72,13 @@ impl LiveService {
             commits: TtlCache::new("commit", 1000, Ttl::BADGE),
             packages: TtlCache::new("npm", 1000, Ttl::BADGE),
             downloads: TtlCache::new("npm-dl", 2000, Ttl::BADGE),
+            versions: TtlCache::new("registry-version", 2000, Ttl::BADGE),
+            pub_scores: TtlCache::new("pub-score", 1000, Ttl::BADGE),
+            packagist: TtlCache::new("packagist-dl", 1000, Ttl::BADGE),
+            bundles: TtlCache::new("bundle", 1000, Ttl::PROFILE),
+            chrome: TtlCache::new("chrome", 500, Ttl::PROFILE),
+            workflows: TtlCache::new("workflow", 2000, Ttl::STATUS),
+            star_history: TtlCache::new("star-history", 500, Ttl::DAILY),
         }
     }
 
@@ -308,6 +324,134 @@ impl LiveService {
         let load = || npm::downloads(self.up(), name, period);
         self.downloads.fetch(format!("{name}:{period}"), load).await
     }
+
+    // duplicate-exception: cache-read wrapper binding one TtlCache to one registry reader.
+    /// Latest pub.dev version.
+    pub(crate) async fn pub_version(&self, name: &str) -> Lookup<String> {
+        let load = || registries::pub_version(self.up(), name);
+        self.versions.fetch(format!("pub:{name}"), load).await
+    }
+
+    // duplicate-exception: cache-read wrapper binding one TtlCache to one registry reader.
+    pub(crate) async fn pub_score(&self, name: &str) -> Lookup<PubScore> {
+        let load = || registries::pub_score(self.up(), name);
+        self.pub_scores.fetch(name.to_string(), load).await
+    }
+
+    // duplicate-exception: cache-read wrapper binding one TtlCache to one registry reader.
+    /// Latest stable Packagist version.
+    pub(crate) async fn packagist_version(&self, vendor: &str, package: &str) -> Lookup<String> {
+        let load = || registries::packagist_version(self.up(), vendor, package);
+        let key = format!("packagist:{vendor}/{package}");
+        self.versions.fetch(key, load).await
+    }
+
+    // duplicate-exception: cache-read wrapper binding one TtlCache to one registry reader.
+    pub(crate) async fn packagist_downloads(
+        &self,
+        vendor: &str,
+        package: &str,
+    ) -> Lookup<PackagistDownloads> {
+        let load = || registries::packagist_downloads(self.up(), vendor, package);
+        self.packagist
+            .fetch(format!("{vendor}/{package}"), load)
+            .await
+    }
+
+    // duplicate-exception: cache-read wrapper binding one TtlCache to one registry reader.
+    pub(crate) async fn bundle_size(&self, package: &str) -> Lookup<BundleSize> {
+        let load = || registries::bundle_size(self.up(), package);
+        self.bundles.fetch(package.to_string(), load).await
+    }
+
+    // duplicate-exception: cache-read wrapper binding one TtlCache to one registry reader.
+    pub(crate) async fn chrome_item(&self, id: &str) -> Lookup<ChromeItem> {
+        let load = || registries::chrome_item(self.up(), id);
+        self.chrome.fetch(id.to_string(), load).await
+    }
+
+    /// Newest run of a workflow; `Found(None)` when it never ran.
+    pub(crate) async fn workflow_run(
+        &self,
+        owner: &str,
+        name: &str,
+        file: &str,
+        branch: Option<&str>,
+        event: Option<&str>,
+    ) -> Lookup<Option<WorkflowRun>> {
+        let key = format!(
+            "{owner}/{name}/{file}@{}#{}",
+            branch.unwrap_or(""),
+            event.unwrap_or("")
+        )
+        .to_ascii_lowercase();
+        let load = || github::workflow_run(self.up(), owner, name, file, branch, event);
+        self.workflows.fetch(key, load).await
+    }
+
+    /// Star counts over time, sampled from the stargazer pages.
+    pub(crate) async fn star_history(&self, owner: &str, name: &str) -> Lookup<StarHistory> {
+        let key = format!("{owner}/{name}").to_ascii_lowercase();
+        let samples = if self.up.has_token() { 16 } else { 8 };
+        let now = self.now_unix();
+        let load = || star_samples(self.up.clone(), owner, name, samples, now);
+        self.star_history.fetch(key, load).await
+    }
+}
+
+/// GitHub lists at most 400 stargazer pages of 100.
+const MAX_STAR_PAGES: u64 = 400;
+
+/// Sample `count` stargazer pages evenly: stargazer `i` on page `p` is star
+/// number `(p - 1) * 100 + i + 1`, at their `starred_at`. The last point is
+/// today's total.
+async fn star_samples(
+    up: Arc<dyn Upstream>,
+    owner: &str,
+    name: &str,
+    count: u64,
+    now: i64,
+) -> Result<Option<StarHistory>, UpstreamError> {
+    let Some(info) = github::repo(up.as_ref(), owner, name).await? else {
+        return Ok(None);
+    };
+    let pages = info.stars.div_ceil(100).clamp(1, MAX_STAR_PAGES);
+    let mut picks: Vec<u64> = (0..count.min(pages))
+        .map(|i| 1 + i * (pages - 1) / count.min(pages).saturating_sub(1).max(1))
+        .collect();
+    picks.dedup();
+    let mut set = tokio::task::JoinSet::new();
+    for page in picks {
+        let (up, owner, name) = (up.clone(), owner.to_string(), name.to_string());
+        set.spawn(async move {
+            let dates = github::stargazer_page(up.as_ref(), &owner, &name, page).await;
+            (page, dates)
+        });
+    }
+    let mut points = Vec::new();
+    while let Some(joined) = set.join_next().await {
+        let Ok((page, dates)) = joined else { continue };
+        for (i, date) in dates?.iter().enumerate() {
+            if let Some(t) = crate::capabilities::live::domain::date::parse_timestamp(date) {
+                points.push((t, (page - 1) * 100 + i as u64 + 1));
+            }
+        }
+    }
+    points.sort();
+    // Keep the chart light: at most ~80 points, the newest always kept.
+    let stride = points.len().div_ceil(80).max(1);
+    let mut points: Vec<(i64, u64)> = points
+        .iter()
+        .enumerate()
+        .filter(|(i, _)| i % stride == 0)
+        .map(|(_, p)| *p)
+        .collect();
+    points.push((now, info.stars));
+    Ok(Some(StarHistory {
+        owner: info.owner,
+        repo: info.name,
+        points,
+    }))
 }
 
 #[cfg(test)]
