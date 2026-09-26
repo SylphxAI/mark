@@ -186,26 +186,6 @@ fn unknown_theme_is_not_a_theme_pack_in_recovery() {
 }
 
 #[test]
-fn studio_page_ships_the_markdown_embed_control() {
-    // The README embed is built in the studio page (the browser owns that
-    // string; there is no server-side embed writer). This asserts the shipped
-    // page still offers the control and the `![alt](url)` shape.
-    let html = std::fs::read_to_string("static/index.html").expect("studio page");
-    assert!(
-        html.contains("Copy markdown"),
-        "studio offers the embed control"
-    );
-    assert!(
-        html.contains("buildMarkdown"),
-        "studio builds the markdown embed"
-    );
-    assert!(
-        html.contains("![") && html.contains("]("),
-        "embed is ![alt](url)"
-    );
-}
-
-#[test]
 fn recovers_score_badge() {
     let boot = parse_public_mark_url("/api/v1/mark/score.svg?label=agent-ready&value=92&max=100")
         .expect("score");

@@ -54,7 +54,10 @@ fn hero_keeps_valid_three_digit_hex_paint() {
     spec.color = Some("#f00".into());
     spec.animation = Some("none".into());
     let svg = render(&spec);
-    assert!(svg.contains("#f00"), "valid paint token kept: {svg:.200}");
+    assert!(
+        svg.contains("#FF0000"),
+        "valid paint token kept, canonical: {svg:.200}"
+    );
     assert!(!svg.contains("NaN"), "no non-finite geometry can reach SVG");
 }
 

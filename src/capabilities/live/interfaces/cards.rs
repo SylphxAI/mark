@@ -12,6 +12,7 @@ use crate::capabilities::live::domain::card::{notice, CardStyle};
 use crate::capabilities::live::domain::langs_card::{self, LangsOptions, Layout};
 use crate::capabilities::live::domain::palette::ColorOverrides;
 use crate::capabilities::live::domain::repo_card::{self, RepoOptions};
+use crate::capabilities::live::domain::star_chart;
 use crate::capabilities::live::domain::stats_card::{self, StatsOptions};
 use crate::capabilities::live::domain::streak_card::{self, StreakColors};
 use crate::capabilities::live::domain::trophy_card::{self, TrophyOptions};
@@ -75,6 +76,8 @@ pub(crate) struct CardQuery {
     pub no_frame: Option<String>,
     pub title: Option<String>,
     pub rank: Option<String>,
+    // star-history.com (`repos=owner/name[,…]`; the first repository is drawn)
+    pub repos: Option<String>,
 }
 
 /// A GitHub login: 1–39 ASCII letters, digits, or hyphens.
@@ -337,6 +340,30 @@ async fn trophy(st: &AppState, q: &CardQuery) -> Card {
     })
 }
 
+async fn stars(st: &AppState, q: &CardQuery) -> Card {
+    let style = q.style();
+    let size = (star_chart::WIDTH, star_chart::HEIGHT);
+    let title = "Star history";
+    let wanted = q
+        .repos
+        .as_deref()
+        .or(q.repo.as_deref())
+        .and_then(|r| r.split(',').next())
+        .map(str::trim)
+        .and_then(|r| r.split_once('/'))
+        .map(|(o, n)| (o.to_string(), n.to_string()));
+    let Some((owner, name)) = wanted else {
+        return explain(&style, size, title, Why::Ask("repos=owner/name"));
+    };
+    if !valid_login(&owner) || !valid_repo(&name) {
+        return explain(&style, size, title, Why::Missing("repository"));
+    }
+    let data = st.live.star_history(&owner, &name).await;
+    outcome(data, &style, size, title, "repository", |h| {
+        star_chart::render(&h, &style)
+    })
+}
+
 async fn repo(st: &AppState, q: &CardQuery) -> Card {
     let (style, o) = (q.style(), q.repo_options());
     let size = repo_card::fallback_size(&style, &o);
@@ -417,6 +444,15 @@ pub(crate) async fn streak_handler(
     respond(streak(&st, &q).await, &headers)
 }
 
+/// `/svg?repos=owner/name` (api.star-history.com's image path).
+pub(crate) async fn star_history_handler(
+    State(st): State<AppState>,
+    Query(q): Query<CardQuery>,
+    headers: HeaderMap,
+) -> Response {
+    respond(stars(&st, &q).await, &headers)
+}
+
 /// Native surface: `/api/v1/card/{stats|langs|streak|repo}` (the router's `.svg`
 /// suffix layer also serves `…/stats.svg`).
 pub(crate) async fn card_handler(
@@ -431,6 +467,7 @@ pub(crate) async fn card_handler(
         "streak" => streak(&st, &q).await,
         "repo" | "pin" => repo(&st, &q).await,
         "trophy" | "trophies" => trophy(&st, &q).await,
+        "stars" | "star-history" => stars(&st, &q).await,
         _ => return StatusCode::NOT_FOUND.into_response(),
     };
     respond(card, &headers)

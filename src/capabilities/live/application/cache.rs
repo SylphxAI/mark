@@ -53,6 +53,20 @@ impl Ttl {
         retry: Duration::from_secs(300),
     };
     /// Badge numbers and the daily calendar: an hour fresh, a week stale.
+    /// Build status: minutes fresh, so a red CI shows up quickly.
+    pub(crate) const STATUS: Ttl = Ttl {
+        fresh: Duration::from_secs(300),
+        stale: Duration::from_secs(24 * 3600),
+        not_found: HOUR,
+        retry: Duration::from_secs(60),
+    };
+    /// Slow-moving history (star charts): a day fresh.
+    pub(crate) const DAILY: Ttl = Ttl {
+        fresh: Duration::from_secs(24 * 3600),
+        stale: Duration::from_secs(14 * 24 * 3600),
+        not_found: HOUR,
+        retry: Duration::from_secs(600),
+    };
     pub(crate) const BADGE: Ttl = Ttl {
         fresh: HOUR,
         stale: Duration::from_secs(7 * 24 * 3600),

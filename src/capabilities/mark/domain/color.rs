@@ -1,319 +1,234 @@
-//! Color / gradient resolution for fills.
+//! Palette resolution for art-backed marks (hero, profile).
 //!
-//! Art kernel rule: every banner owns a **chromatic system**, not a single fill.
-//! Theme/base color becomes a multi-stop field + accent/secondary/warm orbs so
-//! shapes never fall back to pure white wash or theme-blind hardcodes.
+//! A mark's colour is one designed [`Palette`]: a base, an ink, and three
+//! accents. It comes from a theme pack, from `color=` (one colour or gradient
+//! stops), or — with neither — the default dark pack. Every value is a
+//! canonical `#RRGGBB` token, so user spelling never reaches an attribute.
 
 use crate::capabilities::mark::domain::paint::css_color;
 use crate::capabilities::mark::domain::svg::{ensure_hash, is_hex_color, strip_hash};
 use crate::capabilities::mark::domain::theme::{self, Theme};
 
-/// Resolved paint kit consumed by banner shapes + chrome.
+/// The resolved colours of one art-backed mark.
 #[derive(Clone, Debug)]
-pub(crate) struct FillPlan {
-    /// SVG gradient/solid defs to inject under `<defs>`.
-    pub defs: String,
-    /// Main field paint (`url(#…)` or `#hex`).
-    pub fill: String,
-    /// Primary text/ink (no leading `#` for historical callers).
-    pub fg: String,
-    /// Deep base (dark end of field).
-    pub base: String,
-    /// Hero accent (orbs, plate tile, rules).
-    pub accent: String,
-    /// Cool secondary (meshes, secondary blobs).
-    pub accent2: String,
-    /// Warm highlight (sparks, tertiary blobs).
-    pub warm: String,
-    /// Soft specular tint (never pure white).
-    pub glow: String,
+pub(crate) struct Palette {
+    /// Base canvas.
+    pub bg: String,
+    /// Raised surface (window chrome, hairlines).
+    pub surface: String,
+    /// Text ink, legible on `bg` (≥ 7:1).
+    pub ink: String,
+    /// Three accents the art paints from.
+    pub accents: [String; 3],
+    /// Light base with dark ink.
+    pub light: bool,
 }
 
-impl FillPlan {
-    /// `#rrggbb` form of ink for SVG fill attributes.
-    pub(crate) fn fg_hash(&self) -> String {
-        ensure_hash(&self.fg)
-    }
-}
-
-/// Resolve the chromatic paint kit for a mark. Pure and deterministic:
-/// the same inputs always produce the same kit — the clock is never sampled
-/// (ADR-0003: every mark is a pure function of its URL).
-pub(crate) fn resolve_fill(
-    color: Option<&str>,
-    theme: Option<&str>,
-    seed: &str,
-    gid: &str,
-) -> FillPlan {
-    if let Some(name) = theme {
-        if let Some(t) = theme::get(name) {
-            return theme_fill(t, gid);
-        }
-    }
-
-    let color = color.unwrap_or("gradient").trim();
-
-    match color {
-        "auto" => solid_kit(gid, theme::pick_auto(seed)),
-        "gradient" | "random" => {
-            let (a, b) = theme::pick_gradient(seed);
-            gradient_kit(gid, a, b)
-        }
-        other => {
-            if let Some(plan) = parse_custom_gradient(other, gid) {
-                return plan;
-            }
-            let h = strip_hash(other);
-            if is_hex_color(h) {
-                solid_kit(gid, h)
-            } else {
-                let (a, b) = theme::pick_gradient(seed);
-                gradient_kit(gid, a, b)
-            }
-        }
-    }
-}
-
-fn theme_fill(t: &Theme, gid: &str) -> FillPlan {
-    kit(gid, Chroma::themed(t))
-}
-
-fn solid_kit(gid: &str, hex: &str) -> FillPlan {
-    kit(gid, Chroma::solid(hex))
-}
-
-fn gradient_kit(gid: &str, a: &str, b: &str) -> FillPlan {
-    kit(gid, Chroma::pair(a, b))
-}
-
-/// One field's chromatic roles.
-///
-/// Each colour source builds the roles in one place, so the SVG gradient stops
-/// and the resolved `FillPlan` cannot drift apart through positional arguments
-/// (and no call site repeats the literal).
-struct Chroma {
-    base: String,
-    mid: String,
-    end: String,
-    edge: String,
-    warm: String,
-    glow: String,
-    fg: String,
-}
-
-impl Chroma {
-    /// Theme pack: mix the pack's own tones.
-    fn themed(t: &Theme) -> Self {
+impl Palette {
+    fn from_theme(t: &Theme) -> Self {
         Self {
-            base: ensure_hash(t.bg),
-            mid: ensure_hash(&mix_hex(t.bg, t.bg2, 0.42)),
-            end: ensure_hash(t.bg2),
-            edge: ensure_hash(t.accent),
-            // Keep warm chromatic — mix accent toward amber, not white.
-            warm: ensure_hash(&mix_hex(t.accent, "FEE140", 0.42)),
-            glow: ensure_hash(&mix_hex(t.bg2, "FFFFFF", 0.42)),
-            fg: strip_hash(&ensure_hash(t.fg)).to_string(),
+            bg: ensure_hash(t.bg),
+            surface: ensure_hash(t.bg2),
+            ink: ensure_hash(t.fg),
+            accents: [
+                ensure_hash(t.accent),
+                ensure_hash(t.accent2),
+                ensure_hash(t.accent3),
+            ],
+            light: t.is_light(),
         }
     }
 
-    /// Single hex base: derive the field and the supporting roles.
-    fn solid(hex: &str) -> Self {
-        let h = strip_hash(hex);
+    /// A palette around user colours: a very dark first stop becomes the base
+    /// (the classic `0:0F172A,…` banner), all-light stops make a light card,
+    /// anything else sits on a deep tint of the first accent.
+    fn from_colors(stops: &[String]) -> Self {
+        let lum = |c: &str| relative_luminance(c);
+        let (bg, accents): (String, Vec<String>) = if stops.len() > 1 && lum(&stops[0]) < 0.03 {
+            (stops[0].clone(), stops[1..].to_vec())
+        } else {
+            (String::new(), stops.to_vec())
+        };
+        let accents: Vec<String> = if accents.len() == 1 {
+            let a = &accents[0];
+            let mut kin = analogous(a);
+            kin.insert(0, a.clone());
+            kin
+        } else {
+            accents
+        };
+        let pick = |i: usize| accents[i % accents.len()].clone();
+        let accents = [pick(0), pick(accents.len().saturating_sub(1)), pick(1)];
+        let all_light = accents.iter().all(|a| lum(a) > 0.45);
+        let (bg, light) = if !bg.is_empty() {
+            (bg, false)
+        } else if all_light {
+            (mix(&accents[0], "#FFFFFF", 0.9), true)
+        } else {
+            (mix(&accents[0], "#07080C", 0.9), false)
+        };
+        let ink = if light { "#0B0D14" } else { "#F4F6FB" }.to_string();
+        let surface = mix(&bg, &ink, 0.08);
         Self {
-            base: ensure_hash(&darken(h, 0.42)),
-            mid: ensure_hash(h),
-            end: ensure_hash(&mix_hex(h, "4FACFE", 0.48)),
-            edge: ensure_hash(&lighten(h, 0.22)),
-            warm: ensure_hash(&mix_hex(h, "FEE140", 0.5)),
-            glow: ensure_hash(&mix_hex(h, "FFFFFF", 0.48)),
-            fg: contrasting_fg(h),
-        }
-    }
-
-    /// Two gradient endpoints: darken A for depth, keep B chroma high.
-    fn pair(a: &str, b: &str) -> Self {
-        Self {
-            base: ensure_hash(&darken(a, 0.22)),
-            mid: ensure_hash(&mix_hex(a, b, 0.45)),
-            end: ensure_hash(b),
-            edge: ensure_hash(&lighten(b, 0.08)),
-            warm: ensure_hash(&mix_hex(b, "FEE140", 0.38)),
-            glow: ensure_hash(&mix_hex(b, "FFFFFF", 0.4)),
-            fg: "FFFFFF".into(),
-        }
-    }
-
-    /// Exact user stops: first stop, chosen midpoint, last stop.
-    fn stops(a: &str, mid: String, b: &str) -> Self {
-        Self {
-            base: ensure_hash(&darken(strip_hash(a), 0.18)),
-            mid,
-            end: b.to_string(),
-            edge: ensure_hash(&lighten(strip_hash(b), 0.06)),
-            warm: ensure_hash(&mix_hex(strip_hash(b), "FEE140", 0.35)),
-            glow: ensure_hash(&mix_hex(strip_hash(b), "FFFFFF", 0.4)),
-            fg: "FFFFFF".into(),
+            bg,
+            surface,
+            ink,
+            accents,
+            light,
         }
     }
 }
 
-fn kit(gid: &str, c: Chroma) -> FillPlan {
-    FillPlan {
-        defs: chromatic_defs(gid, &c),
-        fill: format!("url(#{gid})"),
-        fg: strip_hash(&c.fg).to_string(),
-        base: c.base.clone(),
-        accent: c.edge.clone(),
-        accent2: c.end.clone(),
-        warm: c.warm.clone(),
-        glow: c.glow.clone(),
+/// Resolve the palette for an art-backed mark. Pure: the same inputs always
+/// give the same palette (a seeded pick is a hash of the URL content).
+pub(crate) fn resolve_palette(color: Option<&str>, theme_id: Option<&str>, seed: &str) -> Palette {
+    if let Some(t) = theme_id.and_then(theme::get) {
+        return Palette::from_theme(t);
+    }
+    let default = || Palette::from_theme(theme::get("dark").expect("dark pack"));
+    let Some(raw) = color.map(str::trim).filter(|c| !c.is_empty()) else {
+        return default();
+    };
+    match raw.to_ascii_lowercase().as_str() {
+        "gradient" | "random" | "auto" | "timegradient" => {
+            Palette::from_theme(theme::pick_seeded(seed))
+        }
+        _ => color_stops(raw)
+            .map(|s| Palette::from_colors(&s))
+            .unwrap_or_else(default),
     }
 }
 
-/// Field + chroma utilities referenced by shapes/motion.
-fn chromatic_defs(id: &str, c: &Chroma) -> String {
-    let (base, mid, end, edge, warm, glow) = (
-        c.base.as_str(),
-        c.mid.as_str(),
-        c.end.as_str(),
-        c.edge.as_str(),
-        c.warm.as_str(),
-        c.glow.as_str(),
-    );
-    format!(
-        r##"<linearGradient id="{id}" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stop-color="{base}"/>
-          <stop offset="34%" stop-color="{mid}"/>
-          <stop offset="68%" stop-color="{end}"/>
-          <stop offset="100%" stop-color="{edge}"/>
-        </linearGradient>
-        <radialGradient id="{id}Bloom" cx="74%" cy="16%" r="72%">
-          <stop offset="0%" stop-color="{edge}" stop-opacity="0.55"/>
-          <stop offset="42%" stop-color="{end}" stop-opacity="0.22"/>
-          <stop offset="100%" stop-color="{base}" stop-opacity="0"/>
-        </radialGradient>
-        <radialGradient id="{id}Bloom2" cx="18%" cy="78%" r="65%">
-          <stop offset="0%" stop-color="{warm}" stop-opacity="0.34"/>
-          <stop offset="55%" stop-color="{end}" stop-opacity="0.1"/>
-          <stop offset="100%" stop-color="{base}" stop-opacity="0"/>
-        </radialGradient>
-        <linearGradient id="{id}Sheen" x1="0%" y1="0%" x2="0%" y2="100%">
-          <stop offset="0%" stop-color="{glow}" stop-opacity="0.2"/>
-          <stop offset="42%" stop-color="{edge}" stop-opacity="0.04"/>
-          <stop offset="100%" stop-color="{base}" stop-opacity="0"/>
-        </linearGradient>
-        <radialGradient id="{id}Vig" cx="50%" cy="38%" r="78%">
-          <stop offset="0%" stop-color="{glow}" stop-opacity="0"/>
-          <stop offset="70%" stop-color="{base}" stop-opacity="0.08"/>
-          <stop offset="100%" stop-color="{base}" stop-opacity="0.38"/>
-        </radialGradient>
-        <linearGradient id="{id}Holo" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stop-color="{edge}" stop-opacity="0"/>
-          <stop offset="28%" stop-color="{end}" stop-opacity="0.42"/>
-          <stop offset="52%" stop-color="{warm}" stop-opacity="0.34"/>
-          <stop offset="74%" stop-color="{edge}" stop-opacity="0.28"/>
-          <stop offset="100%" stop-color="{end}" stop-opacity="0"/>
-        </linearGradient>
-        <linearGradient id="{id}Drift" x1="0%" y1="0%" x2="100%" y2="0%">
-          <stop offset="0%" stop-color="{edge}" stop-opacity="0">
-          </stop>
-          <stop offset="45%" stop-color="{warm}" stop-opacity="0.22">
-          </stop>
-          <stop offset="100%" stop-color="{end}" stop-opacity="0">
-          </stop>
-        </linearGradient>
-        <linearGradient id="{id}WaveA" x1="0%" y1="0%" x2="0%" y2="100%">
-          <stop offset="0%" stop-color="{edge}" stop-opacity="0.55"/>
-          <stop offset="100%" stop-color="{end}" stop-opacity="0.22"/>
-        </linearGradient>
-        <linearGradient id="{id}WaveB" x1="0%" y1="0%" x2="0%" y2="100%">
-          <stop offset="0%" stop-color="{warm}" stop-opacity="0.5"/>
-          <stop offset="100%" stop-color="{end}" stop-opacity="0.18"/>
-        </linearGradient>
-        <linearGradient id="{id}WaveC" x1="0%" y1="0%" x2="0%" y2="100%">
-          <stop offset="0%" stop-color="{glow}" stop-opacity="0.42"/>
-          <stop offset="100%" stop-color="{mid}" stop-opacity="0.14"/>
-        </linearGradient>"##
-    )
-}
-
-fn parse_custom_gradient(spec: &str, gid: &str) -> Option<FillPlan> {
-    // Formats: "0:EEFF00,100:a82da8" or "FF6B6B,C44569,F8B500"
-    let parts: Vec<&str> = spec
+/// `0:EEFF00,100:a82da8`, `FF6B6B,C44569`, or one colour in any spelling
+/// shields accepts; stops come back in offset order. Up to eight stops.
+fn color_stops(raw: &str) -> Option<Vec<String>> {
+    let parts: Vec<&str> = raw
         .split(',')
         .map(str::trim)
         .filter(|s| !s.is_empty())
         .collect();
-    if parts.is_empty() {
-        return None;
+    if parts.len() == 1 && !parts[0].contains(':') {
+        let c = css_color(parts[0])?;
+        return Some(vec![six(&c)?]);
     }
-
     let mut stops: Vec<(f32, String)> = Vec::new();
-    for (i, p) in parts.iter().enumerate() {
-        if let Some((off, hex)) = p.split_once(':') {
-            let o: f32 = off.parse().ok()?;
-            // SVG offsets must be finite percentages in the public grammar.
-            // Reject malformed values instead of serializing `NaN%`/`inf%`.
-            if !o.is_finite() || !(0.0..=100.0).contains(&o) {
-                return None;
-            }
-            let h = strip_hash(hex);
-            if !is_hex_color(h) {
-                return None;
-            }
-            stops.push((o, ensure_hash(h)));
-        } else {
-            let h = strip_hash(p);
-            if !is_hex_color(h) {
-                return None;
-            }
-            let o = if parts.len() == 1 {
-                0.0
-            } else {
-                (i as f32) * 100.0 / (parts.len() as f32 - 1.0)
-            };
-            stops.push((o, ensure_hash(h)));
+    for (i, p) in parts.iter().take(8).enumerate() {
+        let (off, hex) = match p.split_once(':') {
+            Some((o, h)) => (o.parse::<f32>().ok()?, h),
+            None => (i as f32, *p),
+        };
+        if !off.is_finite() || !(0.0..=100.0).contains(&off) || !is_hex_color(hex) {
+            return None;
         }
+        stops.push((off, six(&ensure_hash(strip_hash(hex)))?));
     }
     stops.sort_by(|a, b| a.0.partial_cmp(&b.0).unwrap_or(std::cmp::Ordering::Equal));
-
-    let a = stops.first()?.1.clone();
-    let b = stops.last()?.1.clone();
-    let mid = if stops.len() >= 3 {
-        stops[stops.len() / 2].1.clone()
-    } else {
-        ensure_hash(&mix_hex(strip_hash(&a), strip_hash(&b), 0.5))
-    };
-
-    let mut plan = kit(gid, Chroma::stops(&a, mid, &b));
-
-    // Rebuild primary field gradient with exact user stop positions.
-    let mut stop_svg = String::new();
-    for (o, c) in &stops {
-        stop_svg.push_str(&format!("<stop offset=\"{o}%\" stop-color=\"{c}\"/>"));
-    }
-    let field = format!(
-        "<linearGradient id=\"{gid}\" x1=\"0%\" y1=\"0%\" x2=\"100%\" y2=\"100%\">{stop_svg}</linearGradient>"
-    );
-    let marker = format!("id=\"{gid}Bloom\"");
-    if let Some(pos) = plan.defs.find(&marker) {
-        if let Some(tag) = plan.defs[..pos].rfind("<radialGradient") {
-            plan.defs = field + &plan.defs[tag..];
-        }
-    }
-    Some(plan)
+    Some(stops.into_iter().map(|s| s.1).collect())
 }
 
-/// Deep neutral canvas for restrained art (ADR-0004): dark bases deepen to a
-/// near-black ink with a hue tint (capsule-class negative space); light bases
-/// stay as-is so light themes keep a light canvas.
-pub(crate) fn ink_canvas(base: &str) -> String {
-    let h = strip_hash(base);
-    if contrasting_fg(h) == "FFFFFF" {
-        ensure_hash(&mix_hex(h, "0B0E14", 0.7))
+/// Canonical `#RRGGBB` from a 3/6/8-digit token (alpha is dropped: art
+/// controls its own opacity).
+fn six(hex: &str) -> Option<String> {
+    let h = strip_hash(hex);
+    let full: String = match h.len() {
+        3 => h.chars().flat_map(|c| [c, c]).collect(),
+        6 | 8 => h[..6].to_string(),
+        _ => return None,
+    };
+    Some(format!("#{}", full.to_ascii_uppercase()))
+}
+
+/// Ink that reads on `field`: the brighter-contrast of near-white and near-black.
+pub(crate) fn ink_over(field: &str) -> String {
+    let (light, dark) = ("#FFFFFF", "#0B0D14");
+    if contrast_ratio(light, field) >= contrast_ratio(dark, field) {
+        light.into()
     } else {
-        ensure_hash(h)
+        dark.into()
     }
+}
+
+/// Mix two colours in sRGB: `t = 0` is `a`, `t = 1` is `b`.
+pub(crate) fn mix(a: &str, b: &str, t: f32) -> String {
+    ensure_hash(&mix_hex(a, b, t))
+}
+
+/// Two neighbours of `color` on the colour wheel, for a one-colour palette.
+///
+/// Neighbours in the yellow–olive band (hue 35°–95°) are skipped: low-opacity
+/// light in those hues reads as mud over a dark base, so a lime accent gets
+/// green and teal company instead of olive and ochre.
+fn analogous(color: &str) -> Vec<String> {
+    let base = hue_of(color);
+    let muddy = |h: f32| (35.0..=95.0).contains(&h);
+    let mut out: Vec<String> = [30.0, -30.0, 60.0, -60.0, 90.0, -90.0]
+        .iter()
+        .filter(|d| !muddy((base + *d).rem_euclid(360.0)))
+        .take(2)
+        .map(|d| rotate_hue(color, *d))
+        .collect();
+    while out.len() < 2 {
+        out.push(rotate_hue(color, 120.0 * (out.len() + 1) as f32));
+    }
+    out
+}
+
+/// Hue of a colour in degrees (0 for greys).
+pub(crate) fn hue_of(hex: &str) -> f32 {
+    let h = strip_hash(hex);
+    let c = |i: usize| u8::from_str_radix(h.get(i..i + 2).unwrap_or("00"), 16).unwrap_or(0) as f32;
+    let (r, g, b) = (c(0), c(2), c(4));
+    let (max, min) = (r.max(g).max(b), r.min(g).min(b));
+    let d = max - min;
+    if d < 1e-6 {
+        return 0.0;
+    }
+    let sector = if max == r {
+        ((g - b) / d).rem_euclid(6.0)
+    } else if max == g {
+        (b - r) / d + 2.0
+    } else {
+        (r - g) / d + 4.0
+    };
+    sector * 60.0
+}
+
+/// Rotate a colour's hue by `deg`, keeping lightness and saturation.
+pub(crate) fn rotate_hue(hex: &str, deg: f32) -> String {
+    let h = strip_hash(hex);
+    let c = |i: usize| u8::from_str_radix(&h[i..i + 2], 16).unwrap_or(0) as f32 / 255.0;
+    if h.len() != 6 {
+        return ensure_hash(h);
+    }
+    let (r, g, b) = (c(0), c(2), c(4));
+    let (max, min) = (r.max(g).max(b), r.min(g).min(b));
+    let l = (max + min) / 2.0;
+    let d = max - min;
+    if d < 1e-6 {
+        return ensure_hash(h);
+    }
+    let s = d / (1.0 - (2.0 * l - 1.0).abs());
+    let mut hue = if max == r {
+        ((g - b) / d).rem_euclid(6.0)
+    } else if max == g {
+        (b - r) / d + 2.0
+    } else {
+        (r - g) / d + 4.0
+    } * 60.0;
+    hue = (hue + deg).rem_euclid(360.0);
+    let c2 = (1.0 - (2.0 * l - 1.0).abs()) * s;
+    let x = c2 * (1.0 - ((hue / 60.0).rem_euclid(2.0) - 1.0).abs());
+    let m = l - c2 / 2.0;
+    let (r1, g1, b1) = match (hue / 60.0) as u32 {
+        0 => (c2, x, 0.0),
+        1 => (x, c2, 0.0),
+        2 => (0.0, c2, x),
+        3 => (0.0, x, c2),
+        4 => (x, 0.0, c2),
+        _ => (c2, 0.0, x),
+    };
+    let to = |v: f32| ((v + m) * 255.0).round().clamp(0.0, 255.0) as u8;
+    format!("#{:02X}{:02X}{:02X}", to(r1), to(g1), to(b1))
 }
 
 pub(crate) fn contrasting_fg(hex: &str) -> String {
@@ -333,15 +248,7 @@ pub(crate) fn contrasting_fg(hex: &str) -> String {
     }
 }
 
-fn darken(hex: &str, amount: f32) -> String {
-    mix_hex(hex, "000000", amount.clamp(0.0, 1.0))
-}
-
-fn lighten(hex: &str, amount: f32) -> String {
-    mix_hex(hex, "FFFFFF", amount.clamp(0.0, 1.0))
-}
-
-fn mix_hex(a: &str, b: &str, t: f32) -> String {
+pub(crate) fn mix_hex(a: &str, b: &str, t: f32) -> String {
     let a = strip_hash(a);
     let b = strip_hash(b);
     let parse = |h: &str, i: usize| u8::from_str_radix(&h[i..i + 2], 16).unwrap_or(0) as f32;
@@ -399,65 +306,89 @@ mod tests {
     use super::*;
 
     #[test]
-    fn theme_plan_has_chroma_roles() {
-        let p = resolve_fill(None, Some("sunset"), "seed", "mg");
-        assert!(p.fill.contains("url(#mg)"));
-        assert!(p.defs.contains("id=\"mg\""));
-        assert!(p.defs.contains("mgBloom"));
-        assert!(p.defs.contains("mgHolo"));
-        assert!(p.defs.contains("mgWaveA"));
-        assert_ne!(p.base.to_ascii_lowercase(), p.accent.to_ascii_lowercase());
-        assert_ne!(p.accent.to_ascii_lowercase(), p.warm.to_ascii_lowercase());
+    fn no_colour_is_the_dark_pack() {
+        let p = resolve_palette(None, None, "x");
+        assert_eq!(p.bg, "#0A0C12");
+        assert!(!p.light);
     }
 
     #[test]
-    fn gradient_default_is_chromatic() {
-        let p = resolve_fill(Some("gradient"), None, "wave-Ship", "mg");
-        assert!(p.fill.starts_with("url(#"));
-        assert!(p.defs.contains("linearGradient"));
-        // Must not be a pure solid white/black kit.
-        assert!(!p.accent.eq_ignore_ascii_case("#ffffff"));
-        assert!(!p.accent2.eq_ignore_ascii_case("#000000"));
+    fn theme_wins_over_colour() {
+        let p = resolve_palette(Some("FF0000"), Some("light"), "x");
+        assert!(p.light);
+        assert_eq!(p.ink, "#0B0D14");
     }
 
     #[test]
-    fn custom_stops_parse() {
-        let p = resolve_fill(Some("0:FF6B6B,100:C44569"), None, "x", "mg");
-        assert!(
-            p.defs.contains("#FF6B6B") || p.defs.contains("#ff6b6b") || p.defs.contains("FF6B6B")
+    fn dark_first_stop_becomes_the_base() {
+        let p = resolve_palette(Some("0:0F172A,50:5B8CFF,100:FF8A3D"), None, "x");
+        assert_eq!(p.bg, "#0F172A");
+        assert_eq!(p.accents[0], "#5B8CFF");
+        assert_eq!(p.accents[1], "#FF8A3D");
+    }
+
+    #[test]
+    fn one_colour_builds_a_harmonious_triad() {
+        let p = resolve_palette(Some("5B8CFF"), None, "x");
+        assert_eq!(p.accents[0], "#5B8CFF");
+        assert_ne!(p.accents[1], p.accents[2]);
+        assert!(contrast_ratio(&p.ink, &p.bg) >= 7.0);
+        // CSS and shields names are colours too.
+        assert_eq!(
+            resolve_palette(Some("hotpink"), None, "x").accents[0],
+            "#FF69B4"
         );
     }
 
     #[test]
-    fn chromatic_defs_do_not_emit_raw_string_continuations() {
-        let p = resolve_fill(Some("gradient"), None, "x", "mg");
-        assert!(
-            !p.defs.contains('\\'),
-            "gradient definitions must not contain literal Rust continuation markers"
-        );
+    fn pastel_stops_make_a_light_card() {
+        let p = resolve_palette(Some("FBC2EB,A6C1EE"), None, "x");
+        assert!(p.light);
+        assert!(contrast_ratio(&p.ink, &p.bg) >= 7.0);
     }
 
     #[test]
-    fn custom_stops_reject_nonfinite_or_out_of_range_offsets() {
+    fn malformed_colours_fall_back_to_the_default() {
         for spec in [
             "NaN:FF6B6B,100:C44569",
-            "inf:FF6B6B,100:C44569",
             "-1:FF6B6B,100:C44569",
             "0:FF6B6B,101:C44569",
+            "\" onload=\"x",
+            "zzz",
         ] {
-            let p = resolve_fill(Some(spec), None, "x", "mg");
-            assert!(!p.defs.contains("NaN"), "invalid offset escaped: {spec}");
-            assert!(!p.defs.contains("inf"), "invalid offset escaped: {spec}");
-            assert!(!p.defs.contains("-1%"), "invalid offset escaped: {spec}");
-            assert!(!p.defs.contains("101%"), "invalid offset escaped: {spec}");
+            let p = resolve_palette(Some(spec), None, "x");
+            assert_eq!(p.bg, "#0A0C12", "{spec}");
         }
+    }
+
+    #[test]
+    fn seeded_pick_is_stable() {
+        let a = resolve_palette(Some("gradient"), None, "seed");
+        let b = resolve_palette(Some("gradient"), None, "seed");
+        assert_eq!(a.accents, b.accents);
+    }
+
+    #[test]
+    fn one_colour_palettes_avoid_the_olive_band() {
+        let p = resolve_palette(Some("0:0A0D07,100:C3F53C"), None, "x");
+        for a in &p.accents[1..] {
+            let h = hue_of(a);
+            assert!(!(35.0..=95.0).contains(&h), "{a} hue {h}");
+        }
+        let blue = resolve_palette(Some("5B8CFF"), None, "x");
+        assert_eq!(blue.accents.len(), 3);
+    }
+
+    #[test]
+    fn hue_rotation_round_trips() {
+        assert_eq!(rotate_hue("#FF0000", 120.0), "#00FF00");
+        assert_eq!(rotate_hue("#808080", 90.0), "#808080");
     }
 
     #[test]
     fn wcag_contrast_matches_reference_values() {
         assert!((contrast_ratio("#000000", "#FFFFFF") - 21.0).abs() < 1e-9);
         assert!((contrast_ratio("777777", "777777") - 1.0).abs() < 1e-9);
-        // GitHub's brand ink on the dark icon tile is unreadable.
         assert!(contrast_ratio("181717", "242938") < 2.5);
         assert!(contrast_ratio("F7DF1E", "242938") > 2.5);
     }

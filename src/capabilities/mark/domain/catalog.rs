@@ -1,12 +1,12 @@
 //! The Mark vocabulary — one catalog, one contract.
 
-use crate::capabilities::mark::domain::art::{art_ids, featured_art_ids};
+use crate::capabilities::mark::domain::art::art_ids;
 use crate::capabilities::mark::domain::motion::ANIMATIONS;
 use crate::capabilities::mark::domain::spec::MarkForm;
 use crate::capabilities::mark::domain::{brand_icons, icons};
 
 /// Layout families (hero composition, not background recipe).
-pub(crate) const LAYOUTS: &[&str] = &["default", "plate", "signal", "terminal"];
+pub(crate) const LAYOUTS: &[&str] = &["default", "left"];
 
 /// Pill styles (shields vocabulary).
 pub(crate) const BADGE_STYLES: &[&str] = &[
@@ -31,20 +31,18 @@ pub(crate) const MAX_MESSAGE_CHARS: usize = 120;
 pub(crate) const MAX_ICONS: usize = 60;
 pub(crate) const MAX_SERVICE_CHARS: usize = 40;
 
-/// Normalize `layout=` against [`LAYOUTS`].
+/// Normalize `layout=` against [`LAYOUTS`]: `default` centres the text,
+/// `left` aligns it to the start of the column.
 ///
-/// The published list is the whole vocabulary; retired predecessor aliases
-/// (`center`, `product`, `card`, `oss`, `hero`, `cli`, `mono`) are unknown
-/// input and render the default layout.
+/// `plate` and `terminal` (published before the curated set) were left
+/// aligned and map to `left`; anything else renders the default.
 pub(crate) fn normalize_layout(raw: Option<&str>) -> &'static str {
     match raw
         .map(|s| s.trim().to_ascii_lowercase())
         .filter(|s| !s.is_empty())
         .as_deref()
     {
-        Some("plate") => "plate",
-        Some("signal") => "signal",
-        Some("terminal") => "terminal",
+        Some("left" | "plate" | "terminal") => "left",
         _ => "default",
     }
 }
@@ -54,9 +52,9 @@ pub(crate) fn vocabulary() -> serde_json::Value {
     serde_json::json!({
         "forms": MarkForm::ALL,
         "art_types": art_ids(),
-        "featured_art_types": featured_art_ids(),
         "layouts": LAYOUTS,
         "themes": super::theme::list_names(),
+        "theme_palettes": super::theme::palettes(),
         "icons": icons::available(),
         "icon_count": icons::count(),
         "skill_icons": icons::skill_ids().collect::<Vec<_>>(),

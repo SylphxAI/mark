@@ -1,227 +1,87 @@
-//! Banner motion — SMIL-first so animations work when the SVG is loaded as `<img>`.
+//! Motion — a few quiet, SMIL-first animations.
 //!
-//! CSS `@keyframes` often do nothing for external SVG images; SMIL (`<animate*>`) does.
+//! SMIL (`<animate*>`) runs when an SVG is loaded as `<img>`; CSS keyframes
+//! often do not. Text motion plays once and settles; only the background
+//! drifts, slowly, so a README never has something blinking at its reader.
 
-/// Catalog exported to API / studio (order = UI order).
-pub(crate) const ANIMATIONS: &[&str] = &[
-    "none", "ambient", "fade", "rise", "scale", "float", "glow", "breathe", "slide", "cascade",
-    "shimmer", "glitch", "wave", "orbit", "neon", "bounce", "type",
-];
+/// Published animation ids, in studio order.
+///
+/// - `ambient` (default): the background drifts, the text is still.
+/// - `fade` / `rise`: the text fades (and rises) in once, then rests.
+/// - `type`: the title is revealed left to right, then rests.
+/// - `none`: a still image.
+pub(crate) const ANIMATIONS: &[&str] = &["ambient", "fade", "rise", "type", "none"];
 
 /// Normalize `animation=` against [`ANIMATIONS`].
 ///
-/// The published vocabulary is the whole contract: anything else (including the
-/// retired predecessor aliases) is unknown input and renders `ambient`.
+/// Ids published before the curated set map to the closest survivor: entry
+/// motions become `rise`, looping text effects become `ambient` (still text).
+/// Anything else is unknown input and renders `ambient`.
 pub(crate) fn normalize_animation(raw: Option<&str>) -> &'static str {
-    match raw.map(|s| s.trim().to_ascii_lowercase()) {
-        None => "ambient",
-        Some(s) => ANIMATIONS
-            .iter()
-            .find(|a| **a == s)
-            .copied()
-            .unwrap_or("ambient"),
+    let Some(s) = raw.map(|s| s.trim().to_ascii_lowercase()) else {
+        return "ambient";
+    };
+    if let Some(a) = ANIMATIONS.iter().find(|a| **a == s) {
+        return a;
+    }
+    match s.as_str() {
+        "scale" | "slide" | "cascade" | "bounce" => "rise",
+        _ => "ambient",
     }
 }
 
-/// Background motion intensity 0.0–1.0 (none freezes decorative layers).
-pub(crate) fn ambient_gain(anim: &str) -> f32 {
-    match anim {
-        "none" => 0.0,
-        "ambient" => 0.9,
-        "wave" | "orbit" => 1.0,
-        "glitch" => 0.6,
-        _ => 0.95,
-    }
+/// Whether decorative background layers move.
+pub(crate) fn background_moves(anim: &str) -> bool {
+    anim != "none"
 }
 
-/// Extra opening attributes (no trailing `>`) for a text node.
-pub(crate) fn text_open_attrs(anim: &str, line_index: usize, width: u32, height: u32) -> String {
-    let delay = line_index as f32 * 0.12;
+/// Soft deceleration (ease-out-quint-ish) used by every entry.
+const EASE_OUT: &str = "0.16 1 0.3 1";
+
+/// Opening attributes (no trailing `>`) for a text node with entry motion.
+pub(crate) fn text_open_attrs(anim: &str, _line: usize, _width: u32, height: u32) -> String {
     match anim {
-        "fade" => " opacity=\"0\"".into(),
-        "rise" => {
-            let dy = (height as f32 * 0.12).clamp(14.0, 36.0);
-            format!(" opacity=\"0\" transform=\"translate(0 {dy})\"")
-        }
-        "scale" => {
-            let cx = width as f32 / 2.0;
-            let cy = height as f32 * 0.44;
-            format!(
-                " opacity=\"0\" transform=\"translate({cx} {cy}) scale(0.84) translate({}, {})\"",
-                -cx, -cy
-            )
-        }
-        "glow" | "neon" => " opacity=\"0.7\"".into(),
-        "shimmer" => " opacity=\"0.55\"".into(),
-        "bounce" => {
-            let dy = -(height as f32 * 0.1).clamp(12.0, 28.0);
-            format!(" opacity=\"0\" transform=\"translate(0 {dy})\"")
-        }
-        "type" => " opacity=\"0\"".into(),
-        "slide" => {
-            let dx = -(width as f32 * 0.09).clamp(24.0, 72.0);
-            format!(" opacity=\"0\" transform=\"translate({dx} 0)\"")
-        }
-        "cascade" => {
-            let dy = 18.0 + line_index as f32 * 4.0;
-            format!(" opacity=\"0\" transform=\"translate(0 {dy})\" data-d=\"{delay}\"")
-        }
+        "fade" | "blink" => " opacity=\"0\"".into(),
+        "rise" => format!(
+            " opacity=\"0\" transform=\"translate(0 {})\"",
+            rise_distance(height)
+        ),
         _ => String::new(),
     }
 }
 
-/// SMIL children placed inside a text element.
-pub(crate) fn text_children(anim: &str, line_index: usize, width: u32, height: u32) -> String {
-    let delay = line_index as f32 * 0.12;
+/// SMIL children placed inside a text node. Lines enter 90 ms apart.
+pub(crate) fn text_children(anim: &str, line: usize, _width: u32, height: u32) -> String {
+    let delay = 0.15 + line as f32 * 0.09;
+    let fade = |dur: f32| {
+        format!(
+            "<animate attributeName=\"opacity\" from=\"0\" to=\"1\" dur=\"{dur}s\" begin=\"{delay:.2}s\" \
+             fill=\"freeze\" calcMode=\"spline\" keyTimes=\"0;1\" keySplines=\"{EASE_OUT}\"/>"
+        )
+    };
     match anim {
-        "none" | "ambient" => String::new(),
-
-        "fade" => format!(
-            "<animate attributeName=\"opacity\" from=\"0\" to=\"1\" dur=\"1.05s\" begin=\"{delay}s\" fill=\"freeze\" \
-             calcMode=\"spline\" keySplines=\"0.22 1 0.36 1\" keyTimes=\"0;1\"/>"
+        "fade" => fade(1.1),
+        "rise" => format!(
+            "{}<animateTransform attributeName=\"transform\" type=\"translate\" from=\"0 {}\" to=\"0 0\" \
+             dur=\"1.1s\" begin=\"{delay:.2}s\" fill=\"freeze\" calcMode=\"spline\" keyTimes=\"0;1\" \
+             keySplines=\"{EASE_OUT}\"/>",
+            fade(0.9),
+            rise_distance(height)
         ),
-
-        "rise" => {
-            let dy = (height as f32 * 0.12).clamp(14.0, 36.0);
-            format!(
-                "<animate attributeName=\"opacity\" from=\"0\" to=\"1\" dur=\"0.95s\" begin=\"{delay}s\" fill=\"freeze\" \
-                   calcMode=\"spline\" keySplines=\"0.22 1 0.36 1\" keyTimes=\"0;1\"/>\
-                 <animateTransform attributeName=\"transform\" type=\"translate\" from=\"0 {dy}\" to=\"0 0\" \
-                   dur=\"1.05s\" begin=\"{delay}s\" fill=\"freeze\" calcMode=\"spline\" keySplines=\"0.16 1 0.3 1\" keyTimes=\"0;1\"/>"
-            )
-        }
-
-        "scale" => format!(
-            "<animate attributeName=\"opacity\" from=\"0\" to=\"1\" dur=\"0.75s\" begin=\"{delay}s\" fill=\"freeze\"/>\
-             <animateTransform attributeName=\"transform\" type=\"scale\" from=\"0.84\" to=\"1\" \
-               dur=\"0.9s\" begin=\"{delay}s\" fill=\"freeze\" additive=\"sum\" \
-               calcMode=\"spline\" keySplines=\"0.34 1.45 0.64 1\" keyTimes=\"0;1\"/>"
-        ),
-
-        "float" => {
-            let amp = (height as f32 * 0.028).clamp(3.5, 9.0);
-            format!(
-                "<animateTransform attributeName=\"transform\" type=\"translate\" \
-                   values=\"0 0; 0 -{amp}; 0 0; 0 {half}; 0 0\" keyTimes=\"0;0.25;0.5;0.75;1\" \
-                   dur=\"5.2s\" begin=\"{delay}s\" repeatCount=\"indefinite\" \
-                   calcMode=\"spline\" keySplines=\"0.45 0 0.55 1;0.45 0 0.55 1;0.45 0 0.55 1;0.45 0 0.55 1\"/>",
-                half = amp * 0.55
-            )
-        }
-
-        "glow" => format!(
-            "<animate attributeName=\"opacity\" values=\"0.7;1;0.78;1;0.7\" keyTimes=\"0;0.28;0.52;0.78;1\" \
-               dur=\"3.1s\" begin=\"{delay}s\" repeatCount=\"indefinite\"/>"
-        ),
-
-        "breathe" => {
-            let cx = width as f32 / 2.0;
-            let cy = height as f32 * 0.44;
-            // scale around center via nested group is cleaner; approximate with translate+scale sum
-            format!(
-                "<animateTransform attributeName=\"transform\" type=\"translate\" values=\"0 0; 0 -1.5; 0 0\" \
-                   dur=\"3.4s\" begin=\"{delay}s\" repeatCount=\"indefinite\"/>\
-                 <animate attributeName=\"opacity\" values=\"0.92;1;0.92\" dur=\"3.4s\" begin=\"{delay}s\" repeatCount=\"indefinite\"/>\
-                 <!-- center bias {cx},{cy} -->"
-            )
-        }
-
-        "slide" => {
-            let dx = -(width as f32 * 0.09).clamp(24.0, 72.0);
-            format!(
-                "<animate attributeName=\"opacity\" from=\"0\" to=\"1\" dur=\"0.85s\" begin=\"{delay}s\" fill=\"freeze\"/>\
-                 <animateTransform attributeName=\"transform\" type=\"translate\" from=\"{dx} 0\" to=\"0 0\" \
-                   dur=\"0.95s\" begin=\"{delay}s\" fill=\"freeze\" calcMode=\"spline\" keySplines=\"0.16 1 0.3 1\" keyTimes=\"0;1\"/>"
-            )
-        }
-
-        "cascade" => {
-            let dy = 18.0 + line_index as f32 * 4.0;
-            let d = delay + 0.04;
-            format!(
-                "<animate attributeName=\"opacity\" from=\"0\" to=\"1\" dur=\"0.7s\" begin=\"{d}s\" fill=\"freeze\"/>\
-                 <animateTransform attributeName=\"transform\" type=\"translate\" from=\"0 {dy}\" to=\"0 0\" \
-                   dur=\"0.85s\" begin=\"{d}s\" fill=\"freeze\" calcMode=\"spline\" keySplines=\"0.22 1 0.36 1\" keyTimes=\"0;1\"/>"
-            )
-        }
-
-        "shimmer" => format!(
-            "<animate attributeName=\"opacity\" values=\"0.55;1;0.68;1;0.55\" keyTimes=\"0;0.22;0.48;0.72;1\" \
-               dur=\"2.5s\" begin=\"{delay}s\" repeatCount=\"indefinite\"/>\
-             <animateTransform attributeName=\"transform\" type=\"translate\" \
-               values=\"0 0; 1.8 0; 0 0; -1.2 0; 0 0\" dur=\"2.5s\" begin=\"{delay}s\" repeatCount=\"indefinite\"/>"
-        ),
-
-        "glitch" => format!(
-            "<animateTransform attributeName=\"transform\" type=\"translate\" \
-               values=\"0 0; 2.5 0; -2 0; 1.5 -1; -1.5 1; 0 0; 0 0; 3 0; -2.5 0; 0 0\" \
-               keyTimes=\"0;0.07;0.11;0.15;0.19;0.26;0.68;0.76;0.84;1\" \
-               dur=\"2.7s\" begin=\"{delay}s\" repeatCount=\"indefinite\"/>\
-             <animate attributeName=\"opacity\" values=\"1;1;0.5;1;1;0.65;1\" \
-               keyTimes=\"0;0.08;0.12;0.16;0.72;0.78;1\" dur=\"2.7s\" begin=\"{delay}s\" repeatCount=\"indefinite\"/>"
-        ),
-
-        "wave" => {
-            let amp = (height as f32 * 0.032).clamp(4.0, 11.0);
-            format!(
-                "<animateTransform attributeName=\"transform\" type=\"translate\" \
-                   values=\"0 0; 0 -{amp}; 0 0; 0 {amp}; 0 0\" keyTimes=\"0;0.25;0.5;0.75;1\" \
-                   dur=\"3.8s\" begin=\"{delay}s\" repeatCount=\"indefinite\" \
-                   calcMode=\"spline\" keySplines=\"0.45 0 0.55 1;0.45 0 0.55 1;0.45 0 0.55 1;0.45 0 0.55 1\"/>"
-            )
-        }
-
-        "orbit" => format!(
-            "<animateTransform attributeName=\"transform\" type=\"translate\" \
-               values=\"0 0; 3.5 -2; 0 -3.5; -3.5 -1; 0 0\" keyTimes=\"0;0.25;0.5;0.75;1\" \
-               dur=\"6.5s\" begin=\"{delay}s\" repeatCount=\"indefinite\"/>"
-        ),
-
-        // Neon flicker — cyber/signage pulse with occasional hard cut.
-        "neon" => format!(
-            "<animate attributeName=\"opacity\" \
-               values=\"0.55;1;0.92;1;0.35;1;0.88;1;0.55\" \
-               keyTimes=\"0;0.12;0.28;0.42;0.48;0.55;0.72;0.88;1\" \
-               dur=\"2.4s\" begin=\"{delay}s\" repeatCount=\"indefinite\"/>\
-             <animateTransform attributeName=\"transform\" type=\"translate\" \
-               values=\"0 0; 0.6 0; 0 0; -0.8 0; 0 0; 0 0\" \
-               keyTimes=\"0;0.45;0.5;0.55;0.6;1\" \
-               dur=\"2.4s\" begin=\"{delay}s\" repeatCount=\"indefinite\"/>"
-        ),
-
-        // Spring bounce entry then soft settle.
-        "bounce" => {
-            let dy = -(height as f32 * 0.1).clamp(12.0, 28.0);
-            format!(
-                "<animate attributeName=\"opacity\" from=\"0\" to=\"1\" dur=\"0.35s\" begin=\"{delay}s\" fill=\"freeze\"/>\
-                 <animateTransform attributeName=\"transform\" type=\"translate\" \
-                   values=\"0 {dy}; 0 6; 0 -3; 0 1.5; 0 0\" keyTimes=\"0;0.4;0.62;0.82;1\" \
-                   dur=\"0.95s\" begin=\"{delay}s\" fill=\"freeze\" \
-                   calcMode=\"spline\" keySplines=\"0.22 1.4 0.36 1;0.34 1.2 0.64 1;0.34 1.1 0.64 1;0.25 1 0.5 1\"/>"
-            )
-        },
-
-        // Legacy line-level type path — full typewriter is handled in banner::render
-        // when animation=type (per-character SMIL + cursor). Keep a soft reveal fallback
-        // if something still calls text_children("type").
-        "type" => {
-            let d = delay * 1.35 + line_index as f32 * 0.08;
-            format!(
-                "<animate attributeName=\"opacity\" from=\"0\" to=\"1\" dur=\"0.12s\" begin=\"{d}s\" fill=\"freeze\"/>"
-            )
-        }
-
         other => dialect_children(other),
     }
 }
 
+fn rise_distance(height: u32) -> f32 {
+    (height as f32 * 0.05).clamp(6.0, 16.0).round()
+}
+
 /// Dialect-only motion (capsule-render `blink`/`blinking`/`twinkling`):
-/// reachable through `HeroOverrides`, never through `animation=`
-/// (`normalize_animation` keeps the published list the whole grammar).
+/// reachable through the capsule dialect's overrides, never `animation=`.
 fn dialect_children(anim: &str) -> String {
     match anim {
         "blink" => "<animate attributeName=\"opacity\" values=\"1;0;1;0;1\" keyTimes=\"0;0.1;0.25;0.4;0.7\" \
-             calcMode=\"discrete\" dur=\"0.6s\" begin=\"0s\"/>"
+             calcMode=\"discrete\" dur=\"0.6s\" begin=\"0s\" fill=\"freeze\"/>"
             .into(),
         "blinking" => "<animate attributeName=\"opacity\" values=\"1;0;1\" keyTimes=\"0;0.2;0.5\" \
              calcMode=\"discrete\" dur=\"1.6s\" begin=\"0s\" repeatCount=\"indefinite\"/>"
@@ -229,13 +89,12 @@ fn dialect_children(anim: &str) -> String {
         "twinkling" => "<animate attributeName=\"opacity\" values=\"1;1;0.5;1;0.5;1;1\" \
              keyTimes=\"0;0.4;0.5;0.6;0.7;0.8;1\" dur=\"4s\" begin=\"0s\" repeatCount=\"indefinite\"/>"
             .into(),
-
         _ => String::new(),
     }
 }
 
-/// Wrap a row/group (strip icons) with the same text-level SMIL contract.
-/// Empty pair means the animation is static at this scale (`none` / `ambient`).
+/// Wrap a row/group (strip icons) with the same text-level entry motion.
+/// Empty pair means the group is still.
 pub(crate) fn group_wrap(anim: &str, index: usize, width: u32, height: u32) -> (String, String) {
     let attrs = text_open_attrs(anim, index, width, height);
     let children = text_children(anim, index, width, height);
@@ -243,5 +102,57 @@ pub(crate) fn group_wrap(anim: &str, index: usize, width: u32, height: u32) -> (
         (String::new(), String::new())
     } else {
         (format!("<g{attrs}>{children}"), "</g>".into())
+    }
+}
+
+/// A slow looping drift for a background layer: `translate` through the
+/// given offsets and back, eased, over `dur` seconds.
+pub(crate) fn drift(points: &[(f32, f32)], dur: f32) -> String {
+    let mut values: Vec<String> = points
+        .iter()
+        .map(|(x, y)| format!("{x:.0} {y:.0}"))
+        .collect();
+    values.push(values[0].clone());
+    let n = values.len() - 1;
+    let times: Vec<String> = (0..=n)
+        .map(|i| format!("{:.3}", i as f32 / n as f32))
+        .collect();
+    let splines = vec!["0.45 0 0.55 1"; n].join(";");
+    format!(
+        "<animateTransform attributeName=\"transform\" type=\"translate\" values=\"{}\" keyTimes=\"{}\" \
+         dur=\"{dur}s\" repeatCount=\"indefinite\" calcMode=\"spline\" keySplines=\"{splines}\"/>",
+        values.join(";"),
+        times.join(";"),
+    )
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn retired_ids_map_to_the_closest_survivor() {
+        assert_eq!(normalize_animation(Some("bounce")), "rise");
+        assert_eq!(normalize_animation(Some("slide")), "rise");
+        assert_eq!(normalize_animation(Some("glitch")), "ambient");
+        assert_eq!(normalize_animation(Some("neon")), "ambient");
+        assert_eq!(normalize_animation(Some(" FADE ")), "fade");
+        assert_eq!(normalize_animation(None), "ambient");
+    }
+
+    #[test]
+    fn text_entries_play_once() {
+        for a in ["fade", "rise"] {
+            let c = text_children(a, 0, 880, 220);
+            assert!(c.contains("fill=\"freeze\""), "{a}");
+            assert!(!c.contains("indefinite"), "{a} must not loop");
+        }
+    }
+
+    #[test]
+    fn drift_is_a_closed_eased_loop() {
+        let d = drift(&[(0.0, 0.0), (10.0, -4.0)], 20.0);
+        assert!(d.contains("values=\"0 0;10 -4;0 0\""));
+        assert!(d.contains("keySplines=\"0.45 0 0.55 1;0.45 0 0.55 1\""));
     }
 }

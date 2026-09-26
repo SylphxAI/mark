@@ -36,14 +36,14 @@ FUNCTION_EXCEPTIONS: dict[tuple[str, str], str] = {
     (
         "src/capabilities/mark/application/hero.rs",
         "render",
-    ): "hero composition gathers layout defaults, text/desc assembly, plate and terminal chrome; splitting it is its own slice",
+    ): "hero composition gathers the type scale, line fitting, entry motion and the terminal prompt and cursor in one reading order",
 }
 
 # Only the art dispatch must be exhaustive: `Art::parse` deliberately
 # normalizes unknown input to `Art::Waving`, and family functions may branch on
 # style choices internally.
 DISPATCH_FILE = "src/capabilities/mark/domain/shapes/mod.rs"
-DISPATCH_FN = "shape_background"
+DISPATCH_FN = "stage"
 NO_STRING_ART = "src/capabilities/mark/domain/shapes"
 
 
@@ -80,7 +80,7 @@ def functions(text: str) -> list[tuple[str, int, int]]:
 
 def dispatch_body(text: str) -> str | None:
     """Body of the art dispatch function (the exhaustive match)."""
-    match = re.search(rf"pub\(crate\) fn {DISPATCH_FN}\([^)]*\) -> String \{{", text)
+    match = re.search(rf"pub\(crate\) fn {DISPATCH_FN}\([^)]*\) -> \w+ \{{", text)
     if not match:
         return None
     depth = 1

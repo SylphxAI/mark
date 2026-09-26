@@ -2,8 +2,12 @@
 //!
 //! `cargo test` never touches the network. Subjects:
 //! - user `ada-dev` (profile, repos, searches, calendar, GraphQL);
-//! - repository `SylphxAI/mark` (repo, release, last commit);
-//! - packages `mark-demo` and `@sylphx/mark-demo`;
+//! - repository `SylphxAI/mark` (repo, release, last commit, workflows
+//!   `ci.yml` and never-run `release.yml`, stargazer pages);
+//! - npm packages `mark-demo`, `@sylphx/mark-demo`, and `fresh-demo` (no
+//!   download counts yet); pub.dev `mark_demo`; Packagist `sylphx/mark`;
+//!   Bundlephobia `mark-demo`; Chrome Web Store item
+//!   `gighmmpiobklfepjocnamgkkbiglidom`;
 //! - any URL naming `ghost-404` is not found; any naming `offline` times out.
 
 use super::upstream::{BoxFut, Call, Reply, Resource, Upstream, UpstreamError};
@@ -126,11 +130,49 @@ fn answer(call: &Call, token: bool) -> Result<Reply, UpstreamError> {
             u if u.starts_with("/repos/SylphxAI/mark/commits?per_page=1") => {
                 body(r#"[{"commit":{"committer":{"date":"2026-09-22T10:00:00Z"}}}]"#)
             }
+            u if u.starts_with("/repos/SylphxAI/mark/actions/workflows/ci.yml/runs?") => body(
+                r#"{"workflow_runs":[{"name":"CI","status":"completed","conclusion":"success"}]}"#,
+            ),
+            u if u.starts_with("/repos/SylphxAI/mark/actions/workflows/release.yml/runs?") => {
+                body(r#"{"workflow_runs":[]}"#)
+            }
+            u if u.starts_with("/repos/SylphxAI/mark/stargazers?per_page=100&page=")
+                && call.accept == Some("application/vnd.github.star+json") =>
+            {
+                let page: i64 = u
+                    .rsplit('=')
+                    .next()
+                    .and_then(|p| p.parse().ok())
+                    .unwrap_or(1);
+                Ok(Reply::Body(stargazer_page(page)))
+            }
+            _ => Ok(Reply::NotFound),
+        },
+        Resource::Registry => match url {
+            "https://pub.dev/api/packages/mark_demo" => body(r#"{"latest":{"version":"2.1.0"}}"#),
+            "https://pub.dev/api/packages/mark_demo/score" => body(
+                r#"{"grantedPoints":150,"maxPoints":160,"likeCount":1234,"downloadCount30Days":56789}"#,
+            ),
+            "https://repo.packagist.org/p2/sylphx/mark.json" => body(
+                r#"{"packages":{"sylphx/mark":[{"version":"2.0.0-RC1"},{"version":"1.9.2"}]}}"#,
+            ),
+            "https://packagist.org/packages/sylphx/mark/stats.json" => {
+                body(r#"{"downloads":{"total":1071657,"monthly":21293,"daily":742}}"#)
+            }
+            "https://bundlephobia.com/api/size?package=mark-demo" => {
+                body(r#"{"size":7998,"gzip":3058}"#)
+            }
+            "https://chromewebstore.google.com/detail/gighmmpiobklfepjocnamgkkbiglidom" => body(
+                r#"<script>AF_initDataCallback({key: 'ds:0', hash: '2', data:[["gighmmpiobklfepjocnamgkkbiglidom","i","Demo",4.47,290290,"x","s","u",1,null,null,["c",null,4],1,1,64000000,1,"i",[1,2],"{\"version\": \"6.29.0\"}"]], sideChannel: {}});</script>"#,
+            ),
             _ => Ok(Reply::NotFound),
         },
         Resource::Npm => match url {
             "https://registry.npmjs.org/mark-demo/latest" => {
                 body(r#"{"version":"2.3.1","license":"MIT"}"#)
+            }
+            "https://registry.npmjs.org/fresh-demo/latest" => {
+                body(r#"{"version":"0.1.0","license":"MIT"}"#)
             }
             "https://registry.npmjs.org/@sylphx%2Fmark-demo/latest" => {
                 body(r#"{"version":"0.4.0-beta.2","license":{"type":"Apache-2.0"}}"#)
@@ -150,6 +192,14 @@ fn answer(call: &Call, token: bool) -> Result<Reply, UpstreamError> {
         },
         _ => Ok(Reply::NotFound),
     }
+}
+
+/// One page of stargazers: the first starred 30 days after the previous
+/// page's, from 2024-01-01.
+fn stargazer_page(page: i64) -> String {
+    let day = days_from_civil(2024, 1, 1) + (page - 1) * 30;
+    let (y, m, d) = crate::capabilities::live::domain::date::civil_from_days(day);
+    format!(r#"[{{"starred_at":"{y:04}-{m:02}-{d:02}T12:00:00Z"}}]"#)
 }
 
 impl Upstream for FixtureUpstream {

@@ -1,6 +1,6 @@
 <p align="center">
   <a href="https://mark.sylphx.com">
-    <img src="https://mark.sylphx.com/api/v1/mark/hero.svg?type=waving&color=0:0F172A,50:5B8CFF,100:FF8A3D&height=240&text=readme-mark&desc=Beautiful%20README%20images%20from%20one%20URL" width="100%" alt="readme-mark — beautiful README images from one URL" />
+    <img src="https://mark.sylphx.com/api/v1/mark/hero.svg?type=aurora&theme=dark&height=240&text=Mark&desc=Beautiful%20README%20images%20from%20one%20URL" width="100%" alt="Mark — beautiful README images from one URL" />
   </a>
 </p>
 
@@ -19,7 +19,7 @@
 
 ---
 
-Every image in this README is a live URL served by readme-mark. Paste a URL into
+Every image in this README is a live URL served by Mark. Paste a URL into
 any README, issue, or site and it renders — nothing to install, no account, no
 API key.
 
@@ -29,14 +29,25 @@ github-readme-stats?** Keep your URL and change only the host
 
 ## Gallery
 
-### Banners — 42 animated art types
+### Banners — 8 styles, 8 themes
 
-<img src="https://mark.sylphx.com/api/v1/mark/hero.svg?type=waving&color=0:1A1A2E,50:4A90E2,100:D87000&text=Hello%2C%20README&desc=Animated%20waves%2C%20your%20colors" width="100%" alt="waving banner" />
-<img src="https://mark.sylphx.com/api/v1/mark/hero.svg?type=constellation&color=0:0B1026,100:7C3AED&text=Open%20source&desc=Built%20in%20public&height=200" width="100%" alt="constellation banner" />
-<img src="https://mark.sylphx.com/api/v1/mark/hero.svg?type=aurora&theme=tokyonight&text=Aurora&desc=Soft%20light%20for%20your%20project&height=200" width="100%" alt="aurora banner" />
+<p align="center">
+<img src="https://mark.sylphx.com/api/v1/mark/hero.svg?type=waving&theme=dark&text=Waving&desc=Layered%20waves&animation=none" width="49%" alt="waving banner" />
+<img src="https://mark.sylphx.com/api/v1/mark/hero.svg?type=aurora&theme=grape&text=Aurora&desc=Soft%20pools%20of%20light&animation=none" width="49%" alt="aurora banner" />
+<img src="https://mark.sylphx.com/api/v1/mark/hero.svg?type=mesh&theme=sunset&text=Mesh&desc=A%20full-bleed%20gradient&animation=none" width="49%" alt="mesh banner" />
+<img src="https://mark.sylphx.com/api/v1/mark/hero.svg?type=spotlight&theme=dark&text=Spotlight&desc=One%20beam%20of%20light&animation=none" width="49%" alt="spotlight banner" />
+<img src="https://mark.sylphx.com/api/v1/mark/hero.svg?type=grid&theme=ocean&text=Grid&desc=A%20grid%20that%20fades%20out&animation=none" width="49%" alt="grid banner" />
+<img src="https://mark.sylphx.com/api/v1/mark/hero.svg?type=minimal&theme=light&text=Minimal&desc=A%20card%20and%20a%20hairline&animation=none" width="49%" alt="minimal banner" />
+<img src="https://mark.sylphx.com/api/v1/mark/hero.svg?type=terminal&theme=dark&text=npx%20your-tool&desc=A%20terminal%20window&animation=none" width="49%" alt="terminal banner" />
+<img src="https://mark.sylphx.com/api/v1/mark/hero.svg?type=waving&theme=paper&text=Paper&desc=A%20warm%20light%20theme&animation=none" width="49%" alt="waving banner" />
+</p>
+
+Styles: `waving` `aurora` `mesh` `spotlight` `grid` `minimal` `terminal` `transparent`.
+Themes: `dark` `light` `ocean` `sunset` `forest` `grape` `mono` `paper` — or your own colours with `color=`.
+Motion is quiet by default: the light drifts slowly and the text stays still. `fade`, `rise` and `type` play once; `none` is a still image.
 
 ```md
-![](https://mark.sylphx.com/api/v1/mark/hero?type=waving&text=Hello%2C%20README&desc=Animated%20waves)
+![](https://mark.sylphx.com/api/v1/mark/hero?type=aurora&theme=grape&text=Hello%2C%20README&desc=One%20URL%2C%20one%20image)
 ```
 
 ### Badges — shields syntax, plus 3,400+ logos
@@ -101,17 +112,35 @@ A progress ring and automatic color grading (red → bright green) from `value` 
 ![](https://mark.sylphx.com/trophy?username=YOUR_NAME)
 ```
 
-Dynamic badges work the same way: `/github/stars/{owner}/{repo}`,
-`/github/v/release/{owner}/{repo}`, `/npm/v/{package}`, `/npm/dm/{package}`.
+Dynamic badges use shields' paths:
+
+| Source | Paths |
+| --- | --- |
+| GitHub | `/github/{stars,forks,license,last-commit}/{owner}/{repo}`, `/github/v/release/{owner}/{repo}`, `/github/actions/workflow/status/{owner}/{repo}/{file}` (`?branch=`, `?event=`) |
+| npm | `/npm/{v,dm,dw,dt,l}/{package}` (scoped too) |
+| pub.dev | `/pub/{v,likes,points,dm}/{package}` |
+| Packagist | `/packagist/{v,dm,dd,dt}/{vendor}/{package}` |
+| Bundlephobia | `/bundlephobia/{min,minzip}/{package}` |
+| Chrome Web Store | `/chrome-web-store/{v,users,rating,stars,rating-count}/{id}` |
+
+### Star history
+
+<img src="https://mark.sylphx.com/svg?repos=SylphxAI/firestore_odm" width="100%" alt="star history" />
+
+```md
+![](https://mark.sylphx.com/svg?repos=owner/repo&theme=dark)
+```
+
+A star-history.com URL works with only the host changed. GitHub shares star dates only with the people who can manage a repository, so the chart draws a curve for repositories Mark's server can read; for any other repository it shows today's total.
 
 ### Profile cards
 
-<img src="https://mark.sylphx.com/api/v1/mark/profile.svg?text=Ada%20Lovelace&desc=Analytical%20engines%20and%20poetry&theme=tokyonight" width="49%" alt="profile card" />
-<img src="https://mark.sylphx.com/api/v1/mark/profile.svg?text=Alan%20Turing&desc=Machines%20that%20think&type=wave&theme=ocean" width="49%" alt="profile card with art" />
+<img src="https://mark.sylphx.com/api/v1/mark/profile.svg?text=Ada%20Lovelace&desc=Analytical%20engines%20and%20poetry&theme=grape" width="49%" alt="profile card" />
+<img src="https://mark.sylphx.com/api/v1/mark/profile.svg?text=Alan%20Turing&desc=Machines%20that%20think&type=aurora&theme=ocean" width="49%" alt="profile card with art" />
 
 ## Switch by changing the host
 
-readme-mark reads the URL formats you already use. Keep the path and query,
+Mark reads the URL formats you already use. Keep the path and query,
 change the host:
 
 | You have | Change it to |
@@ -127,10 +156,11 @@ change the host:
 | `github-readme-stats.vercel.app/api/pin?username=you&repo=r` | `mark.sylphx.com/api/pin?username=you&repo=r` |
 | `streak-stats.demolab.com?user=you` | `mark.sylphx.com/?user=you` |
 | `github-profile-trophy.vercel.app/?username=you` | `mark.sylphx.com/?username=you` |
+| `api.star-history.com/svg?repos=owner/repo` | `mark.sylphx.com/svg?repos=owner/repo` |
 
 Or paste any of those URLs into the [studio](https://mark.sylphx.com) and edit it there.
 
-## Why readme-mark
+## Why Mark
 
 - **Free, with no token.** You never paste a personal access token. Live cards read public GitHub data on the server, with caching.
 - **Never a broken image.** Unknown parameters fall back to defaults. If GitHub is slow or rate limited, you get the last good card; if there is none yet, a calm "temporarily unavailable" card, never a broken-image icon.
@@ -148,13 +178,15 @@ Or paste any of those URLs into the [studio](https://mark.sylphx.com) and edit i
 | Param | Values | Default |
 | --- | --- | --- |
 | `text`, `desc` | Title and subtitle. Use `-nl-` for a new line. | — |
-| `type` | Art: `waving` `wave` `aurora` `constellation` `mesh` `glass` `plasma` `holo` `neon` `silk` `orbit` `grid` `circuit` `terminal` `transparent` … ([all 42](https://mark.sylphx.com/api/v1/catalog)) | `waving` |
-| `theme` | `dark` `light` `tokyonight` `dracula` `nord` `monokai` `radical` `gruvbox` `ocean` `sunset` `forest` `neon` `github` | — |
-| `color` | A hex color, or stops like `0:1A1A2E,50:4A90E2,100:D87000` (used when no theme is set) | signature gradient |
-| `layout` | `default` `plate` `signal` `terminal` | `default` |
-| `animation` | `ambient` `none` `fade` `rise` `scale` `float` `glow` `breathe` `slide` `cascade` `shimmer` `glitch` `wave` `orbit` `neon` `bounce` `type` | `ambient` |
+| `type` | Style: `waving` `aurora` `mesh` `spotlight` `grid` `minimal` `terminal` `transparent` | `waving` |
+| `theme` | `dark` `light` `ocean` `sunset` `forest` `grape` `mono` `paper` | `dark` |
+| `color` | One colour, or gradient stops like `0:0F172A,50:5B8CFF,100:FF8A3D` (used when no theme is set; a dark first stop becomes the background). `gradient` picks a theme from the text. | — |
+| `layout` | `default` (centered) `left` | `default` |
+| `animation` | `ambient` (the light drifts) `fade` `rise` `type` (play once) `none` | `ambient` |
 | `font` | `sans` `mono` | `sans` |
-| `width`, `height` | Pixels, up to 1600 × 900. Type scales on large canvases (1280×640 makes a social preview). | `880`, `220` |
+| `width`, `height` | Pixels, up to 1600 × 900. Type scales with the canvas (1280×640 makes a social preview). | `880`, `220` |
+
+`transparent` draws text only, in GitHub's text colours for the viewer's light or dark scheme. Names from earlier versions (`plasma`, `constellation`, `tokyonight`, `glitch`, `plate`, …) still render: each maps to the closest style, theme, motion or layout above.
 
 </details>
 
@@ -196,7 +228,7 @@ The same parameters as readme-typing-svg: `lines` (separated by `;`), `font`, `w
 <details>
 <summary><b>GitHub cards</b> — <code>/api</code>, <code>/api/top-langs</code>, <code>/streak</code>, <code>/api/pin</code>, <code>/trophy</code></summary>
 
-github-readme-stats parameters: `username`, `theme`, `show_icons`, `hide`, `hide_title`, `hide_rank`, `hide_border`, `border_radius`, `title_color`, `text_color`, `icon_color`, `bg_color`, `border_color`, `custom_title`, `card_width`, `layout` (`normal` `compact` `donut` `donut-vertical` `pie`), `langs_count`, `exclude_repo`. The native routes are `/api/v1/card/{stats|langs|streak|repo}`. Trophies (`/trophy`, or `/?username=`) take github-profile-trophy's `theme`, `column`, `row`, `margin-w`, `margin-h`, `no-bg`, `no-frame`, `title` and `rank`.
+github-readme-stats parameters: `username`, `theme`, `show_icons`, `hide`, `hide_title`, `hide_rank`, `hide_border`, `border_radius`, `title_color`, `text_color`, `icon_color`, `bg_color`, `border_color`, `custom_title`, `card_width`, `layout` (`normal` `compact` `donut` `donut-vertical` `pie`), `langs_count`, `exclude_repo`. The native routes are `/api/v1/card/{stats|langs|streak|repo|stars}`. Trophies (`/trophy`, or `/?username=`) take github-profile-trophy's `theme`, `column`, `row`, `margin-w`, `margin-h`, `no-bg`, `no-frame`, `title` and `rank`.
 
 Live cards are cached on the server (about 4 hours) and at the edge. They are served stale while they refresh, and stale when GitHub is unavailable.
 
@@ -214,15 +246,15 @@ Append `.svg` to any image path (`/badge/a-b-c.svg`, `/api/v1/mark/hero.svg?…`
 
 ## Performance
 
-In-process render latency, measured by the [Bench workflow](.github/workflows/bench.yml) (release build, GitHub-hosted runner, 400 runs per URL):
+In-process render latency (release build, 400 runs per URL, p50). The [Bench workflow](.github/workflows/bench.yml) re-measures on every change to `main` and publishes the table to its job summary:
 
 | Image | Size | p50 |
 | --- | ---: | ---: |
-| Badge (`/badge/build-passing-brightgreen`) | 0.8 KB | 6 µs |
-| Banner, waving, 880×220 | 8.2 KB | 29 µs |
-| Banner, constellation, 1200×320 | 13.4 KB | 31 µs |
-| Tech strip, 8 icons | 3.7 KB | 10 µs |
-| Profile card | 4.9 KB | 15 µs |
+| Badge (`/badge/build-passing-brightgreen`) | 1.3 KB | 8 µs |
+| Banner, waving, 880×220 | 2.5 KB | 20 µs |
+| Banner, aurora, 1200×320 | 2.6 KB | 17 µs |
+| Tech strip, 8 icons | 23 KB | 41 µs |
+| Profile card | 2.0 KB | 11 µs |
 
 Live readback on 2026-09-25 from a server in Europe with [`scripts/measure-live.sh`](scripts/measure-live.sh) (15 requests per URL, p50). "Wait" is the time from sending the request to the first byte, not counting DNS, TCP or TLS:
 
@@ -238,8 +270,8 @@ Use the `.svg` form to be served from the edge. Both forms return identical byte
 ## Self-hosting
 
 ```bash
-docker build --build-arg GIT_SHA="$(git rev-parse HEAD)" -t readme-mark .
-docker run --rm -p 8787:8787 readme-mark        # → http://localhost:8787
+docker build --build-arg GIT_SHA="$(git rev-parse HEAD)" -t mark .
+docker run --rm -p 8787:8787 mark               # → http://localhost:8787
 ```
 
 | Variable | Default | Notes |
@@ -254,7 +286,7 @@ Development: `cargo run`, `cargo test`. After reviewing a visual change, refresh
 
 ## Credits
 
-readme-mark stands on ideas from [shields.io](https://github.com/badges/shields),
+Mark stands on ideas from [shields.io](https://github.com/badges/shields),
 [capsule-render](https://github.com/kyechan99/capsule-render),
 [readme-typing-svg](https://github.com/DenverCoder1/readme-typing-svg),
 [skill-icons](https://github.com/tandpfun/skill-icons),

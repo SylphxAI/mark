@@ -14,7 +14,7 @@ use axum::http::Uri;
 use axum::routing::get;
 use axum::Router;
 use tower_http::cors::{Any, CorsLayer};
-use tower_http::services::ServeDir;
+use tower_http::services::{ServeDir, ServeFile};
 use tower_http::trace::{DefaultMakeSpan, DefaultOnResponse, TraceLayer};
 
 use crate::bootstrap::AppState;
@@ -38,6 +38,10 @@ pub(crate) const IMAGE_ROUTE_PREFIXES: &[&str] = &[
     "/trophy",
     "/github",
     "/npm",
+    "/pub",
+    "/packagist",
+    "/bundlephobia",
+    "/chrome-web-store",
 ];
 
 /// `/badge/a-b-c.svg` → `/badge/a-b-c`; only image routes are rewritten, so
@@ -116,10 +120,32 @@ fn routes(state: AppState) -> Router {
             get(live_http::github_badge),
         )
         .route("/npm/{kind}/{*package}", get(live_http::npm_badge))
+        .route(
+            "/github/actions/workflow/status/{owner}/{repo}/{file}",
+            get(live_http::workflow_badge),
+        )
+        .route("/pub/{kind}/{package}", get(live_http::pub_badge))
+        .route(
+            "/packagist/{kind}/{vendor}/{package}",
+            get(live_http::packagist_badge),
+        )
+        .route(
+            "/bundlephobia/{kind}/{*package}",
+            get(live_http::bundlephobia_badge),
+        )
+        .route(
+            "/chrome-web-store/{kind}/{id}",
+            get(live_http::chrome_badge),
+        )
+        .route("/svg", get(live_http::star_history_handler))
         // `/` is the studio, readme-typing-svg's image path (`?lines=`), and
         // github-readme-streak-stats' (`?user=`).
         .route("/", get(dispatch::root))
-        .fallback_service(ServeDir::new("static"))
+        // Anything else is a static file, or the Mark-styled 404 page with a
+        // real 404 status.
+        .fallback_service(
+            ServeDir::new("static").not_found_service(ServeFile::new("static/404.html")),
+        )
         // Public SVG GET is origin-independent (`ACAO: *`, no credentials).
         // Default CorsLayer Vary includes Origin, which splits the CDN cache
         // key without changing bytes. Empty vary is correct: allowed

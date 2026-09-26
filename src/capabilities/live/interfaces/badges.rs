@@ -23,7 +23,7 @@ pub(crate) struct BadgeExtra {
     pub include_prereleases: Option<String>,
 }
 
-fn respond(
+pub(super) fn respond(
     face: Face,
     policy: CachePolicy,
     st: &AppState,
@@ -37,7 +37,7 @@ fn respond(
     svg_response_cached(&render(&spec), if_none_match(headers), policy)
 }
 
-fn from_lookup<T>(
+pub(super) fn from_lookup<T>(
     lookup: Lookup<T>,
     label: &str,
     what: &str,
@@ -200,16 +200,23 @@ pub(crate) async fn npm_badge(
                     "dt" => ("1000-01-01:3000-01-01", None),
                     _ => ("last-month", Some("month")),
                 };
-                from_lookup(
-                    live.npm_downloads(&name, range).await,
-                    label,
-                    "package",
-                    |n| badges::downloads(n, unit),
-                )
+                match live.npm_downloads(&name, range).await {
+                    // npm's downloads API has no counts for new packages yet.
+                    Lookup::Missing => match live.npm_package(&name, "latest").await {
+                        Lookup::Found(_) => (badges::downloads_pending(), CachePolicy::Fallback),
+                        other => from_lookup(other, label, "package", |_| unreachable_face()),
+                    },
+                    found => from_lookup(found, label, "package", |n| badges::downloads(n, unit)),
+                }
             }
         }
     };
     respond(face, policy, &st, &q, &headers)
+}
+
+/// `from_lookup` over a non-`Found` lookup never calls its mapper.
+fn unreachable_face() -> Face {
+    badges::unavailable("downloads")
 }
 
 #[cfg(test)]
