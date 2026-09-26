@@ -43,6 +43,12 @@ value = "https://mark.sylphx.com"
 [env.DEFAULT_CREDIT]
 value = "0"
 
+# GitHub cards, stars and CI badges: a read-only public-repo token raises the
+# GitHub rate limit from 60 to 5,000 calls an hour. The code falls back to
+# anonymous calls when it is empty. Secret set 2026-09-26 (cloud#8849).
+[env.GITHUB_TOKEN]
+from_secret = "GITHUB_TOKEN"
+
 [env.RUST_LOG]
 value = "mark=info,tower_http=info"
 
