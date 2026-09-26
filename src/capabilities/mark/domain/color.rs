@@ -51,7 +51,9 @@ impl Palette {
         };
         let accents: Vec<String> = if accents.len() == 1 {
             let a = &accents[0];
-            vec![a.clone(), rotate_hue(a, 34.0), rotate_hue(a, -30.0)]
+            let mut kin = analogous(a);
+            kin.insert(0, a.clone());
+            kin
         } else {
             accents
         };
@@ -151,8 +153,48 @@ pub(crate) fn mix(a: &str, b: &str, t: f32) -> String {
     ensure_hash(&mix_hex(a, b, t))
 }
 
+/// Two neighbours of `color` on the colour wheel, for a one-colour palette.
+///
+/// Neighbours in the yellow–olive band (hue 35°–95°) are skipped: low-opacity
+/// light in those hues reads as mud over a dark base, so a lime accent gets
+/// green and teal company instead of olive and ochre.
+fn analogous(color: &str) -> Vec<String> {
+    let base = hue_of(color);
+    let muddy = |h: f32| (35.0..=95.0).contains(&h);
+    let mut out: Vec<String> = [30.0, -30.0, 60.0, -60.0, 90.0, -90.0]
+        .iter()
+        .filter(|d| !muddy((base + *d).rem_euclid(360.0)))
+        .take(2)
+        .map(|d| rotate_hue(color, *d))
+        .collect();
+    while out.len() < 2 {
+        out.push(rotate_hue(color, 120.0 * (out.len() + 1) as f32));
+    }
+    out
+}
+
+/// Hue of a colour in degrees (0 for greys).
+pub(crate) fn hue_of(hex: &str) -> f32 {
+    let h = strip_hash(hex);
+    let c = |i: usize| u8::from_str_radix(h.get(i..i + 2).unwrap_or("00"), 16).unwrap_or(0) as f32;
+    let (r, g, b) = (c(0), c(2), c(4));
+    let (max, min) = (r.max(g).max(b), r.min(g).min(b));
+    let d = max - min;
+    if d < 1e-6 {
+        return 0.0;
+    }
+    let sector = if max == r {
+        ((g - b) / d).rem_euclid(6.0)
+    } else if max == g {
+        (b - r) / d + 2.0
+    } else {
+        (r - g) / d + 4.0
+    };
+    sector * 60.0
+}
+
 /// Rotate a colour's hue by `deg`, keeping lightness and saturation.
-fn rotate_hue(hex: &str, deg: f32) -> String {
+pub(crate) fn rotate_hue(hex: &str, deg: f32) -> String {
     let h = strip_hash(hex);
     let c = |i: usize| u8::from_str_radix(&h[i..i + 2], 16).unwrap_or(0) as f32 / 255.0;
     if h.len() != 6 {
@@ -324,6 +366,17 @@ mod tests {
         let a = resolve_palette(Some("gradient"), None, "seed");
         let b = resolve_palette(Some("gradient"), None, "seed");
         assert_eq!(a.accents, b.accents);
+    }
+
+    #[test]
+    fn one_colour_palettes_avoid_the_olive_band() {
+        let p = resolve_palette(Some("0:0A0D07,100:C3F53C"), None, "x");
+        for a in &p.accents[1..] {
+            let h = hue_of(a);
+            assert!(!(35.0..=95.0).contains(&h), "{a} hue {h}");
+        }
+        let blue = resolve_palette(Some("5B8CFF"), None, "x");
+        assert_eq!(blue.accents.len(), 3);
     }
 
     #[test]

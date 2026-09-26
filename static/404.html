@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Page not found — Mark</title>
+<meta name="description" content="This page does not exist. Mark makes beautiful README images from one URL." />
+<meta name="robots" content="noindex" />
+<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+<style>
+  :root { --bg:#0B0C10; --panel:#111318; --fg:#EDEFF4; --muted:#A1A7B5; --line:rgba(255,255,255,0.12);
+    --font:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Inter,Roboto,Helvetica,Arial,sans-serif; color-scheme:dark; }
+  @media (prefers-color-scheme: light) { :root { --bg:#FAFAFA; --panel:#FFFFFF; --fg:#0B0C10; --muted:#52525B; --line:rgba(10,12,16,0.13); color-scheme:light; } }
+  * { box-sizing:border-box; }
+  body { margin:0; min-height:100vh; display:flex; flex-direction:column; background:var(--bg); color:var(--fg); font:15px/1.5 var(--font); -webkit-font-smoothing:antialiased; }
+  header { max-width:1280px; width:100%; margin:0 auto; padding:0 20px; height:64px; display:flex; align-items:center; }
+  .brand { display:flex; align-items:center; gap:10px; font-weight:650; color:inherit; text-decoration:none; }
+  main { flex:1; display:grid; place-items:center; padding:24px 20px 80px; }
+  .card { max-width:720px; width:100%; display:grid; gap:20px; text-align:center; }
+  .card img { width:100%; height:auto; display:block; }
+  h1 { margin:0; font-size:clamp(1.5rem, 4vw, 2rem); letter-spacing:-0.03em; }
+  p { margin:0; color:var(--muted); }
+  .actions { display:flex; gap:8px; justify-content:center; flex-wrap:wrap; }
+  a.btn { display:inline-flex; align-items:center; height:40px; padding:0 16px; border-radius:10px; font-weight:560; font-size:.875rem; text-decoration:none; border:1px solid var(--line); color:var(--fg); background:var(--panel); }
+  a.btn.primary { background:var(--fg); border-color:var(--fg); color:var(--bg); }
+  a.btn:hover { opacity:.88; }
+  :focus-visible { outline:2px solid #7C83FF; outline-offset:2px; }
+</style>
+</head>
+<body>
+<header>
+  <a class="brand" href="/" aria-label="Mark home">
+    <svg width="26" height="26" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" fill="currentColor"/><path d="M9 22V10.5l7 6.5 7-6.5V22" fill="none" stroke="var(--bg)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    Mark
+  </a>
+</header>
+<main>
+  <div class="card">
+    <img src="/api/v1/mark/hero.svg?type=spotlight&amp;theme=dark&amp;text=404&amp;desc=Nothing%20lives%20at%20this%20URL&amp;height=240" width="880" height="240" alt="404 — nothing lives at this URL" />
+    <h1>This page does not exist.</h1>
+    <p>Images live at URLs like <code>/badge/…</code> and <code>/api/v1/mark/hero?…</code>. The studio builds them for you.</p>
+    <div class="actions">
+      <a class="btn primary" href="/">Open the studio</a>
+      <a class="btn" href="https://github.com/SylphxAI/readme-mark#readme">Read the docs</a>
+    </div>
+  </div>
+</main>
+</body>
+</html>

@@ -14,7 +14,7 @@ use axum::http::Uri;
 use axum::routing::get;
 use axum::Router;
 use tower_http::cors::{Any, CorsLayer};
-use tower_http::services::ServeDir;
+use tower_http::services::{ServeDir, ServeFile};
 use tower_http::trace::{DefaultMakeSpan, DefaultOnResponse, TraceLayer};
 
 use crate::bootstrap::AppState;
@@ -119,7 +119,11 @@ fn routes(state: AppState) -> Router {
         // `/` is the studio, readme-typing-svg's image path (`?lines=`), and
         // github-readme-streak-stats' (`?user=`).
         .route("/", get(dispatch::root))
-        .fallback_service(ServeDir::new("static"))
+        // Anything else is a static file, or the Mark-styled 404 page with a
+        // real 404 status.
+        .fallback_service(
+            ServeDir::new("static").not_found_service(ServeFile::new("static/404.html")),
+        )
         // Public SVG GET is origin-independent (`ACAO: *`, no credentials).
         // Default CorsLayer Vary includes Origin, which splits the CDN cache
         // key without changing bytes. Empty vary is correct: allowed

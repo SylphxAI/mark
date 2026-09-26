@@ -636,3 +636,11 @@ async fn studio_boots_from_wrapped_score_url() {
     assert_eq!(boot["form"], "score");
     assert_eq!(boot["score"]["value"], "92");
 }
+
+#[tokio::test]
+async fn unknown_pages_answer_a_real_404_page() {
+    let (status, ctype, body) = get("/no-such-page").await;
+    assert_eq!(status, StatusCode::NOT_FOUND);
+    assert!(ctype.starts_with("text/html"), "ctype={ctype}");
+    assert!(body.contains("This page does not exist."));
+}

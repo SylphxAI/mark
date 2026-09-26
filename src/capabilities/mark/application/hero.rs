@@ -21,10 +21,9 @@ use crate::capabilities::mark::domain::{
 /// fitted with headroom instead of edge to edge.
 const FIT_MARGIN: f32 = 0.94;
 
-/// Adaptive ink for the transparent art: GitHub's own text colours, switched
-/// by the viewer's colour scheme.
-const ADAPTIVE_INK: &str =
-    "<style>.mi{fill:#1F2328}@media (prefers-color-scheme:dark){.mi{fill:#E6EDF3}}</style>";
+/// Subtitle ink for the transparent art: a neutral grey with the same
+/// contrast (~4.2:1) on GitHub's light and dark README backgrounds.
+const TRANSPARENT_DESC: &str = "#6E7781";
 
 /// Largest size ≤ `size` (down to `min_ratio` of it, never under 16px unless
 /// `size` already is) at which every line fits `budget`; lines that still
@@ -41,10 +40,13 @@ fn shrink_to_fit(lines: &[&str], budget: f32, size: f32, min_ratio: f32, metric:
     (size * budget / widest).floor().max(floor)
 }
 
-/// How one text role is painted.
+/// How the text is painted.
 struct Ink {
-    /// `fill="…"` or `class="mi"` attribute text.
+    /// Title `fill`.
     paint: String,
+    /// Subtitle `fill` and its opacity.
+    desc_paint: String,
+    desc_opacity: f32,
     family: &'static str,
     anchor: &'static str,
     x: f32,
@@ -69,16 +71,25 @@ pub fn render(spec: &MarkSpec) -> String {
     } else {
         content_family(spec.font.as_deref())
     };
-    let paint = match (&st.ink, art) {
-        (Some(ink), _) => format!("fill=\"{ink}\""),
-        // Transparent: a named theme or colour is honoured; otherwise the ink
-        // follows the viewer's light/dark scheme.
-        (None, _) if spec.theme.is_some() => format!("fill=\"{}\"", palette.ink),
-        (None, _) if spec.color.is_some() => format!("fill=\"{}\"", palette.accents[0]),
-        (None, _) => "class=\"mi\"".into(),
+    // Transparent text sits on whatever the README is, light or dark (and a
+    // viewer's OS scheme need not match GitHub's), so it is painted in tones
+    // balanced to read on both.
+    let (paint, desc_paint, desc_opacity) = match &st.ink {
+        Some(ink) => (
+            ink.clone(),
+            ink.clone(),
+            if palette.light { 0.7 } else { 0.72 },
+        ),
+        None => (
+            balanced(&palette.accents[0]),
+            TRANSPARENT_DESC.to_string(),
+            1.0,
+        ),
     };
     let ink = Ink {
-        paint,
+        paint: format!("fill=\"{paint}\""),
+        desc_paint: format!("fill=\"{desc_paint}\""),
+        desc_opacity,
         family,
         anchor: if left { "start" } else { "middle" },
         x: if left { st.x0 } else { (st.x0 + st.x1) / 2.0 },
@@ -155,10 +166,20 @@ pub fn render(spec: &MarkSpec) -> String {
         } else {
             String::new()
         };
+        let cursor = if st.terminal && i + 1 == lines.len() {
+            terminal_cursor(
+                &palette.accents[0],
+                title_size,
+                typing,
+                background_moves(anim),
+            )
+        } else {
+            String::new()
+        };
         title_nodes.push_str(&format!(
             "<text x=\"{x:.1}\" y=\"{y:.1}\" text-anchor=\"{anchor}\" dominant-baseline=\"central\" \
              font-family=\"{family}\" font-size=\"{title_size}\" font-weight=\"{weight}\" \
-             letter-spacing=\"{tracking}\" {paint}{open}>{prompt_span}{content}{children}</text>",
+             letter-spacing=\"{tracking}\" {paint}{open}>{prompt_span}{content}{cursor}{children}</text>",
             x = ink.x,
             anchor = ink.anchor,
             family = ink.family,
@@ -182,32 +203,10 @@ pub fn render(spec: &MarkSpec) -> String {
         None
     };
     let reveal_end = reveal.as_ref().map_or(0.0, |r| r.1);
+    title_nodes = title_nodes.replace(CURSOR_BEGIN, &format!("{reveal_end:.2}s"));
     if let Some((defs, _)) = &reveal {
         title_nodes = format!("{defs}<g mask=\"url(#mt)\">{title_nodes}</g>");
     }
-
-    let cursor = if st.terminal && lines.len() == 1 {
-        let cx = st.x0 + (lines[0].chars().count() + 2) as f32 * title_size * 0.6 + 2.0;
-        let blink = if background_moves(anim) {
-            format!(
-                "<animate attributeName=\"opacity\" values=\"1;0\" dur=\"1.1s\" begin=\"{reveal_end:.2}s\" \
-                 repeatCount=\"indefinite\" calcMode=\"discrete\"/>"
-            )
-        } else {
-            String::new()
-        };
-        format!(
-            "<rect x=\"{cx:.1}\" y=\"{y:.1}\" width=\"{cw:.1}\" height=\"{ch:.1}\" rx=\"1\" fill=\"{a}\" \
-             fill-opacity=\"0.85\"{hidden}>{blink}</rect>",
-            hidden = if typing { " opacity=\"0\"" } else { "" },
-            y = first_y - title_size * 0.42,
-            cw = (title_size * 0.5).round(),
-            ch = (title_size * 0.84).round(),
-            a = palette.accents[0],
-        )
-    } else {
-        String::new()
-    };
 
     let desc_node = if has_desc {
         let y = first_y + span + to_desc;
@@ -225,29 +224,70 @@ pub fn render(spec: &MarkSpec) -> String {
                 text_children(anim, lines.len(), width, height),
             )
         };
-        let muted = if palette.light { 0.7 } else { 0.72 };
         format!(
             "<text x=\"{x:.1}\" y=\"{y:.1}\" text-anchor=\"{anchor}\" dominant-baseline=\"central\" \
              font-family=\"{family}\" font-size=\"{desc_size}\" font-weight=\"400\" {paint} \
              fill-opacity=\"{muted}\"{open}>{content}{children}</text>",
+            muted = ink.desc_opacity,
             x = ink.x,
             anchor = ink.anchor,
             family = ink.family,
-            paint = ink.paint,
+            paint = ink.desc_paint,
             content = esc(&desc_line),
         )
     } else {
         String::new()
     };
 
-    let style = if st.ink.is_none() { ADAPTIVE_INK } else { "" };
     let body = format!(
-        "{style}<defs>{defs}</defs>{back}{title_nodes}{cursor}{desc_node}{credit}",
+        "<defs>{defs}</defs>{back}{title_nodes}{desc_node}{credit}",
         defs = st.defs,
         back = st.back,
         credit = credit_mark(width, height, spec.credit),
     );
     svg_doc(width, height, &body)
+}
+
+/// Placeholder for the cursor's blink start, filled once the reveal is timed.
+const CURSOR_BEGIN: &str = "{cursor-begin}";
+
+/// The terminal's block cursor: a glyph in the title's own text run, so it
+/// always sits one small gap after the last character whatever the viewer's
+/// monospace face measures. It blinks once the title is fully shown.
+fn terminal_cursor(accent: &str, size: f32, typing: bool, moves: bool) -> String {
+    let base = if typing { "0" } else { "0.85" };
+    let blink = if moves {
+        format!(
+            "<animate attributeName=\"fill-opacity\" values=\"0.85;0\" dur=\"1.1s\" \
+             begin=\"{CURSOR_BEGIN}\" repeatCount=\"indefinite\" calcMode=\"discrete\"/>"
+        )
+    } else if typing {
+        format!("<set attributeName=\"fill-opacity\" to=\"0.85\" begin=\"{CURSOR_BEGIN}\"/>")
+    } else {
+        String::new()
+    };
+    format!(
+        "<tspan dx=\"{gap:.1}\" font-weight=\"400\" fill=\"{accent}\" fill-opacity=\"{base}\">█{blink}</tspan>",
+        gap = (size * 0.18).max(3.0),
+    )
+}
+
+/// `color` moved in lightness until its luminance sits where contrast with
+/// white and with GitHub's dark background is equal (~4.3:1 each).
+fn balanced(color: &str) -> String {
+    use crate::capabilities::mark::domain::color::{mix, relative_luminance};
+    let target = 0.19;
+    let lum = relative_luminance(color);
+    let toward = if lum < target { "#FFFFFF" } else { "#000000" };
+    let mut out = color.to_string();
+    for step in 1..=50 {
+        let next = mix(color, toward, step as f32 * 0.02);
+        if (relative_luminance(&next) - target).abs() > (relative_luminance(&out) - target).abs() {
+            break;
+        }
+        out = next;
+    }
+    out
 }
 
 fn measured_width(lines: &[String], prompt: &str, size: f32, metric: Metric) -> f32 {
@@ -319,11 +359,18 @@ mod tests {
     }
 
     #[test]
-    fn transparent_ink_follows_the_viewer_scheme() {
-        let svg = hero(&[("type", "transparent")]);
-        assert!(svg.contains("prefers-color-scheme:dark"));
-        assert!(svg.contains("class=\"mi\""));
-        assert!(!hero(&[("type", "transparent"), ("theme", "light")]).contains("class=\"mi\""));
+    fn transparent_ink_reads_on_light_and_dark_readmes() {
+        use crate::capabilities::mark::domain::color::contrast_ratio;
+        for theme in ["dark", "light", "sunset", "mono", "paper"] {
+            let ink = balanced(&resolve_palette(None, Some(theme), "x").accents[0]);
+            for readme in ["#FFFFFF", "#0D1117"] {
+                let r = contrast_ratio(&ink, readme);
+                assert!(r >= 3.6, "{theme} title {ink} on {readme}: {r:.2}");
+            }
+        }
+        for readme in ["#FFFFFF", "#0D1117"] {
+            assert!(contrast_ratio(TRANSPARENT_DESC, readme) >= 4.0);
+        }
     }
 
     #[test]

@@ -6,7 +6,7 @@
 //! at any size. Motion is SMIL and only ever a slow drift of the light.
 
 use crate::capabilities::mark::domain::art::Art;
-use crate::capabilities::mark::domain::color::{ink_over, mix, Palette};
+use crate::capabilities::mark::domain::color::{hue_of, ink_over, mix, rotate_hue, Palette};
 use crate::capabilities::mark::domain::motion::drift;
 
 pub(crate) mod capsule;
@@ -43,6 +43,8 @@ struct Ctx<'a> {
 impl Ctx<'_> {
     /// A soft pool of light: an ellipse filled with a radial falloff.
     fn glow(&self, id: &str, color: &str, opacity: f32, c: (f32, f32), r: (f32, f32)) -> Glow {
+        let lifted = self.thin(color);
+        let color = lifted.as_str();
         Glow {
             def: format!(
                 "<radialGradient id=\"{id}\"><stop offset=\"0\" stop-color=\"{color}\" stop-opacity=\"{o0:.2}\"/>\
@@ -60,6 +62,18 @@ impl Ctx<'_> {
                 c.0, c.1, r.0, r.1
             ),
         }
+    }
+
+    /// A colour to paint at low opacity. Yellow-to-lime light thinned over a
+    /// dark base reads as olive or ochre mud, so on dark bases it leans out
+    /// of that band: amber toward orange, lime toward green.
+    fn thin(&self, color: &str) -> String {
+        let hue = hue_of(color);
+        if self.p.light || !(35.0..=95.0).contains(&hue) {
+            return color.to_string();
+        }
+        let target = if hue < 65.0 { 30.0 } else { 115.0 };
+        rotate_hue(color, target - hue)
     }
 
     /// Wrap a layer in a slow drift when the background moves.
@@ -169,10 +183,14 @@ fn waving(c: &Ctx) -> (String, String) {
         (c.w * 0.55, c.h * 0.9),
     );
     let mut defs = top.def;
+    let (t1, t2, t3) = (c.thin(a1), c.thin(a2), c.thin(a3));
     defs.push_str(&format!(
         "<linearGradient id=\"mw\" x1=\"0\" y1=\"0\" x2=\"1\" y2=\"0\">\
          <stop offset=\"0\" stop-color=\"{a1}\"/><stop offset=\"0.5\" stop-color=\"{a2}\"/>\
-         <stop offset=\"1\" stop-color=\"{a3}\"/></linearGradient>"
+         <stop offset=\"1\" stop-color=\"{a3}\"/></linearGradient>\
+         <linearGradient id=\"mwb\" x1=\"0\" y1=\"0\" x2=\"1\" y2=\"0\">\
+         <stop offset=\"0\" stop-color=\"{t1}\"/><stop offset=\"0.5\" stop-color=\"{t2}\"/>\
+         <stop offset=\"1\" stop-color=\"{t3}\"/></linearGradient>"
     ));
     let mut back = c.base(&c.p.bg);
     back.push_str(&top.shape);
@@ -182,7 +200,8 @@ fn waving(c: &Ctx) -> (String, String) {
         (0.77, 0.06, 2.0, 0.42, 20.0, -1.0),
         (0.85, 0.05, 1.0, c.strength(0.95).max(0.8), 16.0, 1.0),
     ];
-    for (base, amp, periods, opacity, dur, dir) in layers {
+    for (i, (base, amp, periods, opacity, dur, dir)) in layers.into_iter().enumerate() {
+        let fill = if i + 1 == layers.len() { "mw" } else { "mwb" };
         let period = c.w / periods;
         let path = wave_path(c.w + period, c.h, c.h * base, c.h * amp, period);
         let (from, to) = if dir > 0.0 {
@@ -199,7 +218,7 @@ fn waving(c: &Ctx) -> (String, String) {
             String::new()
         };
         back.push_str(&format!(
-            "<path d=\"{path}\" fill=\"url(#mw)\" fill-opacity=\"{opacity:.2}\" \
+            "<path d=\"{path}\" fill=\"url(#{fill})\" fill-opacity=\"{opacity:.2}\" \
              transform=\"translate({from:.0} 0)\">{motion}</path>"
         ));
     }
@@ -431,19 +450,23 @@ fn grid(c: &Ctx) -> (String, String) {
     (defs, back)
 }
 
-/// A flat card with one accent hairline along the top.
+/// A flat card with one accent hairline along the top, fading at both ends
+/// so it never meets the rounded corners.
 fn minimal(c: &Ctx) -> (String, String) {
     let [a1, a2, a3] = &c.p.accents;
     let defs = format!(
         "<linearGradient id=\"ml\" x1=\"0\" y1=\"0\" x2=\"1\" y2=\"0\">\
-         <stop offset=\"0\" stop-color=\"{a1}\"/><stop offset=\"0.5\" stop-color=\"{a2}\"/>\
-         <stop offset=\"1\" stop-color=\"{a3}\"/></linearGradient>"
+         <stop offset=\"0\" stop-color=\"{a1}\" stop-opacity=\"0\"/>\
+         <stop offset=\"0.2\" stop-color=\"{a1}\"/><stop offset=\"0.5\" stop-color=\"{a2}\"/>\
+         <stop offset=\"0.8\" stop-color=\"{a3}\"/>\
+         <stop offset=\"1\" stop-color=\"{a3}\" stop-opacity=\"0\"/></linearGradient>"
     );
-    let bar = (c.h * 0.014).clamp(2.0, 4.0);
+    let bar = (c.h * 0.012).clamp(2.0, 3.0);
+    let inset = card_radius(c.h) + 8.0;
     let back = format!(
-        "{}<rect width=\"{:.0}\" height=\"{bar:.1}\" fill=\"url(#ml)\"/>",
+        "{}<rect x=\"{inset}\" width=\"{:.0}\" height=\"{bar:.1}\" fill=\"url(#ml)\"/>",
         c.base(&c.p.bg),
-        c.w
+        c.w - 2.0 * inset,
     );
     (defs, back)
 }
