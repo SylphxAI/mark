@@ -1,219 +1,72 @@
 //! The published art vocabulary.
 //!
+//! A small curated set: each art type is a distinct, designed composition.
 //! One enum owns the ids, the catalogue order, and the parse rule, so the
-//! renderer's dispatch can be exhaustive instead of stringly typed.
+//! renderer's dispatch is exhaustive instead of stringly typed.
 
 use std::fmt;
 
 /// A background art type (`type=` in a mark URL).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Art {
-    Transparent,
-    Plasma,
-    Holo,
-    Neon,
-    Meteor,
-    Liquid,
-    Prism,
-    Void,
-    Firefly,
-    Silk,
-    Iridescent,
-    Rect,
-    Soft,
-    Rounded,
-    Aurora,
-    Mesh,
-    Glass,
-    Horizon,
-    Dusk,
-    Wave,
+    /// Layered waves drifting along the bottom edge.
     Waving,
-    Orbit,
-    Ring,
-    Beam,
-    Terminal,
-    Constellation,
-    Blur,
+    /// Soft coloured light pooling over a dark (or pale) base.
+    Aurora,
+    /// A full-bleed mesh gradient.
+    Mesh,
+    /// One beam of light from above.
+    Spotlight,
+    /// A fine grid fading out from a soft centre glow.
     Grid,
-    Circuit,
-    Hud,
-    Pulse,
-    Noise,
-    Cylinder,
-    Slice,
-    Egg,
-    Shark,
-    Venom,
-    Speech,
-    Checkered,
-    Product,
-    Oss,
-    Org,
+    /// A flat card with one accent hairline.
+    Minimal,
+    /// A terminal window.
+    Terminal,
+    /// Text only.
+    Transparent,
 }
 
 impl Art {
-    /// Catalogue order (published as `art_types`); this order is a
-    /// product contract, asserted by `catalogue_order_never_drifts`.
-    pub const ALL: [Art; 42] = [
-        Art::Plasma,
-        Art::Holo,
-        Art::Neon,
-        Art::Meteor,
-        Art::Liquid,
-        Art::Prism,
-        Art::Void,
-        Art::Firefly,
-        Art::Silk,
-        Art::Iridescent,
+    /// Catalogue order (published as `art_types`; the studio shows it too).
+    pub const ALL: [Art; 8] = [
+        Art::Waving,
         Art::Aurora,
         Art::Mesh,
-        Art::Glass,
-        Art::Soft,
-        Art::Horizon,
-        Art::Dusk,
-        Art::Orbit,
-        Art::Beam,
-        Art::Wave,
-        Art::Waving,
-        Art::Terminal,
-        Art::Constellation,
+        Art::Spotlight,
         Art::Grid,
-        Art::Blur,
-        Art::Ring,
-        Art::Circuit,
-        Art::Hud,
-        Art::Pulse,
-        Art::Noise,
-        Art::Rounded,
-        Art::Rect,
-        Art::Slice,
-        Art::Cylinder,
-        Art::Checkered,
-        Art::Egg,
-        Art::Shark,
-        Art::Venom,
-        Art::Speech,
-        Art::Product,
-        Art::Oss,
-        Art::Org,
-        Art::Transparent,
-    ];
-
-    /// Studio showcase order (published as `featured_art_types`).
-    pub const FEATURED: [Art; 18] = [
-        Art::Wave,
-        Art::Waving,
-        Art::Soft,
-        Art::Rounded,
-        Art::Rect,
-        Art::Slice,
-        Art::Glass,
-        Art::Product,
+        Art::Minimal,
         Art::Terminal,
-        Art::Aurora,
-        Art::Mesh,
-        Art::Plasma,
-        Art::Holo,
-        Art::Neon,
-        Art::Liquid,
-        Art::Silk,
-        Art::Orbit,
-        Art::Constellation,
+        Art::Transparent,
     ];
 
     pub const fn id(self) -> &'static str {
         match self {
-            Art::Transparent => "transparent",
-            Art::Plasma => "plasma",
-            Art::Holo => "holo",
-            Art::Neon => "neon",
-            Art::Meteor => "meteor",
-            Art::Liquid => "liquid",
-            Art::Prism => "prism",
-            Art::Void => "void",
-            Art::Firefly => "firefly",
-            Art::Silk => "silk",
-            Art::Iridescent => "iridescent",
-            Art::Rect => "rect",
-            Art::Soft => "soft",
-            Art::Rounded => "rounded",
+            Art::Waving => "waving",
             Art::Aurora => "aurora",
             Art::Mesh => "mesh",
-            Art::Glass => "glass",
-            Art::Horizon => "horizon",
-            Art::Dusk => "dusk",
-            Art::Wave => "wave",
-            Art::Waving => "waving",
-            Art::Orbit => "orbit",
-            Art::Ring => "ring",
-            Art::Beam => "beam",
-            Art::Terminal => "terminal",
-            Art::Constellation => "constellation",
-            Art::Blur => "blur",
+            Art::Spotlight => "spotlight",
             Art::Grid => "grid",
-            Art::Circuit => "circuit",
-            Art::Hud => "hud",
-            Art::Pulse => "pulse",
-            Art::Noise => "noise",
-            Art::Cylinder => "cylinder",
-            Art::Slice => "slice",
-            Art::Egg => "egg",
-            Art::Shark => "shark",
-            Art::Venom => "venom",
-            Art::Speech => "speech",
-            Art::Checkered => "checkered",
-            Art::Product => "product",
-            Art::Oss => "oss",
-            Art::Org => "org",
+            Art::Minimal => "minimal",
+            Art::Terminal => "terminal",
+            Art::Transparent => "transparent",
         }
     }
 
-    /// Parse `type=`; an unknown name is the restrained default (`waving`).
+    /// Parse `type=`. Ids published before the curated set map to the
+    /// closest survivor, so every banner ever embedded keeps a designed look;
+    /// an unknown name is the default (`waving`).
     pub fn parse(raw: &str) -> Art {
         match raw.trim().to_ascii_lowercase().as_str() {
-            "transparent" => Art::Transparent,
-            "plasma" => Art::Plasma,
-            "holo" => Art::Holo,
-            "neon" => Art::Neon,
-            "meteor" => Art::Meteor,
-            "liquid" => Art::Liquid,
-            "prism" => Art::Prism,
-            "void" => Art::Void,
-            "firefly" => Art::Firefly,
-            "silk" => Art::Silk,
-            "iridescent" => Art::Iridescent,
-            "rect" => Art::Rect,
-            "soft" => Art::Soft,
-            "rounded" => Art::Rounded,
-            "aurora" => Art::Aurora,
-            "mesh" => Art::Mesh,
-            "glass" => Art::Glass,
-            "horizon" => Art::Horizon,
-            "dusk" => Art::Dusk,
-            "wave" => Art::Wave,
-            "waving" => Art::Waving,
-            "orbit" => Art::Orbit,
-            "ring" => Art::Ring,
-            "beam" => Art::Beam,
+            "aurora" | "void" | "firefly" | "meteor" | "constellation" | "orbit" | "ring"
+            | "pulse" | "neon" => Art::Aurora,
+            "mesh" | "plasma" | "holo" | "liquid" | "iridescent" | "silk" | "prism" | "noise"
+            | "blur" => Art::Mesh,
+            "spotlight" | "glass" | "beam" | "horizon" | "dusk" => Art::Spotlight,
+            "grid" | "circuit" | "hud" | "checkered" => Art::Grid,
+            "minimal" | "rect" | "soft" | "rounded" | "product" | "oss" | "org" => Art::Minimal,
             "terminal" => Art::Terminal,
-            "constellation" => Art::Constellation,
-            "blur" => Art::Blur,
-            "grid" => Art::Grid,
-            "circuit" => Art::Circuit,
-            "hud" => Art::Hud,
-            "pulse" => Art::Pulse,
-            "noise" => Art::Noise,
-            "cylinder" => Art::Cylinder,
-            "slice" => Art::Slice,
-            "egg" => Art::Egg,
-            "shark" => Art::Shark,
-            "venom" => Art::Venom,
-            "speech" => Art::Speech,
-            "checkered" => Art::Checkered,
-            "product" => Art::Product,
-            "oss" => Art::Oss,
-            "org" => Art::Org,
+            "transparent" => Art::Transparent,
             _ => Art::Waving,
         }
     }
@@ -230,11 +83,6 @@ pub(crate) fn art_ids() -> Vec<&'static str> {
     Art::ALL.iter().map(|a| a.id()).collect()
 }
 
-/// Studio showcase ids in published order.
-pub(crate) fn featured_art_ids() -> Vec<&'static str> {
-    Art::FEATURED.iter().map(|a| a.id()).collect()
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -246,80 +94,28 @@ mod tests {
             assert!(seen.insert(art.id()), "duplicate id {}", art.id());
             assert_eq!(Art::parse(art.id()), art, "round trip for {}", art.id());
         }
-        assert_eq!(seen.len(), 42);
+    }
+
+    #[test]
+    fn retired_ids_map_to_the_closest_curated_art() {
+        for (old, new) in [
+            ("plasma", Art::Mesh),
+            ("constellation", Art::Aurora),
+            ("glass", Art::Spotlight),
+            ("circuit", Art::Grid),
+            ("wave", Art::Waving),
+            ("shark", Art::Waving),
+            ("soft", Art::Minimal),
+            ("product", Art::Minimal),
+        ] {
+            assert_eq!(Art::parse(old), new, "{old}");
+        }
     }
 
     #[test]
     fn unknown_and_case_variants_normalize() {
         assert_eq!(Art::parse("not-a-type"), Art::Waving);
-        assert_eq!(Art::parse("PLASMA"), Art::Plasma);
-        assert_eq!(Art::parse("  neon "), Art::Neon);
-    }
-
-    #[test]
-    fn catalogue_order_never_drifts() {
-        // The published `art_types` order is product surface: adding or moving an
-        // art type must be a deliberate change to this frozen expectation.
-        let expected = [
-            "plasma",
-            "holo",
-            "neon",
-            "meteor",
-            "liquid",
-            "prism",
-            "void",
-            "firefly",
-            "silk",
-            "iridescent",
-            "aurora",
-            "mesh",
-            "glass",
-            "soft",
-            "horizon",
-            "dusk",
-            "orbit",
-            "beam",
-            "wave",
-            "waving",
-            "terminal",
-            "constellation",
-            "grid",
-            "blur",
-            "ring",
-            "circuit",
-            "hud",
-            "pulse",
-            "noise",
-            "rounded",
-            "rect",
-            "slice",
-            "cylinder",
-            "checkered",
-            "egg",
-            "shark",
-            "venom",
-            "speech",
-            "product",
-            "oss",
-            "org",
-            "transparent",
-        ];
-        assert_eq!(
-            Art::ALL.iter().map(|a| a.id()).collect::<Vec<_>>(),
-            expected.to_vec(),
-            "Art::ALL order is the published art_types order"
-        );
-        assert_eq!(super::art_ids(), expected.to_vec());
-    }
-
-    #[test]
-    fn featured_is_a_subset_of_all() {
-        for art in Art::FEATURED {
-            assert!(
-                Art::ALL.contains(&art),
-                "featured {} not in catalogue",
-                art.id()
-            );
-        }
+        assert_eq!(Art::parse("MESH"), Art::Mesh);
+        assert_eq!(Art::parse("  aurora "), Art::Aurora);
     }
 }

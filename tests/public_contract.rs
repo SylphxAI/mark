@@ -59,7 +59,7 @@ async fn catalog_publishes_the_one_vocabulary() {
     for key in [
         "forms",
         "art_types",
-        "featured_art_types",
+        "theme_palettes",
         "layouts",
         "themes",
         "icons",

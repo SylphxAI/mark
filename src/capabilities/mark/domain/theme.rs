@@ -1,178 +1,217 @@
-//! Theme packs — neutral design themes.
+//! Theme packs — a small set of designed, neutral palettes.
+//!
+//! Every theme is one base colour, one ink, and three accents that sit
+//! together (the art paints glows, meshes, and waves from the accents). Each
+//! was checked against GitHub's light (`#FFFFFF`) and dark (`#0D1117`) README
+//! backgrounds: a banner is an opaque card, so what matters is that the card
+//! reads as a deliberate object on both and that its ink clears WCAG AA on its
+//! own base.
 
 #[derive(Clone, Debug)]
 pub(crate) struct Theme {
+    /// Base canvas.
     pub bg: &'static str,
+    /// Raised surface / hairline tone (cards, borders, window chrome).
     pub bg2: &'static str,
+    /// Text ink.
     pub fg: &'static str,
+    /// Primary accent.
     pub accent: &'static str,
+    /// Secondary accent.
+    pub accent2: &'static str,
+    /// Tertiary accent.
+    pub accent3: &'static str,
 }
 
+impl Theme {
+    /// A light theme paints dark ink on a light base.
+    pub(crate) fn is_light(&self) -> bool {
+        super::color::relative_luminance(self.bg) > 0.4
+    }
+}
+
+/// Resolve a theme id, including retired ids (mapped to the closest pack).
 pub(crate) fn get(name: &str) -> Option<&'static Theme> {
-    THEMES
+    let name = name.trim().to_ascii_lowercase();
+    let id = RETIRED
         .iter()
-        .find(|t| t.0.eq_ignore_ascii_case(name))
-        .map(|t| &t.1)
+        .find(|r| r.0 == name)
+        .map_or(name.as_str(), |r| r.1);
+    THEMES.iter().find(|t| t.0 == id).map(|t| &t.1)
 }
 
+/// Published ids, in studio order.
 pub(crate) fn list_names() -> Vec<&'static str> {
     THEMES.iter().map(|t| t.0).collect()
 }
 
-use crate::capabilities::mark::domain::hash;
+/// Each published theme's colours (`#hex`), for pickers that draw swatches.
+pub(crate) fn palettes() -> serde_json::Value {
+    let hex = |h: &str| format!("#{h}");
+    THEMES
+        .iter()
+        .map(|(id, t)| {
+            (
+                id.to_string(),
+                serde_json::json!({
+                    "bg": hex(t.bg),
+                    "fg": hex(t.fg),
+                    "accents": [hex(t.accent), hex(t.accent2), hex(t.accent3)],
+                }),
+            )
+        })
+        .collect::<serde_json::Map<_, _>>()
+        .into()
+}
+
+/// Theme ids published before the curated set, mapped to their closest pack
+/// so a README that names one keeps a designed look.
+const RETIRED: &[(&str, &str)] = &[
+    ("github", "dark"),
+    ("tokyonight", "dark"),
+    ("radical", "sunset"),
+    ("gruvbox", "sunset"),
+    ("dracula", "grape"),
+    ("neon", "grape"),
+    ("nord", "ocean"),
+    ("monokai", "forest"),
+];
 
 static THEMES: &[(&str, Theme)] = &[
     (
         "dark",
         Theme {
-            bg: "0D1117",
-            bg2: "161B22",
-            fg: "E6EDF3",
-            accent: "58A6FF",
+            bg: "0A0C12",
+            bg2: "161A24",
+            fg: "F4F6FB",
+            accent: "5B6CFF",
+            accent2: "A35BFF",
+            accent3: "22C4EE",
         },
     ),
     (
         "light",
         Theme {
-            bg: "FFFFFF",
-            bg2: "F6F8FA",
-            fg: "1F2328",
-            accent: "0969DA",
-        },
-    ),
-    (
-        "radical",
-        Theme {
-            bg: "141321",
-            bg2: "FE428E",
-            fg: "A9FEF7",
-            accent: "FE428E",
-        },
-    ),
-    (
-        "gruvbox",
-        Theme {
-            bg: "282828",
-            bg2: "FABD2F",
-            fg: "EBDBB2",
-            accent: "FE8019",
-        },
-    ),
-    (
-        "tokyonight",
-        Theme {
-            bg: "1A1B27",
-            bg2: "7AA2F7",
-            fg: "A9B1D6",
-            accent: "BB9AF7",
-        },
-    ),
-    (
-        "dracula",
-        Theme {
-            bg: "282A36",
-            bg2: "BD93F9",
-            fg: "F8F8F2",
-            accent: "FF79C6",
-        },
-    ),
-    (
-        "nord",
-        Theme {
-            bg: "2E3440",
-            bg2: "88C0D0",
-            fg: "ECEFF4",
-            accent: "81A1C1",
-        },
-    ),
-    (
-        "monokai",
-        Theme {
-            bg: "272822",
-            bg2: "F92672",
-            fg: "F8F8F2",
-            accent: "A6E22E",
+            bg: "FAFAFC",
+            bg2: "E7E9F0",
+            fg: "0B0D14",
+            accent: "5B6CFF",
+            accent2: "C27BFF",
+            accent3: "38BDF8",
         },
     ),
     (
         "ocean",
         Theme {
-            bg: "0B1D36",
-            bg2: "00B4D8",
-            fg: "CAF0F8",
-            accent: "0077B6",
+            bg: "04111E",
+            bg2: "0D2236",
+            fg: "EAF6FF",
+            accent: "0EA5E9",
+            accent2: "2DD4BF",
+            accent3: "6366F1",
         },
     ),
     (
         "sunset",
         Theme {
-            bg: "2B0A0A",
-            bg2: "FF6B35",
-            fg: "FFF3E0",
-            accent: "FF9F1C",
+            bg: "150A0F",
+            bg2: "2A151D",
+            fg: "FFF5EF",
+            accent: "FF6A45",
+            accent2: "F43F8E",
+            accent3: "FBBF24",
         },
     ),
     (
         "forest",
         Theme {
-            bg: "0B1F14",
-            bg2: "2D6A4F",
-            fg: "D8F3DC",
-            accent: "52B788",
+            bg: "06120D",
+            bg2: "11241B",
+            fg: "ECFDF3",
+            accent: "10B981",
+            accent2: "A3E635",
+            accent3: "06B6D4",
         },
     ),
     (
-        "neon",
+        "grape",
         Theme {
-            bg: "0A0A12",
-            bg2: "00F5D4",
-            fg: "F0F0FF",
-            accent: "F15BB5",
+            bg: "0F0A1C",
+            bg2: "1F1733",
+            fg: "F6F1FF",
+            accent: "8B5CF6",
+            accent2: "EC4899",
+            accent3: "6366F1",
         },
     ),
     (
-        "github",
+        "mono",
         Theme {
-            bg: "0D1117",
-            bg2: "238636",
-            fg: "C9D1D9",
-            accent: "1F6FEB",
+            bg: "09090B",
+            bg2: "1C1C21",
+            fg: "FAFAFA",
+            accent: "A1A1AA",
+            accent2: "E4E4E7",
+            accent3: "52525B",
+        },
+    ),
+    (
+        "paper",
+        Theme {
+            bg: "F7F3EC",
+            bg2: "E6DFD3",
+            fg: "1C1917",
+            accent: "EA580C",
+            accent2: "E11D48",
+            accent3: "D97706",
         },
     ),
 ];
 
-pub(crate) const PALETTE: &[&str] = &[
-    "667EEA", "764BA2", "F093FB", "F5576C", "4FACFE", "00F2FE", "43E97B", "38F9D7", "FA709A",
-    "FEE140", "A18CD1", "FBC2EB", "D87000", "4A90E2", "E03840", "7C3AED", "C9A227", "00F5D4",
-    "FF6B35", "2D6A4F",
-];
-
-pub(crate) const GRADIENTS: &[(&str, &str)] = &[
-    // High-chroma signature pairs (capsule-class liquid fields)
-    ("667EEA", "F093FB"),
-    ("F093FB", "F5576C"),
-    ("4FACFE", "00F2FE"),
-    ("43E97B", "38F9D7"),
-    ("FA709A", "FEE140"),
-    ("FF6B35", "F15BB5"),
-    ("7C3AED", "00F5D4"),
-    ("E03840", "FF6B35"),
-    ("00F5D4", "F15BB5"),
-    ("FF6B35", "FEE140"),
-    ("4338CA", "F093FB"),
-    ("0EA5E9", "A78BFA"),
-    ("F43F5E", "FB923C"),
-    ("14B8A6", "6366F1"),
-    ("D87000", "4A90E2"),
-    ("1A1B27", "7AA2F7"),
-    ("282A36", "FF79C6"),
-    ("2D6A4F", "95D5B2"),
-];
-
-pub(crate) fn pick_auto(seed: &str) -> &'static str {
-    PALETTE[(hash::fnv1a_32(seed.as_bytes()) as usize) % PALETTE.len()]
+/// Accent triads for `color=gradient|random|auto`: one per dark pack, picked
+/// by a stable hash of the content so the same URL keeps its colours.
+pub(crate) fn pick_seeded(seed: &str) -> &'static Theme {
+    const DARK: [&str; 5] = ["dark", "ocean", "sunset", "forest", "grape"];
+    let i = super::hash::fnv1a_32(seed.as_bytes()) as usize % DARK.len();
+    get(DARK[i]).unwrap_or(&THEMES[0].1)
 }
 
-pub(crate) fn pick_gradient(seed: &str) -> (&'static str, &'static str) {
-    GRADIENTS[(hash::fnv1a_32(seed.as_bytes()) as usize) % GRADIENTS.len()]
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::capabilities::mark::domain::color::contrast_ratio;
+
+    #[test]
+    fn every_theme_ink_clears_aa_on_its_base() {
+        for (id, t) in THEMES {
+            let r = contrast_ratio(t.fg, t.bg);
+            assert!(r >= 7.0, "{id}: ink {r:.2}:1 on its base");
+        }
+    }
+
+    #[test]
+    fn retired_ids_resolve_to_a_curated_pack() {
+        for id in [
+            "github",
+            "tokyonight",
+            "radical",
+            "gruvbox",
+            "dracula",
+            "neon",
+            "nord",
+            "monokai",
+        ] {
+            assert!(get(id).is_some(), "{id} must still resolve");
+            assert!(!list_names().contains(&id), "{id} is not published");
+        }
+        assert!(get("TokyoNight").is_some());
+        assert!(get("not-a-theme").is_none());
+    }
+
+    #[test]
+    fn light_packs_are_light() {
+        assert!(get("light").unwrap().is_light());
+        assert!(get("paper").unwrap().is_light());
+        assert!(!get("dark").unwrap().is_light());
+    }
 }

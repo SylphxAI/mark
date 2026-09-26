@@ -25,8 +25,9 @@ impl Metric {
                 Wide => 0.78,
                 Bracket => 0.40,
                 Upper => 0.58,
-                Digit => 0.54,
-                NonAsciiAlnum | Other => 0.52,
+                Digit => 0.56,
+                // Lowercase runs ~0.55em in Inter/SF and ~0.6em in DejaVu.
+                NonAsciiAlnum | Other => 0.56,
             },
             // Bold name weight plus sidebearings run wider than the regular table.
             Self::Bold => match class(ch) {
@@ -80,7 +81,7 @@ fn class(ch: char) -> GlyphClass {
 /// typography, pill-shaped marks add the shields badge stacks.
 pub(crate) const FONT_MONO: &str = "ui-monospace,SFMono-Regular,Menlo,Consolas,monospace";
 pub(crate) const FONT_UI_SANS: &str =
-    "ui-sans-serif,system-ui,-apple-system,Segoe UI,Helvetica,sans-serif";
+    "Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial,sans-serif";
 /// shields' badge faces: the Verdana stack its width tables were measured in,
 /// and the Helvetica stack of the social style.
 pub(crate) const FONT_SHIELDS_SANS: &str = "Verdana,Geneva,DejaVu Sans,sans-serif";
