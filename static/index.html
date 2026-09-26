@@ -23,7 +23,7 @@
 <style>
   :root {
     --bg:#0B0C10; --panel:#111318; --elev:#171A21; --hover:#1D212A; --fg:#EDEFF4; --muted:#A1A7B5;
-    --faint:#6B7280; --line:rgba(255,255,255,0.07); --line2:rgba(255,255,255,0.12);
+    --faint:#80879A; --line:rgba(255,255,255,0.07); --line2:rgba(255,255,255,0.12);
     --accent:#7C83FF; --accent-ink:#0B0C10; --ok:#4ADE80; --danger:#F87171;
     --radius:14px; --font:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Inter,Roboto,Helvetica,Arial,sans-serif;
     --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace;
@@ -33,7 +33,7 @@
   @media (prefers-color-scheme: light) {
     :root:not([data-theme="dark"]) {
       --bg:#FAFAFA; --panel:#FFFFFF; --elev:#F4F4F6; --hover:#ECECF0; --fg:#0B0C10; --muted:#52525B;
-      --faint:#8A8A94; --line:rgba(10,12,16,0.07); --line2:rgba(10,12,16,0.13); --accent:#5B63F5; --accent-ink:#FFFFFF;
+      --faint:#6B6B75; --line:rgba(10,12,16,0.07); --line2:rgba(10,12,16,0.13); --accent:#5B63F5; --accent-ink:#FFFFFF;
       --ok:#15803D; --danger:#DC2626; --shadow:0 1px 2px rgba(10,12,16,0.04), 0 12px 32px -18px rgba(10,12,16,0.18);
       color-scheme:light;
     }
@@ -58,13 +58,14 @@
   .import { display:flex; gap:8px; margin-top:8px; }
   .import input { flex:1; min-width:0; height:40px; background:var(--panel); border:1px solid var(--line2); border-radius:10px; padding:0 12px; font-size:.875rem; outline:none; transition:border-color .15s; }
   .import input::placeholder { color:var(--faint); }
-  .import input:focus { border-color:var(--accent); }
+  .import input:focus { border-color:var(--accent); box-shadow:0 0 0 3px color-mix(in srgb, var(--accent) 28%, transparent); }
   .import-note { font-size:.8125rem; color:var(--muted); min-height:1.2em; }
   .btn { display:inline-flex; align-items:center; justify-content:center; gap:6px; height:36px; border:1px solid var(--line2); background:var(--panel); color:var(--fg); border-radius:9px; padding:0 13px; font-weight:560; font-size:.8125rem; cursor:pointer; white-space:nowrap; transition:background .12s, border-color .12s, transform .06s; }
   .btn:hover { background:var(--hover); }
   .btn:active { transform:translateY(1px); }
   .btn.primary { background:var(--fg); border-color:var(--fg); color:var(--bg); }
   .btn.primary:hover { opacity:.9; }
+  .btn.copied { background:var(--ok); border-color:var(--ok); color:#0B0C10; }
   .btn:disabled { opacity:.45; cursor:not-allowed; }
   .btn svg { width:15px; height:15px; }
   .kinds { display:flex; gap:2px; overflow-x:auto; padding:3px; margin:0 0 16px; background:var(--elev); border-radius:12px; width:max-content; max-width:100%; scrollbar-width:none; }
@@ -111,7 +112,8 @@
   .field input[type=text], .field input[type=number], .field textarea, .field select {
     width:100%; background:var(--elev); border:1px solid var(--line); border-radius:9px; padding:8px 11px; font-size:.875rem; outline:none; transition:border-color .15s, background .15s; }
   .field input:hover, .field textarea:hover, .field select:hover { border-color:var(--line2); }
-  .field input:focus, .field textarea:focus, .field select:focus { border-color:var(--accent); background:var(--panel); }
+  .field input:focus, .field textarea:focus, .field select:focus { border-color:var(--accent); background:var(--panel); box-shadow:0 0 0 3px color-mix(in srgb, var(--accent) 28%, transparent); }
+  .field input:focus-visible, .field textarea:focus-visible, .field select:focus-visible, .import input:focus-visible { outline:none; }
   .field textarea { min-height:62px; resize:vertical; font-family:var(--font); line-height:1.45; }
   .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
   .chips { display:flex; flex-wrap:wrap; gap:6px; }
@@ -129,7 +131,7 @@
   .art span { font-size:.75rem; color:var(--muted); font-weight:560; padding:0 3px 1px; }
   .themes { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; }
   .theme { border:1px solid var(--line); border-radius:10px; padding:0; cursor:pointer; overflow:hidden; background:none; display:grid; }
-  .theme .sw { height:34px; display:flex; align-items:flex-end; gap:3px; padding:6px; }
+  .theme .sw { height:34px; display:flex; align-items:flex-end; gap:3px; padding:6px; box-shadow:inset 0 -1px 0 var(--line); }
   .theme .sw i { width:9px; height:9px; border-radius:50%; }
   .theme span { font-size:.72rem; color:var(--muted); font-weight:560; padding:4px 6px 5px; text-align:left; background:var(--elev); }
   .theme:hover { border-color:var(--line2); }
@@ -656,7 +658,7 @@ function fieldNode(f){
     const grid = el("div", { class:"arts" });
     const theme = state.vals.theme || "";
     for (const a of ART) {
-      const q = new URLSearchParams({ type:a, text:cap(a), animation:"none", width:"360", height:"120" });
+      const q = new URLSearchParams({ type:a, text:"Aa", animation:"none", width:"360", height:"120" });
       if (theme) q.set("theme", theme); else if (state.vals.color) q.set("color", state.vals.color);
       const b = el("button", { type:"button", class:"art" + (v === a ? " on" : ""), "aria-pressed":String(v === a), "aria-label":cap(a), onclick:()=>update(f.key, a, true) });
       b.appendChild(el("img", { src: BASE + "/api/v1/mark/hero?" + q.toString(), alt:"", loading:"lazy", width:"360", height:"120" }));
@@ -716,7 +718,9 @@ function renderPresets(){
     const b = el("button", { type:"button", class:"preset", onclick:()=>setKind(state.kind, p.s) });
     b.dataset.url = presetUrl(state.kind, p.s);
     const t = el("div", { class:"thumb", style:"background:" + (state.bg === "light" ? "#fff" : "#0d1117") });
-    t.appendChild(el("img", { src: b.dataset.url, alt: p.name, loading:"lazy" }));
+    // Thumbnails show the finished frame: an entry motion would leave them blank until it plays.
+    const still = state.kind === "banner" ? presetUrl(state.kind, Object.assign({}, p.s, { animation:"none" })) : b.dataset.url;
+    t.appendChild(el("img", { src: still, alt: "", loading:"lazy" }));
     b.appendChild(t); b.appendChild(el("span", { text:p.name }));
     grid.appendChild(b);
   }
@@ -845,6 +849,12 @@ function toast(msg){
   t.textContent = msg; t.classList.add("show");
   clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove("show"), 1600);
 }
+function flashCopied(btn, label){
+  const was = label.textContent;
+  btn.classList.add("copied"); label.textContent = "Copied";
+  clearTimeout(btn._t); btn._t = setTimeout(() => { btn.classList.remove("copied"); renderCode(); }, 1400);
+  return was;
+}
 async function copyText(s){
   try { await navigator.clipboard.writeText(s); }
   catch (_) { const ta = el("textarea"); ta.value = s; document.body.appendChild(ta); ta.select(); document.execCommand("copy"); ta.remove(); }
@@ -879,9 +889,10 @@ function init(){
   document.getElementById("copyBtn").addEventListener("click", async () => {
     const code = document.getElementById("codeBox").textContent;
     await copyText(code);
+    flashCopied(document.getElementById("copyBtn"), document.getElementById("copyLabel"));
     toast(state.fmt === "url" ? "URL copied" : state.fmt === "html" ? "HTML copied" : "Markdown copied — paste it into your README");
   });
-  document.getElementById("dockMd").addEventListener("click", async () => { await copyText(buildMarkdown()); toast("Markdown copied — paste it into your README"); });
+  document.getElementById("dockMd").addEventListener("click", async (e) => { const b = e.currentTarget; await copyText(buildMarkdown()); b.classList.add("copied"); b.textContent = "Copied"; setTimeout(() => { b.classList.remove("copied"); b.textContent = "Copy Markdown"; }, 1400); toast("Markdown copied — paste it into your README"); });
   document.getElementById("dockUrl").addEventListener("click", async () => { await copyText(buildURL()); toast("URL copied"); });
   document.getElementById("openBtn").addEventListener("click", () => window.open(buildURL(), "_blank", "noopener"));
   document.getElementById("downloadBtn").addEventListener("click", async () => {
