@@ -227,15 +227,15 @@ Append `.svg` to any image path (`/badge/a-b-c.svg`, `/api/v1/mark/hero.svg?…`
 
 ## Performance
 
-In-process render latency, measured by the [Bench workflow](.github/workflows/bench.yml) (release build, GitHub-hosted runner, 400 runs per URL):
+In-process render latency (release build, 400 runs per URL, p50). The [Bench workflow](.github/workflows/bench.yml) re-measures on every change to `main` and publishes the table to its job summary:
 
 | Image | Size | p50 |
 | --- | ---: | ---: |
-| Badge (`/badge/build-passing-brightgreen`) | 0.8 KB | 6 µs |
-| Banner, waving, 880×220 | 8.2 KB | 29 µs |
-| Banner, aurora, 1200×320 | — | — |
-| Tech strip, 8 icons | 3.7 KB | 10 µs |
-| Profile card | 4.9 KB | 15 µs |
+| Badge (`/badge/build-passing-brightgreen`) | 1.3 KB | 8 µs |
+| Banner, waving, 880×220 | 2.5 KB | 20 µs |
+| Banner, aurora, 1200×320 | 2.6 KB | 17 µs |
+| Tech strip, 8 icons | 23 KB | 41 µs |
+| Profile card | 2.0 KB | 11 µs |
 
 Live readback on 2026-09-25 from a server in Europe with [`scripts/measure-live.sh`](scripts/measure-live.sh) (15 requests per URL, p50). "Wait" is the time from sending the request to the first byte, not counting DNS, TCP or TLS:
 
