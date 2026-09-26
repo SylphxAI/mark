@@ -6,10 +6,10 @@
 //! motion, native width × height.
 
 use crate::capabilities::mark::domain::art::Art;
-use crate::capabilities::mark::domain::color::{contrasting_fg, ink_canvas, resolve_fill};
+use crate::capabilities::mark::domain::color::{ink_over, mix, resolve_palette};
 use crate::capabilities::mark::domain::motion::{text_children, text_open_attrs};
-use crate::capabilities::mark::domain::shapes::{shape_background, shape_defs};
-use crate::capabilities::mark::domain::svg::{credit_mark, ensure_hash, esc, svg_doc};
+use crate::capabilities::mark::domain::shapes::{card_radius, stage};
+use crate::capabilities::mark::domain::svg::{credit_mark, esc, svg_doc};
 use crate::capabilities::mark::domain::text::{content_family, fit_line, monogram, Metric};
 use crate::capabilities::mark::domain::{
     cap_text, normalize_animation, MarkSpec, MAX_DESC_CHARS, MAX_TEXT_CHARS,
@@ -22,134 +22,132 @@ pub fn render(spec: &MarkSpec) -> String {
 
     let w = spec.width.unwrap_or(640).clamp(280, 1200);
     let h = spec.height.unwrap_or(200).clamp(80, 400);
-    let wf = w as f32;
-    let hf = h as f32;
+    let (wf, hf) = (w as f32, h as f32);
 
-    let fill = resolve_fill(
+    let p = resolve_palette(
         spec.color.as_deref(),
         spec.theme.as_deref(),
         &format!("profile-{name}"),
-        "mg",
     );
     let art = spec
         .art
         .as_deref()
         .map(str::trim)
         .filter(|s| !s.is_empty() && !s.eq_ignore_ascii_case("none"))
-        .map(Art::parse);
+        .map(Art::parse)
+        // Terminal and transparent are banner compositions, not card fields.
+        .filter(|a| !matches!(a, Art::Terminal | Art::Transparent));
 
-    let radius = (hf * 0.08).clamp(12.0, 20.0);
-    let tile = (hf * 0.56).clamp(56.0, 96.0);
-    let tile_x = (wf * 0.045).clamp(20.0, 36.0);
-    let tile_y = (hf - tile) / 2.0;
-    let tile_rx = (tile * 0.18).clamp(10.0, 18.0);
-    let text_x = tile_x + tile + (wf * 0.035).clamp(16.0, 28.0);
-    let name_size = (hf * 0.18).clamp(22.0, 36.0);
-    let tag_size = (hf * 0.08).clamp(12.0, 16.0);
-    let mono_size = (tile * 0.38).clamp(20.0, 36.0);
+    let rx = card_radius(hf);
+    let [a1, a2, _] = &p.accents;
+    let (field_defs, field) = match art {
+        Some(a) => {
+            let st = stage(a, w, h, &p, false);
+            (st.defs, st.back)
+        }
+        None => {
+            // A calm card: the base with two faint pools of accent light.
+            let o = if p.light { 0.16 } else { 0.28 };
+            (
+                format!(
+                    "<radialGradient id=\"pg1\" cx=\"0.92\" cy=\"0\" r=\"0.8\">\
+                     <stop offset=\"0\" stop-color=\"{a1}\" stop-opacity=\"{o}\"/>\
+                     <stop offset=\"1\" stop-color=\"{a1}\" stop-opacity=\"0\"/></radialGradient>\
+                     <radialGradient id=\"pg2\" cx=\"0.05\" cy=\"1\" r=\"0.7\">\
+                     <stop offset=\"0\" stop-color=\"{a2}\" stop-opacity=\"{o2:.2}\"/>\
+                     <stop offset=\"1\" stop-color=\"{a2}\" stop-opacity=\"0\"/></radialGradient>",
+                    o2 = o * 0.55,
+                ),
+                format!(
+                    "<rect width=\"{w}\" height=\"{h}\" rx=\"{rx}\" fill=\"{bg}\"/>\
+                     <rect width=\"{w}\" height=\"{h}\" rx=\"{rx}\" fill=\"url(#pg1)\"/>\
+                     <rect width=\"{w}\" height=\"{h}\" rx=\"{rx}\" fill=\"url(#pg2)\"/>\
+                     <rect x=\"0.5\" y=\"0.5\" width=\"{bw}\" height=\"{bh}\" rx=\"{rx2}\" fill=\"none\" \
+                     stroke=\"{ink}\" stroke-opacity=\"0.09\"/>",
+                    bg = p.bg,
+                    ink = p.ink,
+                    bw = wf - 1.0,
+                    bh = hf - 1.0,
+                    rx2 = rx - 0.5,
+                ),
+            )
+        }
+    };
+    let ink = match art {
+        Some(a) => stage(a, w, h, &p, false).ink.unwrap_or(p.ink.clone()),
+        None => p.ink.clone(),
+    };
+
+    let tile = (hf * 0.5).clamp(48.0, 112.0).round();
+    let pad = (hf * 0.16).clamp(20.0, 40.0).round();
+    let tile_y = ((hf - tile) / 2.0).round();
+    let tile_rx = (tile * 0.24).round();
+    let text_x = pad + tile + (hf * 0.12).clamp(16.0, 28.0).round();
+    let name_size = (hf * 0.16).clamp(20.0, 40.0).round();
+    let tag_size = (hf * 0.075).clamp(12.0, 18.0).round();
+    let mono_size = (tile * 0.36).round();
     let has_tag = !tagline.is_empty();
-    let name_y = if has_tag { hf * 0.44 } else { hf * 0.52 };
-    let tag_y = hf * 0.64;
-
-    let font_family = content_family(spec.font.as_deref());
-
-    let anim = normalize_animation(spec.animation.as_deref());
-    let anim = if anim == "ambient" { "none" } else { anim };
-    let name_open = text_open_attrs(anim, 0, w, h);
-    let name_children = text_children(anim, 0, w, h);
-    let tag_open = text_open_attrs(anim, 1, w, h);
-    let tag_children = text_children(anim, 1, w, h);
-
-    // Without art the card is a calm ink canvas with two soft palette glows:
-    // a full gradient wash fights the name for contrast on light stops.
-    let canvas = ink_canvas(&fill.base);
-    let field = if let Some(ty) = art {
-        format!(
-            "<clipPath id=\"pc\"><rect width=\"{w}\" height=\"{h}\" rx=\"{radius}\"/></clipPath>\
-             <g clip-path=\"url(#pc)\">{}</g>",
-            shape_background(ty, w, h, &fill, 0.0),
-        )
+    let gap = if has_tag {
+        name_size * 0.55 + tag_size * 0.95
     } else {
-        let accent = ensure_hash(&fill.accent);
-        let warm = ensure_hash(&fill.warm);
-        let edge = ensure_hash(&contrasting_fg(&canvas));
-        format!(
-            "<defs>\
-               <radialGradient id=\"pg1\" cx=\"88%\" cy=\"0%\" r=\"85%\">\
-                 <stop offset=\"0%\" stop-color=\"{accent}\" stop-opacity=\"0.38\"/>\
-                 <stop offset=\"100%\" stop-color=\"{accent}\" stop-opacity=\"0\"/>\
-               </radialGradient>\
-               <radialGradient id=\"pg2\" cx=\"4%\" cy=\"100%\" r=\"70%\">\
-                 <stop offset=\"0%\" stop-color=\"{warm}\" stop-opacity=\"0.2\"/>\
-                 <stop offset=\"100%\" stop-color=\"{warm}\" stop-opacity=\"0\"/>\
-               </radialGradient>\
-             </defs>\
-             <rect width=\"{w}\" height=\"{h}\" rx=\"{radius}\" fill=\"{canvas}\"/>\
-             <rect width=\"{w}\" height=\"{h}\" rx=\"{radius}\" fill=\"url(#pg1)\"/>\
-             <rect width=\"{w}\" height=\"{h}\" rx=\"{radius}\" fill=\"url(#pg2)\"/>\
-             <rect x=\"0.5\" y=\"0.5\" width=\"{bw}\" height=\"{bh}\" rx=\"{radius}\" fill=\"none\" \
-               stroke=\"{edge}\" stroke-opacity=\"0.1\"/>",
-            bw = wf - 1.0,
-            bh = hf - 1.0,
-        )
+        0.0
     };
+    let name_y = hf / 2.0 - gap / 2.0;
+    let tag_y = hf / 2.0 + gap / 2.0;
 
-    let art_defs = art.map(|ty| shape_defs(ty, 0.0, &fill)).unwrap_or_default();
-
-    let right_pad = (wf * 0.04).clamp(16.0, 28.0) + radius;
-    let text_max = (wf - text_x - right_pad).max(48.0);
+    let family = content_family(spec.font.as_deref());
+    let anim = match normalize_animation(spec.animation.as_deref()) {
+        "fade" => "fade",
+        "rise" | "type" => "rise",
+        _ => "none",
+    };
+    let text_max = (wf - text_x - pad).max(48.0);
     let name = fit_line(&name, text_max, name_size, Metric::Bold);
-    let tagline = if has_tag {
-        fit_line(&tagline, text_max, tag_size, Metric::Bold)
-    } else {
-        tagline
-    };
-    // Text ink contrasts with what it sits on: the ink canvas without art, the
-    // palette foreground over art.
-    let ink = if art.is_some() {
-        fill.fg_hash()
-    } else {
-        ensure_hash(&contrasting_fg(&canvas))
-    };
-    let muted = ink.clone();
-    let accent = ensure_hash(&fill.accent);
-    let warm = ensure_hash(&fill.warm);
-    let mono_ink = ensure_hash(&contrasting_fg(&fill.accent));
+    let tagline = fit_line(&tagline, text_max, tag_size, Metric::Display);
+    let tile_mid = mix(a1, a2, 0.5);
+    let mono_ink = ink_over(&tile_mid);
     let tag_node = if has_tag {
         format!(
-            "<text x=\"{text_x}\" y=\"{tag_y}\" font-family=\"{font_family}\" font-size=\"{tag_size}\" \
-             font-weight=\"450\" fill=\"{muted}\" fill-opacity=\"0.68\"{tag_open}>{tagline}{tag_children}</text>",
-            tagline = esc(&tagline),
+            "<text x=\"{text_x}\" y=\"{tag_y:.1}\" dominant-baseline=\"central\" font-family=\"{family}\" \
+             font-size=\"{tag_size}\" font-weight=\"400\" fill=\"{ink}\" fill-opacity=\"0.7\"{open}>{t}{kids}</text>",
+            t = esc(&tagline),
+            open = text_open_attrs(anim, 1, w, h),
+            kids = text_children(anim, 1, w, h),
         )
     } else {
         String::new()
     };
 
     let body = format!(
-        "<defs>{fill_defs}{art_defs}\
-           <linearGradient id=\"pm\" x1=\"0%\" y1=\"0%\" x2=\"100%\" y2=\"100%\">\
-             <stop offset=\"0%\" stop-color=\"{accent}\" stop-opacity=\"0.95\"/>\
-             <stop offset=\"100%\" stop-color=\"{warm}\" stop-opacity=\"0.72\"/>\
+        "<defs>{field_defs}\
+           <linearGradient id=\"pm\" x1=\"0\" y1=\"0\" x2=\"1\" y2=\"1\">\
+             <stop offset=\"0\" stop-color=\"{a1}\"/><stop offset=\"1\" stop-color=\"{a2}\"/>\
            </linearGradient>\
-           <clipPath id=\"pt\"><rect x=\"{text_x}\" y=\"0\" width=\"{text_max}\" height=\"{h}\"/></clipPath>\
+           <clipPath id=\"pt\"><rect x=\"{text_x}\" width=\"{text_max}\" height=\"{h}\"/></clipPath>\
          </defs>\
          {field}\
-         <rect x=\"{tile_x}\" y=\"{tile_y}\" width=\"{tile}\" height=\"{tile}\" rx=\"{tile_rx}\" \
-           fill=\"url(#pm)\" stroke=\"{accent}\" stroke-opacity=\"0.7\" stroke-width=\"1.25\"/>\
-         <text x=\"{mx}\" y=\"{my}\" text-anchor=\"middle\" dominant-baseline=\"middle\" \
-           font-family=\"{font_family}\" font-weight=\"750\" font-size=\"{mono_size}\" \
-           letter-spacing=\"-0.04em\" fill=\"{mono_ink}\">{initials}</text>\
+         <rect x=\"{pad}\" y=\"{tile_y}\" width=\"{tile}\" height=\"{tile}\" rx=\"{tile_rx}\" fill=\"url(#pm)\"/>\
+         <rect x=\"{pi}\" y=\"{ti}\" width=\"{ts}\" height=\"{ts}\" rx=\"{tri}\" fill=\"none\" \
+           stroke=\"#FFFFFF\" stroke-opacity=\"0.22\"/>\
+         <text x=\"{mx}\" y=\"{my}\" text-anchor=\"middle\" dominant-baseline=\"central\" \
+           font-family=\"{family}\" font-weight=\"700\" font-size=\"{mono_size}\" \
+           letter-spacing=\"-0.02em\" fill=\"{mono_ink}\">{initials}</text>\
          <g clip-path=\"url(#pt)\">\
-         <text x=\"{text_x}\" y=\"{name_y}\" font-family=\"{font_family}\" font-size=\"{name_size}\" \
-           font-weight=\"700\" letter-spacing=\"-0.02em\" fill=\"{ink}\"{name_open}>{name}{name_children}</text>\
-         {tag_node}\
-         </g>\
+         <text x=\"{text_x}\" y=\"{name_y:.1}\" dominant-baseline=\"central\" font-family=\"{family}\" \
+           font-size=\"{name_size}\" font-weight=\"700\" letter-spacing=\"-0.02em\" fill=\"{ink}\"{nopen}>\
+           {name}{nkids}</text>\
+         {tag_node}</g>\
          {credit}",
-        fill_defs = fill.defs,
-        mx = tile_x + tile / 2.0,
-        my = tile_y + tile / 2.0 + 1.0,
+        pi = pad + 0.5,
+        ti = tile_y + 0.5,
+        ts = tile - 1.0,
+        tri = tile_rx - 0.5,
+        mx = pad + tile / 2.0,
+        my = tile_y + tile / 2.0,
         name = esc(&name),
         initials = esc(&initials),
+        nopen = text_open_attrs(anim, 0, w, h),
+        nkids = text_children(anim, 0, w, h),
         credit = credit_mark(w, h, spec.credit),
     );
 

@@ -4,354 +4,356 @@
 //! forever — no clock, no upstream, no state.
 
 use crate::capabilities::mark::domain::art::Art;
-use crate::capabilities::mark::domain::color::{legible_ink, resolve_fill, FillPlan};
-use crate::capabilities::mark::domain::motion::{ambient_gain, text_children, text_open_attrs};
-use crate::capabilities::mark::domain::shapes::{shape_background, shape_defs};
-use crate::capabilities::mark::domain::svg::{credit_mark, ensure_hash, esc, svg_doc};
+use crate::capabilities::mark::domain::color::resolve_palette;
+use crate::capabilities::mark::domain::motion::{background_moves, text_children, text_open_attrs};
+use crate::capabilities::mark::domain::shapes::{stage, Stage};
+use crate::capabilities::mark::domain::svg::{credit_mark, esc, svg_doc};
 use crate::capabilities::mark::domain::text::{
-    content_family, fit_line, line_advance, monogram, Metric,
+    content_family, fit_line, line_advance, Metric, FONT_MONO,
 };
 use crate::capabilities::mark::domain::{
     cap_text, normalize_animation, normalize_layout, MarkSpec, MAX_DESC_CHARS, MAX_LINES,
     MAX_TEXT_CHARS,
 };
 
-/// Share of the line budget text may fill. The width metric follows the
-/// system UI sans; viewers without it fall back to wider faces (DejaVu Sans is
-/// ~8% wider), so text is fitted with headroom instead of edge to edge.
-const FIT_MARGIN: f32 = 0.92;
+/// Share of the text column a line may fill. Widths are estimated from the
+/// system UI sans; viewers without it fall back to wider faces, so text is
+/// fitted with headroom instead of edge to edge.
+const FIT_MARGIN: f32 = 0.94;
 
-/// Largest size ≤ `size` (down to `min_ratio` of it) at which every line fits
-/// `budget`; lines that still overflow at the floor are truncated by the
-/// caller. Short text keeps `size` exactly.
-fn shrink_to_fit(lines: &[&str], budget: f32, size: u32, min_ratio: f32, metric: Metric) -> u32 {
+/// Adaptive ink for the transparent art: GitHub's own text colours, switched
+/// by the viewer's colour scheme.
+const ADAPTIVE_INK: &str =
+    "<style>.mi{fill:#1F2328}@media (prefers-color-scheme:dark){.mi{fill:#E6EDF3}}</style>";
+
+/// Largest size ≤ `size` (down to `min_ratio` of it, never under 16px unless
+/// `size` already is) at which every line fits `budget`; lines that still
+/// overflow at the floor are cropped by the caller.
+fn shrink_to_fit(lines: &[&str], budget: f32, size: f32, min_ratio: f32, metric: Metric) -> f32 {
     let widest = lines
         .iter()
-        .map(|l| line_advance(l, size as f32, metric))
+        .map(|l| line_advance(l, size, metric))
         .fold(0.0_f32, f32::max);
     if widest <= budget || widest <= 0.0 {
         return size;
     }
-    let fitted = (size as f32 * budget / widest).floor();
-    fitted.max((size as f32 * min_ratio).ceil()) as u32
+    let floor = (size * min_ratio).ceil().max(16.0_f32.min(size));
+    (size * budget / widest).floor().max(floor)
 }
 
-fn line_max_px(width: u32, x: f32, anchor: &str) -> f32 {
-    let pad = (width as f32 * 0.04).clamp(16.0, 36.0);
-    match anchor {
-        "start" | "left" => (width as f32 - x - pad).max(24.0),
-        "end" | "right" => (x - pad).max(24.0),
-        _ => (width as f32 - pad * 2.0).max(24.0),
-    }
-}
-
-/// Paint/style choices shared by every text node of one hero render.
-struct TextStyle<'a> {
-    font_color: &'a str,
-    font_family: &'a str,
-    anchor: &'a str,
-}
-
-impl TextStyle<'_> {
-    fn typewriter_line(
-        &self,
-        line: &str,
-        x: f32,
-        y: f32,
-        font_size: u32,
-        begin: f32,
-        char_dur: f32,
-    ) -> String {
-        let (font_color, font_family, anchor) = (self.font_color, self.font_family, self.anchor);
-        let fs = font_size as f32;
-        let total = line_advance(line, fs, Metric::Display);
-        // Anchor the run as a whole, then place glyphs left→right.
-        let start_x = match anchor {
-            "start" | "left" => x,
-            "end" | "right" => x - total,
-            _ => x - total / 2.0,
-        };
-
-        let mut out = String::new();
-        let mut cx = start_x;
-        let mut t = begin;
-        for ch in line.chars() {
-            let adv = Metric::Display.advance(ch, fs);
-            let glyph_x = cx;
-            out.push_str(&format!(
-                "<text x=\"{glyph_x}\" y=\"{y}\" text-anchor=\"start\" dominant-baseline=\"middle\" \
-             font-family=\"{font_family}\" font-weight=\"650\" letter-spacing=\"0\" font-size=\"{font_size}\" \
-             fill=\"{font_color}\" opacity=\"0\">\
-               <animate attributeName=\"opacity\" from=\"0\" to=\"1\" dur=\"0.01s\" begin=\"{t}s\" fill=\"freeze\"/>\
-               {}</text>",
-                esc(&ch.to_string()),
-            ));
-            cx += adv;
-            t += char_dur;
-        }
-        // Blinking cursor after typed line
-        let cursor_x = cx + fs * 0.06;
-        let cy = y - fs * 0.42;
-        let cw = (fs * 0.08).clamp(2.0, 5.0);
-        let chh = fs * 0.78;
-        let cursor_begin = begin + line.chars().count() as f32 * char_dur;
-        out.push_str(&format!(
-            "<rect x=\"{cursor_x}\" y=\"{cy}\" width=\"{cw}\" height=\"{chh}\" rx=\"1.5\" fill=\"{font_color}\" opacity=\"0\">\
-           <animate attributeName=\"opacity\" values=\"0;0;1;1;0;0\" keyTimes=\"0;0.01;0.02;0.48;0.52;1\" \
-             dur=\"1.05s\" begin=\"{cursor_begin}s\" repeatCount=\"indefinite\"/>\
-         </rect>"
-        ));
-        // Full string kept for accessibility / crawl / tests (invisible).
-        out.push_str(&format!(
-        "<text x=\"{x}\" y=\"{y}\" text-anchor=\"{anchor}\" dominant-baseline=\"middle\" font-size=\"1\" fill=\"{font_color}\" opacity=\"0\">{}</text>",
-        esc(line),
-    ));
-        out
-    }
-}
-
-fn plate_chrome(width: u32, height: u32, mono: &str, plan: &FillPlan, ink: &str) -> String {
-    let (accent, base, warm, glow) = (
-        plan.accent.as_str(),
-        plan.base.as_str(),
-        plan.warm.as_str(),
-        plan.glow.as_str(),
-    );
-    let hf = height as f32;
-    let wf = width as f32;
-    // Left calm field so type always wins — tinted, not pure black.
-    let scrim_w = (wf * 0.46).clamp(180.0, 420.0);
-    let tile = (hf * 0.28).clamp(56.0, 120.0);
-    let tile_x = wf * 0.055;
-    let tile_y = hf * 0.14;
-    format!(
-        "         <defs>           <linearGradient id=\"plateScrim\" x1=\"0%\" y1=\"0%\" x2=\"100%\" y2=\"0%\">             <stop offset=\"0%\" stop-color=\"{base}\" stop-opacity=\"0.72\"/>             <stop offset=\"55%\" stop-color=\"{base}\" stop-opacity=\"0.28\"/>             <stop offset=\"100%\" stop-color=\"{base}\" stop-opacity=\"0\"/>           </linearGradient>           <linearGradient id=\"plateTile\" x1=\"0%\" y1=\"0%\" x2=\"100%\" y2=\"100%\">             <stop offset=\"0%\" stop-color=\"{accent}\" stop-opacity=\"0.95\"/>             <stop offset=\"55%\" stop-color=\"{warm}\" stop-opacity=\"0.72\"/>             <stop offset=\"100%\" stop-color=\"{glow}\" stop-opacity=\"0.55\"/>           </linearGradient>           <radialGradient id=\"plateGlow\" cx=\"35%\" cy=\"30%\" r=\"70%\">             <stop offset=\"0%\" stop-color=\"{glow}\" stop-opacity=\"0.55\"/>             <stop offset=\"100%\" stop-color=\"{accent}\" stop-opacity=\"0\"/>           </radialGradient>         </defs>         <rect x=\"0\" y=\"0\" width=\"{scrim_w}\" height=\"{hf}\" fill=\"url(#plateScrim)\"/>         <rect x=\"{tile_x}\" y=\"{tile_y}\" width=\"{tile}\" height=\"{tile}\" rx=\"{rx}\"            fill=\"url(#plateTile)\" stroke=\"{accent}\" stroke-opacity=\"0.75\" stroke-width=\"1.5\"/>         <rect x=\"{tile_x}\" y=\"{tile_y}\" width=\"{tile}\" height=\"{tile}\" rx=\"{rx}\" fill=\"url(#plateGlow)\"/>         <text x=\"{tx}\" y=\"{ty}\" text-anchor=\"middle\" dominant-baseline=\"middle\"            font-family=\"ui-sans-serif,system-ui,sans-serif\" font-weight=\"750\"            font-size=\"{fs}\" letter-spacing=\"-0.04em\" fill=\"{ink}\">{mono}</text>",
-        rx = (tile * 0.18).clamp(10.0, 22.0),
-        tx = tile_x + tile / 2.0,
-        ty = tile_y + tile / 2.0 + 1.0,
-        fs = (tile * 0.38).clamp(22.0, 48.0),
-        mono = esc(mono),
-    )
+/// How one text role is painted.
+struct Ink {
+    /// `fill="…"` or `class="mi"` attribute text.
+    paint: String,
+    family: &'static str,
+    anchor: &'static str,
+    x: f32,
 }
 
 pub fn render(spec: &MarkSpec) -> String {
     let art = Art::parse(spec.art.as_deref().unwrap_or("waving"));
-    // Cards need taller canvases (e.g. 768); strips stay ~200–320.
     let height = spec.height.unwrap_or(220).clamp(40, 900);
     let width = spec.width.unwrap_or(880).clamp(200, 1600);
-    let layout = normalize_layout(spec.hero.layout.as_deref());
-    // product/oss/org types default into plate composition when layout omitted
-    let layout = if layout == "default"
-        && matches!(art, Art::Product | Art::Oss | Art::Org)
-        && spec.hero.layout.is_none()
-    {
-        "plate"
-    } else {
-        layout
-    };
-
+    let (wf, hf) = (width as f32, height as f32);
     let anim = normalize_animation(spec.animation.as_deref());
-    let gain = ambient_gain(anim);
-
-    let seed = format!("{art}-{}", spec.text.as_deref().unwrap_or(""));
-    let fill = resolve_fill(spec.color.as_deref(), spec.theme.as_deref(), &seed, "mg");
-
-    // Strict color grammar: ink is derived from the resolved palette, so only
-    // canonical hex tokens reach SVG attributes.
-    let font_color = if art == Art::Transparent {
-        ensure_hash(&fill.fg)
-    } else {
-        ensure_hash(&legible_ink(&fill.fg, &fill.base, &fill.accent))
-    };
-    let font_family = content_family(spec.font.as_deref());
 
     let text = cap_text(spec.text.as_deref().unwrap_or(""), MAX_TEXT_CHARS);
     let desc = cap_text(spec.desc.as_deref().unwrap_or(""), MAX_DESC_CHARS);
+    let seed = format!("{art}-{text}");
+    let palette = resolve_palette(spec.color.as_deref(), spec.theme.as_deref(), &seed);
+    let st: Stage = stage(art, width, height, &palette, background_moves(anim));
 
-    // Typography and placement come from the layout family: the grammar exposes
-    // no other hero geometry.
-    let (align, align_y, desc_align, desc_align_y, default_fs, desc_size, anchor) = match layout {
-        "plate" => {
-            let fs = if height >= 480 {
-                56
-            } else if height >= 320 {
-                48
-            } else {
-                42
-            };
-            let ds = if height >= 480 { 20 } else { 16 };
-            let ay = if desc.is_empty() { 58.0 } else { 52.0 };
-            let dy = if height >= 480 { 66.0 } else { 72.0 };
-            (14.0, ay, 14.0, dy, fs, ds, "start")
-        }
-        "terminal" => {
-            let fs = if height >= 400 { 44 } else { 36 };
-            (
-                12.0,
-                if desc.is_empty() { 50.0 } else { 46.0 },
-                12.0,
-                68.0,
-                fs,
-                15,
-                "start",
-            )
-        }
-        _ => (
-            50.0,
-            if desc.is_empty() { 50.0 } else { 44.0 },
-            50.0,
-            68.0,
-            48,
-            18,
-            "middle",
-        ),
-    };
-    // Large canvases (social previews, tall headers) scale type with the
-    // canvas; the default 880×220 banner and anything narrower or shorter keep
-    // the layout's sizes exactly.
-    let scale = (width as f32 / 700.0)
-        .min(height as f32 / 220.0)
-        .clamp(1.0, 2.4);
-    let default_fs = (default_fs as f32 * scale).round() as u32;
-    let desc_size = (desc_size as f32 * scale).round() as u32;
-    let font_size = if text.is_empty() { 40 } else { default_fs };
-
-    // Plate lifts title below monogram row
-    let title_y_bias = if layout == "plate" && height >= 280 {
-        height as f32 * 0.08
+    let left = st.terminal || normalize_layout(spec.hero.layout.as_deref()) == "left";
+    let family = if st.terminal {
+        FONT_MONO
     } else {
-        0.0
+        content_family(spec.font.as_deref())
+    };
+    let paint = match (&st.ink, art) {
+        (Some(ink), _) => format!("fill=\"{ink}\""),
+        // Transparent: a named theme or colour is honoured; otherwise the ink
+        // follows the viewer's light/dark scheme.
+        (None, _) if spec.theme.is_some() => format!("fill=\"{}\"", palette.ink),
+        (None, _) if spec.color.is_some() => format!("fill=\"{}\"", palette.accents[0]),
+        (None, _) => "class=\"mi\"".into(),
+    };
+    let ink = Ink {
+        paint,
+        family,
+        anchor: if left { "start" } else { "middle" },
+        x: if left { st.x0 } else { (st.x0 + st.x1) / 2.0 },
     };
 
-    let x0 = width as f32 * align / 100.0;
-    let title_budget = line_max_px(width, x0, anchor) * FIT_MARGIN;
+    // Type scale: the title follows the canvas height, capped by its width;
+    // the description is a fixed ratio of the title.
+    let has_desc = !desc.is_empty();
+    let title_size = (hf * if has_desc { 0.235 } else { 0.28 })
+        .min(wf * 0.062)
+        .clamp(14.0, 140.0);
+    // Monospace runs wide and reads loud: the terminal sets it smaller.
+    let (title_size, desc_ratio) = if st.terminal {
+        ((title_size * 0.74).round(), 0.44)
+    } else {
+        (title_size.round(), 0.36)
+    };
+    let desc_size = (title_size * desc_ratio).clamp(11.0, 34.0).round();
+
+    let budget = (st.x1 - st.x0) * FIT_MARGIN;
+    let prompt = if st.terminal { "$ " } else { "" };
     let raw_lines: Vec<&str> = text
         .split('\n')
         .filter(|l| !l.is_empty())
         .take(MAX_LINES)
         .collect();
-    // Titles are drawn at weight 650: measure with the bold table.
-    let font_size = shrink_to_fit(&raw_lines, title_budget, font_size, 0.6, Metric::Bold);
+    let title_metric = Metric::Bold;
+    let measured: Vec<String> = raw_lines.iter().map(|l| format!("{prompt}{l}")).collect();
+    let measured: Vec<&str> = measured.iter().map(String::as_str).collect();
+    let title_size = shrink_to_fit(&measured, budget, title_size, 0.45, title_metric);
+    let prompt_px = line_advance(prompt, title_size, title_metric);
     let lines: Vec<String> = raw_lines
         .iter()
-        .map(|l| fit_line(l, title_budget, font_size as f32, Metric::Bold))
+        .map(|l| fit_line(l, budget - prompt_px, title_size, title_metric))
         .collect();
-    let mut text_nodes = String::new();
+    let desc_size = shrink_to_fit(&[desc.as_str()], budget, desc_size, 0.8, Metric::Display);
+    let desc_line = fit_line(&desc, budget, desc_size, Metric::Display);
+
+    // Vertical rhythm: centre the whole block (title lines + description) on
+    // the stage's text centre.
+    let line_h = title_size * 1.14;
     let n = lines.len().max(1) as f32;
-    let use_typewriter = anim == "type";
-    let style = TextStyle {
-        font_color: &font_color,
-        font_family,
-        anchor,
+    let span = (n - 1.0) * line_h;
+    let to_desc = if lines.is_empty() {
+        0.0
+    } else {
+        title_size * 0.56 + desc_size * 0.95
     };
+    let block = span + if has_desc { to_desc } else { 0.0 };
+    let first_y = st.cy - block / 2.0;
 
+    let tracking = if st.terminal {
+        "0"
+    } else if title_size >= 40.0 {
+        "-0.025em"
+    } else {
+        "-0.015em"
+    };
+    let weight = if st.terminal { 600 } else { 700 };
+    let typing = anim == "type";
+    let mut title_nodes = String::new();
     for (i, line) in lines.iter().enumerate() {
-        let dy = (i as f32 - (n - 1.0) / 2.0) * font_size as f32 * 1.15;
-        let x = x0;
-        let y = height as f32 * align_y / 100.0 + dy + title_y_bias;
-
-        if use_typewriter {
-            let base = i as f32 * 0.55;
-            text_nodes.push_str(&style.typewriter_line(line, x, y, font_size, base, 0.055));
-            continue;
-        }
-
-        let open_extra = text_open_attrs(anim, i, width, height);
-        let children = text_children(anim, i, width, height);
-        text_nodes.push_str(&format!(
-            "<text x=\"{x}\" y=\"{y}\" text-anchor=\"{anchor}\" dominant-baseline=\"middle\" \
-             font-family=\"{font_family}\" font-weight=\"650\" letter-spacing=\"-0.02em\" font-size=\"{font_size}\" \
-             fill=\"{font_color}\"{open_extra}>{content}{children}</text>",
+        let y = first_y + i as f32 * line_h;
+        let (open, children) = if typing {
+            (String::new(), String::new())
+        } else {
+            (
+                text_open_attrs(anim, i, width, height),
+                text_children(anim, i, width, height),
+            )
+        };
+        let prompt_span = if st.terminal {
+            format!("<tspan fill=\"{}\">{prompt}</tspan>", palette.accents[0])
+        } else {
+            String::new()
+        };
+        title_nodes.push_str(&format!(
+            "<text x=\"{x:.1}\" y=\"{y:.1}\" text-anchor=\"{anchor}\" dominant-baseline=\"central\" \
+             font-family=\"{family}\" font-size=\"{title_size}\" font-weight=\"{weight}\" \
+             letter-spacing=\"{tracking}\" {paint}{open}>{prompt_span}{content}{children}</text>",
+            x = ink.x,
+            anchor = ink.anchor,
+            family = ink.family,
+            paint = ink.paint,
             content = esc(line),
         ));
     }
 
-    let desc_node = if !desc.is_empty() {
-        let dx = width as f32 * desc_align / 100.0;
-        let dy = height as f32 * desc_align_y / 100.0
-            + if layout == "plate" {
-                title_y_bias * 0.35
-            } else {
-                0.0
-            };
-        let desc_budget = line_max_px(width, dx, anchor) * FIT_MARGIN;
-        let desc_size = shrink_to_fit(
-            &[desc.as_str()],
-            desc_budget,
-            desc_size,
-            0.8,
-            Metric::Display,
-        );
-        let desc = fit_line(&desc, desc_budget, desc_size as f32, Metric::Display);
-        if use_typewriter {
-            let base = lines.len() as f32 * 0.55 + 0.2;
-            style.typewriter_line(&desc, dx, dy, desc_size, base, 0.04)
-        } else {
-            let open_extra = text_open_attrs(anim, lines.len().max(1), width, height);
-            let children = text_children(anim, lines.len().max(1), width, height);
+    let title_px = if st.terminal {
+        // Monospace advances are uniform: ~0.6em in every common face.
+        lines
+            .iter()
+            .map(|l| (l.chars().count() + prompt.chars().count()) as f32 * title_size * 0.62)
+            .fold(0.0, f32::max)
+    } else {
+        measured_width(&lines, prompt, title_size, title_metric)
+    };
+    let reveal = if typing && !lines.is_empty() {
+        Some(type_reveal(&ink, title_px, first_y, span, title_size, wf))
+    } else {
+        None
+    };
+    let reveal_end = reveal.as_ref().map_or(0.0, |r| r.1);
+    if let Some((defs, _)) = &reveal {
+        title_nodes = format!("{defs}<g mask=\"url(#mt)\">{title_nodes}</g>");
+    }
+
+    let cursor = if st.terminal && lines.len() == 1 {
+        let cx = st.x0 + (lines[0].chars().count() + 2) as f32 * title_size * 0.6 + 2.0;
+        let blink = if background_moves(anim) {
             format!(
-                "<text x=\"{dx}\" y=\"{dy}\" text-anchor=\"{anchor}\" dominant-baseline=\"middle\" \
-                 font-family=\"{font_family}\" font-size=\"{desc_size}\" \
-                 font-weight=\"450\" letter-spacing=\"0.01em\" fill=\"{font_color}\" fill-opacity=\"0.82\"{open_extra}>{}{children}</text>",
-                esc(&desc),
+                "<animate attributeName=\"opacity\" values=\"1;0\" dur=\"1.1s\" begin=\"{reveal_end:.2}s\" \
+                 repeatCount=\"indefinite\" calcMode=\"discrete\"/>"
             )
-        }
-    } else {
-        String::new()
-    };
-
-    let plate = if layout == "plate" && !text.is_empty() {
-        plate_chrome(width, height, &monogram(&text), &fill, &font_color)
-    } else {
-        String::new()
-    };
-
-    // Terminal: faint top rule
-    let terminal_rule = if layout == "terminal" {
+        } else {
+            String::new()
+        };
         format!(
-            "<rect x=\"{x}\" y=\"{y}\" width=\"{w}\" height=\"2\" rx=\"1\" fill=\"{font_color}\" fill-opacity=\"0.35\"/>",
-            x = width as f32 * 0.06,
-            y = height as f32 * 0.12,
-            w = width as f32 * 0.28,
+            "<rect x=\"{cx:.1}\" y=\"{y:.1}\" width=\"{cw:.1}\" height=\"{ch:.1}\" rx=\"1\" fill=\"{a}\" \
+             fill-opacity=\"0.85\"{hidden}>{blink}</rect>",
+            hidden = if typing { " opacity=\"0\"" } else { "" },
+            y = first_y - title_size * 0.42,
+            cw = (title_size * 0.5).round(),
+            ch = (title_size * 0.84).round(),
+            a = palette.accents[0],
         )
     } else {
         String::new()
     };
 
-    let body = format!(
-        "<defs>{}{}</defs>{}{}{}{}{}{}",
-        fill.defs,
-        shape_defs(art, gain, &fill),
-        shape_background(art, width, height, &fill, gain),
-        plate,
-        terminal_rule,
-        text_nodes,
-        desc_node,
-        credit_mark(width, height, spec.credit),
-    );
+    let desc_node = if has_desc {
+        let y = first_y + span + to_desc;
+        let (open, children) = if typing {
+            (
+                " opacity=\"0\"".to_string(),
+                format!(
+                    "<animate attributeName=\"opacity\" from=\"0\" to=\"1\" dur=\"0.8s\" \
+                     begin=\"{reveal_end:.2}s\" fill=\"freeze\"/>"
+                ),
+            )
+        } else {
+            (
+                text_open_attrs(anim, lines.len(), width, height),
+                text_children(anim, lines.len(), width, height),
+            )
+        };
+        let muted = if palette.light { 0.7 } else { 0.72 };
+        format!(
+            "<text x=\"{x:.1}\" y=\"{y:.1}\" text-anchor=\"{anchor}\" dominant-baseline=\"central\" \
+             font-family=\"{family}\" font-size=\"{desc_size}\" font-weight=\"400\" {paint} \
+             fill-opacity=\"{muted}\"{open}>{content}{children}</text>",
+            x = ink.x,
+            anchor = ink.anchor,
+            family = ink.family,
+            paint = ink.paint,
+            content = esc(&desc_line),
+        )
+    } else {
+        String::new()
+    };
 
+    let style = if st.ink.is_none() { ADAPTIVE_INK } else { "" };
+    let body = format!(
+        "{style}<defs>{defs}</defs>{back}{title_nodes}{cursor}{desc_node}{credit}",
+        defs = st.defs,
+        back = st.back,
+        credit = credit_mark(width, height, spec.credit),
+    );
     svg_doc(width, height, &body)
 }
 
-#[cfg(test)]
-mod layout_tests {
-    use super::*;
-    use crate::capabilities::mark::domain::normalize_layout;
+fn measured_width(lines: &[String], prompt: &str, size: f32, metric: Metric) -> f32 {
+    lines
+        .iter()
+        .map(|l| line_advance(&format!("{prompt}{l}"), size, metric))
+        .fold(0.0, f32::max)
+}
 
-    #[test]
-    fn normalize_layout_keeps_only_the_dest_vocabulary() {
-        assert_eq!(normalize_layout(Some("plate")), "plate");
-        assert_eq!(normalize_layout(Some("terminal")), "terminal");
-        assert_eq!(normalize_layout(Some("signal")), "signal");
-        assert_eq!(normalize_layout(None), "default");
-        // Retired predecessor aliases are unknown input, not a second vocabulary.
-        assert_eq!(normalize_layout(Some("card")), "default");
-        assert_eq!(normalize_layout(Some("mono")), "default");
+/// The `type` motion: a feathered mask sweeps across the title once.
+/// Returns the mask defs and when the sweep ends (seconds); from then on the
+/// mask opens to the whole canvas, so a width estimate never crops a glyph.
+fn type_reveal(
+    ink: &Ink,
+    width: f32,
+    first_y: f32,
+    span: f32,
+    size: f32,
+    canvas: f32,
+) -> (String, f32) {
+    let pad = size * 0.6;
+    let x = match ink.anchor {
+        "start" => ink.x - pad,
+        _ => ink.x - width / 2.0 - pad,
+    };
+    let full = width + pad * 2.0;
+    let y = first_y - size;
+    let h = span + size * 2.0;
+    let dur = (width / (size * 9.0)).clamp(0.7, 2.2);
+    let begin = 0.2;
+    let defs = format!(
+        "<defs><linearGradient id=\"mtg\" x1=\"0\" y1=\"0\" x2=\"1\" y2=\"0\">\
+         <stop offset=\"0.85\" stop-color=\"#fff\"/><stop offset=\"1\" stop-color=\"#fff\" stop-opacity=\"0\"/>\
+         </linearGradient><mask id=\"mt\" maskUnits=\"userSpaceOnUse\">\
+         <rect x=\"{x:.1}\" y=\"{y:.1}\" width=\"0\" height=\"{h:.1}\" fill=\"url(#mtg)\">\
+         <animate attributeName=\"width\" from=\"0\" to=\"{full:.1}\" dur=\"{dur:.2}s\" begin=\"{begin}s\" \
+         fill=\"freeze\" calcMode=\"spline\" keyTimes=\"0;1\" keySplines=\"0.4 0 0.6 1\"/></rect>\
+         <rect width=\"{canvas}\" height=\"{ch:.1}\" fill=\"#fff\" opacity=\"0\">\
+         <set attributeName=\"opacity\" to=\"1\" begin=\"{end:.2}s\"/></rect></mask></defs>",
+        end = begin + dur,
+        ch = first_y + span + size * 2.0,
+    );
+    (defs, begin + dur)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn hero(q: &[(&str, &str)]) -> String {
+        let mut spec = MarkSpec {
+            text: Some("Hello".into()),
+            animation: Some("none".into()),
+            ..Default::default()
+        };
+        for (k, v) in q {
+            match *k {
+                "type" => spec.art = Some(v.to_string()),
+                "theme" => spec.theme = Some(v.to_string()),
+                "color" => spec.color = Some(v.to_string()),
+                "animation" => spec.animation = Some(v.to_string()),
+                "layout" => spec.hero.layout = Some(v.to_string()),
+                "desc" => spec.desc = Some(v.to_string()),
+                "text" => spec.text = Some(v.to_string()),
+                _ => {}
+            }
+        }
+        render(&spec)
     }
 
     #[test]
-    fn monogram_two_words() {
-        assert_eq!(monogram("PDF Reader MCP"), "PR");
-        assert_eq!(monogram("coderag"), "CO");
+    fn transparent_ink_follows_the_viewer_scheme() {
+        let svg = hero(&[("type", "transparent")]);
+        assert!(svg.contains("prefers-color-scheme:dark"));
+        assert!(svg.contains("class=\"mi\""));
+        assert!(!hero(&[("type", "transparent"), ("theme", "light")]).contains("class=\"mi\""));
+    }
+
+    #[test]
+    fn terminal_sets_a_left_aligned_mono_prompt() {
+        let svg = hero(&[("type", "terminal")]);
+        assert!(svg.contains("text-anchor=\"start\""));
+        assert!(svg.contains(FONT_MONO));
+        assert!(svg.contains(">$ </tspan>"));
+    }
+
+    #[test]
+    fn left_layout_aligns_to_the_column() {
+        assert!(hero(&[("layout", "left")]).contains("text-anchor=\"start\""));
+        assert!(hero(&[]).contains("text-anchor=\"middle\""));
+    }
+
+    #[test]
+    fn type_reveals_the_title_as_one_run() {
+        let svg = hero(&[("animation", "type"), ("text", "readme-mark")]);
+        assert!(svg.contains("mask=\"url(#mt)\""));
+        // One text node: glyph spacing stays the font's own.
+        assert_eq!(svg.matches(">readme-mark<").count(), 1);
+    }
+
+    #[test]
+    fn long_titles_shrink_before_they_crop() {
+        let long = "A long project title that still fits: shrunk";
+        let svg = hero(&[("text", long)]);
+        assert!(svg.contains(long), "shrunk, not cropped");
+        let huge = "x".repeat(400);
+        assert!(hero(&[("text", &huge)]).contains('…'));
     }
 }

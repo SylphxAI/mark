@@ -23,40 +23,40 @@ fn hero_all_art_types_render() {
 }
 
 #[test]
-fn hero_plate_has_monogram_and_left_anchor() {
+fn hero_left_layout_anchors_a_large_social_card() {
     let spec = MarkSpec {
         form: MarkForm::Hero,
         art: Some("aurora".into()),
-        theme: Some("tokyonight".into()),
+        theme: Some("grape".into()),
         animation: Some("none".into()),
-        height: Some(768),
-        width: Some(1376),
+        height: Some(640),
+        width: Some(1280),
         text: Some("PDF Reader MCP".into()),
         desc: Some("The PDF intelligence layer".into()),
         hero: mark::capabilities::mark::domain::HeroSpec {
-            layout: Some("plate".into()),
+            layout: Some("left".into()),
         },
         ..Default::default()
     };
     let svg = render(&spec);
+    assert!(svg.contains("text-anchor=\"start\""), "left-aligned titles");
     assert!(
-        svg.contains("text-anchor=\"start\""),
-        "plate titles left-aligned"
+        svg.contains("font-size=\"79\""),
+        "type scales with the canvas"
     );
-    assert!(svg.contains("PR"), "monogram present");
     assert!(svg.contains("PDF Reader MCP"));
 }
 
 #[test]
-fn hero_typewriter_is_per_character() {
-    let mut spec = hero("soft", "Hi");
+fn hero_type_reveals_once_then_rests() {
+    let mut spec = hero("minimal", "Hi");
     spec.animation = Some("type".into());
     let svg = render(&spec);
-    let anims = svg.matches("attributeName=\"opacity\"").count();
     assert!(
-        anims >= 2,
-        "typewriter animates each character; anims={anims}"
+        svg.contains("attributeName=\"width\""),
+        "a sweep reveals the title"
     );
+    assert!(!svg.contains("indefinite"), "minimal art never loops");
 }
 
 #[test]
@@ -247,11 +247,11 @@ fn strip_motion_wraps_the_icon_row() {
         "fade SMIL must wrap the icon row, not an empty group"
     );
 
-    let glow = render(&strip_spec("glow"));
-    strip_groups_are_balanced(&glow);
+    let rise = render(&strip_spec("rise"));
+    strip_groups_are_balanced(&rise);
     assert!(
-        glow.contains("<animate"),
-        "glow must compose onto the strip"
+        rise.contains("<animateTransform"),
+        "rise must compose onto the strip"
     );
 
     let none = render(&strip_spec("none"));
@@ -279,10 +279,9 @@ fn profile_renders_text_art_and_monogram() {
     assert!(art.contains("Ada Lovelace"));
     assert!(art.contains("AI-native platform"));
     assert!(art.contains(">AL<"));
-    assert!(art.contains("clipPath"), "art is clipped to the card");
     assert!(
-        art.contains("id=\"mg\""),
-        "profile art must share the hero chromatic kernel ids"
+        art.contains("clip-path=\"url(#mc)\""),
+        "profile art is the hero's stage, clipped to the card"
     );
 }
 
@@ -417,8 +416,8 @@ fn deploy_renders_conversion_pill() {
 fn composition_pill_motion_and_profile_art() {
     let pill = render(&MarkSpec {
         form: MarkForm::Pill,
-        theme: Some("neon".into()),
-        animation: Some("glow".into()),
+        theme: Some("grape".into()),
+        animation: Some("fade".into()),
         pill: mark::capabilities::mark::domain::PillSpec {
             label: Some("build".into()),
             message: Some("passing".into()),
@@ -430,7 +429,7 @@ fn composition_pill_motion_and_profile_art() {
 
     let profile = render(&MarkSpec {
         form: MarkForm::Profile,
-        art: Some("wave".into()),
+        art: Some("waving".into()),
         theme: Some("ocean".into()),
         text: Some("Kyle Tse".into()),
         ..Default::default()

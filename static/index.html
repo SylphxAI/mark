@@ -2,129 +2,175 @@
 <html lang="en">
 <head>
 <meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>readme-mark — beautiful README images from one URL</title>
-<meta name="description" content="Animated banners, shields-compatible badges, typing text, tech icons and GitHub stats cards for your README. Free, no token, no signup — one URL." />
-<meta property="og:title" content="readme-mark — beautiful README images from one URL" />
-<meta property="og:description" content="Banners, badges, typing text, tech icons and GitHub stats cards. Free, no token, drop-in for shields, capsule-render, skill-icons, readme-typing-svg and github-readme-stats." />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Mark — beautiful README images from one URL</title>
+<meta name="description" content="Banners, badges, typing text, tech icons and GitHub stats cards for your README. Free, no token, no signup — one URL per image." />
+<meta name="theme-color" content="#0B0C10" media="(prefers-color-scheme: dark)" />
+<meta name="theme-color" content="#FAFAFA" media="(prefers-color-scheme: light)" />
+<meta property="og:title" content="Mark — beautiful README images from one URL" />
+<meta property="og:description" content="Banners, badges, typing text, tech icons and GitHub stats cards. Free, no token, and a drop-in for shields, capsule-render, skill-icons, readme-typing-svg and github-readme-stats." />
 <meta property="og:type" content="website" />
-<meta property="og:site_name" content="readme-mark" />
+<meta property="og:site_name" content="Mark" />
 <meta property="og:url" content="https://mark.sylphx.com/" />
-<meta name="twitter:card" content="summary" />
+<meta property="og:image" content="https://mark.sylphx.com/og.png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta property="og:image:alt" content="Mark — beautiful README images from one URL" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:image" content="https://mark.sylphx.com/og.png" />
 <link rel="canonical" href="https://mark.sylphx.com/" />
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3ClinearGradient id='g' x2='1' y2='1'%3E%3Cstop stop-color='%23ff8a3d'/%3E%3Cstop offset='1' stop-color='%235b8cff'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='32' height='32' rx='9' fill='url(%23g)'/%3E%3Cpath d='M8 22V10l8 7 8-7v12' fill='none' stroke='%23fff' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E" />
+<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
 <style>
   :root {
-    --bg:#08090d; --panel:#0e1117; --elev:#151a23; --elev2:#1b2130; --fg:#eef1f6; --muted:#9aa3b6;
-    --faint:#667085; --line:rgba(255,255,255,0.07); --line2:rgba(255,255,255,0.14);
-    --accent:#ff8a3d; --accent2:#5b8cff; --ok:#3dd68c; --danger:#ff7b86;
-    --radius:16px; --font:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
-    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    --bg:#0B0C10; --panel:#111318; --elev:#171A21; --hover:#1D212A; --fg:#EDEFF4; --muted:#A1A7B5;
+    --faint:#6B7280; --line:rgba(255,255,255,0.07); --line2:rgba(255,255,255,0.12);
+    --accent:#7C83FF; --accent-ink:#0B0C10; --ok:#4ADE80; --danger:#F87171;
+    --radius:14px; --font:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Inter,Roboto,Helvetica,Arial,sans-serif;
+    --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace;
+    --shadow:0 1px 0 rgba(255,255,255,0.03) inset, 0 12px 32px -16px rgba(0,0,0,0.6);
     color-scheme:dark;
   }
   @media (prefers-color-scheme: light) {
     :root:not([data-theme="dark"]) {
-      --bg:#f6f7f9; --panel:#ffffff; --elev:#f2f4f7; --elev2:#e9edf3; --fg:#111827; --muted:#4b5563;
-      --faint:#8a94a6; --line:rgba(15,23,42,0.08); --line2:rgba(15,23,42,0.16); color-scheme:light;
+      --bg:#FAFAFA; --panel:#FFFFFF; --elev:#F4F4F6; --hover:#ECECF0; --fg:#0B0C10; --muted:#52525B;
+      --faint:#8A8A94; --line:rgba(10,12,16,0.07); --line2:rgba(10,12,16,0.13); --accent:#5B63F5; --accent-ink:#FFFFFF;
+      --ok:#15803D; --danger:#DC2626; --shadow:0 1px 2px rgba(10,12,16,0.04), 0 12px 32px -18px rgba(10,12,16,0.18);
+      color-scheme:light;
     }
   }
   * { box-sizing:border-box; }
-  html { overflow-x:clip; }
-  body { margin:0; color:var(--fg); font-family:var(--font); background:var(--bg); min-height:100vh;
-    background-image:radial-gradient(900px 420px at 8% -10%, rgba(255,138,61,0.10), transparent 60%),
-      radial-gradient(800px 420px at 95% -5%, rgba(91,140,255,0.10), transparent 55%); }
+  [hidden] { display:none !important; }
+  html { overflow-x:clip; -webkit-text-size-adjust:100%; }
+  body { margin:0; color:var(--fg); font:15px/1.5 var(--font); background:var(--bg); min-height:100vh; -webkit-font-smoothing:antialiased; }
   button,input,select,textarea { font:inherit; color:inherit; }
-  a { color:var(--accent2); text-decoration:none; }
-  a:hover { text-decoration:underline; }
-  .wrap { max-width:1440px; margin:0 auto; padding:0 16px; }
-  header.top { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:14px 0 6px; }
-  .brand { display:flex; align-items:center; gap:10px; font-weight:700; letter-spacing:-0.02em; font-size:1.05rem; }
-  .brand svg { flex-shrink:0; }
-  .brand small { color:var(--faint); font-weight:500; font-size:.8rem; letter-spacing:0; }
-  .toplinks { display:flex; align-items:center; gap:10px; font-size:.84rem; }
-  .toplinks a { color:var(--muted); }
-  .intro { padding:26px 0 18px; display:grid; gap:14px; }
-  .intro h1 { margin:0; font-size:clamp(1.6rem, 3.4vw, 2.5rem); letter-spacing:-0.035em; line-height:1.08; }
-  .intro h1 span { background:linear-gradient(90deg,var(--accent),#f15bb5 45%,var(--accent2)); -webkit-background-clip:text; background-clip:text; color:transparent; }
-  .intro p { margin:0; color:var(--muted); max-width:760px; line-height:1.55; }
-  .import { display:flex; gap:8px; max-width:880px; }
-  .import input { flex:1; min-width:0; background:var(--panel); border:1px solid var(--line2); border-radius:12px; padding:10px 12px; font-family:var(--mono); font-size:.8rem; outline:none; }
-  .import input:focus { border-color:var(--accent2); }
-  .btn { border:1px solid var(--line2); background:var(--elev); color:var(--fg); border-radius:10px; padding:8px 13px; font-weight:600; font-size:.82rem; cursor:pointer; white-space:nowrap; transition:transform .08s, background .12s, border-color .12s; }
-  .btn:hover { border-color:var(--faint); }
+  a { color:inherit; }
+  :focus-visible { outline:2px solid var(--accent); outline-offset:2px; border-radius:8px; }
+  .wrap { max-width:1280px; margin:0 auto; padding:0 20px; }
+  header.top { display:flex; align-items:center; justify-content:space-between; gap:12px; height:64px; }
+  .brand { display:flex; align-items:center; gap:10px; font-weight:650; letter-spacing:-0.01em; font-size:1rem; text-decoration:none; }
+  .toplinks { display:flex; align-items:center; gap:4px; font-size:.875rem; }
+  .toplinks a { color:var(--muted); text-decoration:none; padding:8px 10px; border-radius:8px; }
+  .toplinks a:hover { color:var(--fg); background:var(--elev); }
+  .intro { padding:40px 0 28px; display:grid; gap:14px; max-width:760px; }
+  .intro h1 { margin:0; font-size:clamp(2rem, 5vw, 3.25rem); letter-spacing:-0.04em; line-height:1.04; font-weight:700; text-wrap:balance; }
+  .intro h1 span { color:var(--muted); }
+  .intro p { margin:0; color:var(--muted); font-size:1.0625rem; line-height:1.55; max-width:620px; }
+  .import { display:flex; gap:8px; margin-top:8px; }
+  .import input { flex:1; min-width:0; height:40px; background:var(--panel); border:1px solid var(--line2); border-radius:10px; padding:0 12px; font-size:.875rem; outline:none; transition:border-color .15s; }
+  .import input::placeholder { color:var(--faint); }
+  .import input:focus { border-color:var(--accent); }
+  .import-note { font-size:.8125rem; color:var(--muted); min-height:1.2em; }
+  .btn { display:inline-flex; align-items:center; justify-content:center; gap:6px; height:36px; border:1px solid var(--line2); background:var(--panel); color:var(--fg); border-radius:9px; padding:0 13px; font-weight:560; font-size:.8125rem; cursor:pointer; white-space:nowrap; transition:background .12s, border-color .12s, transform .06s; }
+  .btn:hover { background:var(--hover); }
   .btn:active { transform:translateY(1px); }
-  .btn.primary { background:var(--accent); border-color:var(--accent); color:#1a0d02; }
+  .btn.primary { background:var(--fg); border-color:var(--fg); color:var(--bg); }
+  .btn.primary:hover { opacity:.9; }
   .btn:disabled { opacity:.45; cursor:not-allowed; }
-  .import-note { font-size:.76rem; color:var(--faint); min-height:1em; }
-  .kinds { display:flex; gap:6px; overflow-x:auto; padding:4px 0 12px; scrollbar-width:none; }
-  .kinds button { border:1px solid var(--line); background:var(--panel); color:var(--muted); padding:8px 14px; border-radius:999px; cursor:pointer; font-weight:600; font-size:.84rem; white-space:nowrap; display:flex; gap:7px; align-items:center; }
+  .btn svg { width:15px; height:15px; }
+  .kinds { display:flex; gap:2px; overflow-x:auto; padding:3px; margin:0 0 16px; background:var(--elev); border-radius:12px; width:max-content; max-width:100%; scrollbar-width:none; }
+  .kinds::-webkit-scrollbar { display:none; }
+  .kinds button { border:0; background:transparent; color:var(--muted); height:34px; padding:0 14px; border-radius:9px; cursor:pointer; font-weight:560; font-size:.875rem; white-space:nowrap; }
   .kinds button:hover { color:var(--fg); }
-  .kinds button.on { color:var(--fg); border-color:var(--accent); box-shadow:inset 0 0 0 1px var(--accent); }
-  .kinds button i { font-style:normal; font-size:.72rem; color:var(--faint); font-weight:500; }
-  .studio { display:grid; grid-template-columns:minmax(0,1fr) 380px; gap:14px; align-items:start; }
-  .panel { background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); min-width:0; }
-  .stagebar { display:flex; align-items:center; justify-content:space-between; gap:8px; padding:10px 12px; border-bottom:1px solid var(--line); }
-  .stagebar .title { font-size:.8rem; color:var(--muted); font-weight:600; }
-  .seg { display:flex; gap:2px; background:var(--elev); border-radius:9px; padding:2px; }
-  .seg button { border:0; background:transparent; color:var(--muted); padding:5px 10px; border-radius:7px; font-size:.75rem; cursor:pointer; font-weight:600; }
-  .seg button.on { background:var(--panel); color:var(--fg); box-shadow:0 1px 2px rgba(0,0,0,.25); }
-  .stage { min-height:300px; display:flex; align-items:center; justify-content:center; padding:28px 18px; transition:background .2s; }
-  .stage[data-bg="dark"] { background:#0d1117; }
-  .stage[data-bg="light"] { background:#ffffff; }
-  .stage[data-bg="checker"] { background:repeating-conic-gradient(#1a1f29 0 25%, #12161e 0 50%) 0 0/18px 18px; }
-  .stage img { max-width:100%; height:auto; display:block; }
-  .status { display:flex; align-items:center; justify-content:space-between; gap:8px; padding:8px 12px; font-size:.76rem; color:var(--muted); border-top:1px solid var(--line); min-height:36px; }
-  .status[data-state="ready"] { color:var(--ok); }
+  .kinds button.on { color:var(--fg); background:var(--panel); box-shadow:0 1px 2px rgba(0,0,0,.18), 0 0 0 1px var(--line); }
+  .studio { display:grid; grid-template-columns:minmax(0,1fr) 360px; grid-template-areas:"preview aside" "gallery aside"; gap:20px; align-items:start; }
+  .studio > .preview { grid-area:preview; } .studio > aside { grid-area:aside; } .studio > .gallery { grid-area:gallery; }
+  .panel { background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); min-width:0; box-shadow:var(--shadow); }
+  .stagebar { display:flex; align-items:center; justify-content:space-between; gap:8px; padding:10px 12px 10px 16px; border-bottom:1px solid var(--line); }
+  .stagebar .title { font-size:.8125rem; color:var(--muted); font-weight:560; }
+  .seg { display:inline-flex; gap:2px; background:var(--elev); border-radius:9px; padding:2px; }
+  .seg button { border:0; background:transparent; color:var(--muted); height:28px; padding:0 10px; border-radius:7px; font-size:.78rem; cursor:pointer; font-weight:560; white-space:nowrap; }
+  .seg button:hover { color:var(--fg); }
+  .seg button.on { background:var(--panel); color:var(--fg); box-shadow:0 1px 2px rgba(0,0,0,.2), 0 0 0 1px var(--line); }
+  .stage { min-height:320px; display:flex; align-items:center; justify-content:center; padding:36px 24px; transition:background .2s; }
+  .stage[data-bg="dark"] { background:#0D1117; }
+  .stage[data-bg="light"] { background:#FFFFFF; }
+  .stage[data-bg="checker"] { background:repeating-conic-gradient(#1b1f27 0 25%, #14171d 0 50%) 0 0/16px 16px; }
+  .stage img { max-width:100%; height:auto; display:block; transition:opacity .2s; }
+  .stage img.loading { opacity:.55; }
+  .status { display:flex; align-items:center; justify-content:space-between; gap:8px; padding:0 16px; height:36px; font-size:.78rem; color:var(--faint); border-top:1px solid var(--line); }
   .status[data-state="error"] { color:var(--danger); }
-  .status .btn { padding:3px 9px; font-size:.72rem; }
-  .output { border-top:1px solid var(--line); padding:12px; display:grid; gap:10px; }
-  .output .row { display:flex; gap:8px; align-items:center; flex-wrap:wrap; justify-content:space-between; }
-  .code { background:var(--elev); border:1px solid var(--line); border-radius:10px; padding:10px 12px; font-family:var(--mono); font-size:.76rem; line-height:1.5; color:var(--fg); white-space:pre-wrap; word-break:break-all; max-height:132px; overflow:auto; margin:0; }
+  .status .btn { height:26px; font-size:.75rem; }
+  .embed { border-top:1px solid var(--line); padding:14px 16px 16px; display:grid; gap:10px; }
+  .embed .row { display:flex; gap:8px; align-items:center; flex-wrap:wrap; justify-content:space-between; }
   .actions { display:flex; gap:6px; flex-wrap:wrap; }
-  .presets { padding:12px; border-top:1px solid var(--line); }
-  .presets h3, .controls h3 { margin:0 0 10px; font-size:.7rem; text-transform:uppercase; letter-spacing:.1em; color:var(--faint); font-weight:700; }
-  .preset-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); gap:8px; }
-  .preset { border:1px solid var(--line); background:var(--elev); border-radius:12px; padding:8px; cursor:pointer; display:grid; gap:6px; text-align:left; transition:border-color .12s, transform .08s; }
-  .preset:hover { border-color:var(--line2); transform:translateY(-1px); }
-  .preset.on { border-color:var(--accent); }
-  .preset .thumb { height:64px; display:flex; align-items:center; justify-content:center; background:#0d1117; border-radius:8px; overflow:hidden; }
-  .preset .thumb img { max-width:100%; max-height:64px; }
-  .preset span { font-size:.76rem; color:var(--muted); font-weight:600; }
-  .controls { padding:14px; display:grid; gap:16px; }
-  .field { display:grid; gap:5px; }
-  .field > label { font-size:.78rem; color:var(--muted); font-weight:600; display:flex; justify-content:space-between; gap:6px; }
-  .field > label em { font-style:normal; color:var(--faint); font-weight:500; font-family:var(--mono); font-size:.7rem; }
+  .code { position:relative; background:var(--elev); border:1px solid var(--line); border-radius:10px; padding:12px 14px; font-family:var(--mono); font-size:.78rem; line-height:1.6; color:var(--fg); white-space:pre-wrap; word-break:break-all; max-height:140px; overflow:auto; margin:0; cursor:text; }
+  .section-title { margin:0 0 12px; font-size:.75rem; letter-spacing:.06em; text-transform:uppercase; color:var(--faint); font-weight:600; }
+  .gallery { margin-top:4px; }
+  .preset-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:12px; }
+  .preset { border:1px solid var(--line); background:var(--panel); border-radius:12px; padding:6px; cursor:pointer; display:grid; gap:6px; text-align:left; transition:border-color .15s, transform .15s, box-shadow .15s; }
+  .preset:hover { border-color:var(--line2); transform:translateY(-2px); box-shadow:var(--shadow); }
+  .preset.on { border-color:var(--accent); box-shadow:0 0 0 1px var(--accent); }
+  .preset .thumb { aspect-ratio:4/1; display:flex; align-items:center; justify-content:center; background:#0D1117; border-radius:8px; overflow:hidden; }
+  .preset .thumb img { max-width:100%; max-height:100%; }
+  .preset span { font-size:.8125rem; color:var(--muted); font-weight:560; padding:0 4px 2px; }
+  aside.panel { position:sticky; top:16px; max-height:calc(100vh - 32px); overflow:auto; scrollbar-width:thin; }
+  .controls { padding:18px; display:grid; gap:18px; }
+  .field { display:grid; gap:7px; }
+  .field > label { font-size:.8125rem; color:var(--fg); font-weight:560; display:flex; justify-content:space-between; gap:6px; }
+  .field > label em { font-style:normal; color:var(--faint); font-weight:450; font-family:var(--mono); font-size:.72rem; }
   .field input[type=text], .field input[type=number], .field textarea, .field select {
-    width:100%; background:var(--elev); border:1px solid var(--line2); border-radius:9px; padding:8px 10px; font-size:.85rem; outline:none; }
-  .field input:focus, .field textarea:focus, .field select:focus { border-color:var(--accent2); }
-  .field textarea { min-height:70px; resize:vertical; font-family:var(--font); }
+    width:100%; background:var(--elev); border:1px solid var(--line); border-radius:9px; padding:8px 11px; font-size:.875rem; outline:none; transition:border-color .15s, background .15s; }
+  .field input:hover, .field textarea:hover, .field select:hover { border-color:var(--line2); }
+  .field input:focus, .field textarea:focus, .field select:focus { border-color:var(--accent); background:var(--panel); }
+  .field textarea { min-height:62px; resize:vertical; font-family:var(--font); line-height:1.45; }
   .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
-  .chips { display:flex; flex-wrap:wrap; gap:5px; max-height:170px; overflow:auto; }
-  .chip { border:1px solid var(--line2); background:var(--elev); color:var(--muted); padding:5px 9px; border-radius:8px; font-size:.75rem; cursor:pointer; display:inline-flex; align-items:center; gap:6px; }
-  .chip:hover { color:var(--fg); }
+  .chips { display:flex; flex-wrap:wrap; gap:6px; }
+  .chip { border:1px solid var(--line); background:var(--elev); color:var(--muted); height:30px; padding:0 10px; border-radius:8px; font-size:.78rem; cursor:pointer; display:inline-flex; align-items:center; gap:6px; }
+  .chip:hover { color:var(--fg); border-color:var(--line2); }
   .chip.on { border-color:var(--accent); color:var(--fg); box-shadow:inset 0 0 0 1px var(--accent); }
-  .chip .dot { width:10px; height:10px; border-radius:50%; box-shadow:0 0 0 1px rgba(255,255,255,.15); }
-  .field > label.toggle { justify-content:flex-start; font-weight:500; }
-  .toggle { display:flex; align-items:center; gap:8px; font-size:.8rem; color:var(--muted); cursor:pointer; }
+  .chip .dot { width:10px; height:10px; border-radius:50%; box-shadow:0 0 0 1px rgba(127,127,127,.3); }
+  .field .seg { display:flex; }
+  .field .seg button { flex:1; }
+  .arts { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+  .art { border:1px solid var(--line); background:var(--elev); border-radius:10px; padding:4px; cursor:pointer; display:grid; gap:4px; transition:border-color .15s; }
+  .art:hover { border-color:var(--line2); }
+  .art.on { border-color:var(--accent); box-shadow:0 0 0 1px var(--accent); }
+  .art img { width:100%; height:auto; aspect-ratio:3/1; display:block; border-radius:7px; background:#0D1117; }
+  .art span { font-size:.75rem; color:var(--muted); font-weight:560; padding:0 3px 1px; }
+  .themes { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; }
+  .theme { border:1px solid var(--line); border-radius:10px; padding:0; cursor:pointer; overflow:hidden; background:none; display:grid; }
+  .theme .sw { height:34px; display:flex; align-items:flex-end; gap:3px; padding:6px; }
+  .theme .sw i { width:9px; height:9px; border-radius:50%; }
+  .theme span { font-size:.72rem; color:var(--muted); font-weight:560; padding:4px 6px 5px; text-align:left; background:var(--elev); }
+  .theme:hover { border-color:var(--line2); }
+  .theme.on { border-color:var(--accent); box-shadow:0 0 0 1px var(--accent); }
+  .field > label.toggle { justify-content:flex-start; font-weight:450; }
+  .toggle { display:flex; align-items:center; gap:8px; font-size:.8125rem; color:var(--muted); cursor:pointer; }
   .toggle input { accent-color:var(--accent); width:16px; height:16px; }
-  .hint { font-size:.74rem; color:var(--faint); line-height:1.45; }
-  .dialects { padding:28px 0 8px; display:grid; gap:12px; }
-  .dialects h2 { margin:0; font-size:1.1rem; letter-spacing:-0.02em; }
-  .dtable { width:100%; border-collapse:collapse; font-size:.8rem; }
-  .dtable td, .dtable th { border-bottom:1px solid var(--line); padding:8px 6px; text-align:left; vertical-align:top; }
+  .hint { font-size:.75rem; color:var(--faint); line-height:1.45; }
+  .dialects { padding:56px 0 8px; display:grid; gap:14px; }
+  .dialects h2 { margin:0; font-size:1.375rem; letter-spacing:-0.025em; }
+  .dialects p { margin:0; color:var(--muted); }
+  .dtable { width:100%; border-collapse:collapse; font-size:.8125rem; }
+  .dtable td, .dtable th { border-bottom:1px solid var(--line); padding:10px 8px; text-align:left; vertical-align:top; }
   .dtable th { color:var(--faint); font-weight:600; font-size:.72rem; text-transform:uppercase; letter-spacing:.06em; }
-  .dtable code { font-family:var(--mono); font-size:.74rem; color:var(--muted); word-break:break-all; }
-  footer { padding:24px 0 32px; font-size:.76rem; color:var(--faint); display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap; }
-  .toast { position:fixed; left:50%; bottom:22px; transform:translateX(-50%) translateY(20px); background:var(--fg); color:var(--bg); padding:9px 14px; border-radius:10px; font-size:.82rem; font-weight:600; opacity:0; pointer-events:none; transition:all .18s; }
+  .dtable td:first-child code { color:var(--faint); }
+  .dtable code { font-family:var(--mono); font-size:.76rem; color:var(--fg); word-break:break-all; }
+  footer { padding:40px 0 48px; font-size:.8125rem; color:var(--faint); display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap; border-top:1px solid var(--line); margin-top:48px; }
+  footer a { color:var(--muted); }
+  .toast { position:fixed; left:50%; bottom:24px; transform:translateX(-50%) translateY(16px); background:var(--fg); color:var(--bg); padding:10px 16px; border-radius:10px; font-size:.84rem; font-weight:600; opacity:0; pointer-events:none; transition:opacity .18s, transform .18s; z-index:20; box-shadow:0 8px 30px rgba(0,0,0,.3); }
   .toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+  .dock { display:none; }
   .noscript { padding:16px; }
+  @media (prefers-reduced-motion: reduce) { * { transition:none !important; } }
   @media (max-width: 980px) {
-    .studio { grid-template-columns:1fr; }
-    .intro { padding-top:14px; }
+    .studio { grid-template-columns:minmax(0,1fr); grid-template-areas:"preview" "aside" "gallery"; }
+    aside.panel { position:static; max-height:none; }
+    .intro { padding:24px 0 20px; }
   }
-  @media (max-width: 560px) {
+  @media (max-width: 600px) {
+    .wrap { padding:0 16px; }
     .import { flex-direction:column; }
-    .grid2 { grid-template-columns:1fr; }
+    .import input, .import .btn { height:44px; flex:none; }
+    .stage { min-height:180px; padding:20px 12px; }
+    .embed .actions .btn:not(.keep) { display:none; }
+    .kinds button, .seg button, .chip { min-height:40px; }
+    .themes { grid-template-columns:repeat(4,1fr); }
+    .preset-grid { grid-template-columns:1fr 1fr; gap:8px; }
+    .dock { display:flex; position:fixed; left:0; right:0; bottom:0; gap:8px; padding:10px 16px calc(10px + env(safe-area-inset-bottom)); background:color-mix(in srgb, var(--bg) 88%, transparent); backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px); border-top:1px solid var(--line); z-index:10; }
+    .dock .btn { flex:1; height:44px; font-size:.875rem; }
+    body { padding-bottom:76px; }
+    .toast { bottom:88px; }
     .toplinks .hide-sm { display:none; }
   }
 </style>
@@ -132,30 +178,31 @@
 <body>
 <div class="wrap">
   <header class="top">
-    <div class="brand">
-      <svg width="28" height="28" viewBox="0 0 32 32" aria-hidden="true"><defs><linearGradient id="lg" x2="1" y2="1"><stop stop-color="#ff8a3d"/><stop offset="1" stop-color="#5b8cff"/></linearGradient></defs><rect width="32" height="32" rx="9" fill="url(#lg)"/><path d="M8 22V10l8 7 8-7v12" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      readme-mark <small class="hide-sm">by Sylphx</small>
-    </div>
+    <a class="brand" href="/" aria-label="Mark home">
+      <svg width="26" height="26" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" fill="currentColor"/><path d="M9 22V10.5l7 6.5 7-6.5V22" fill="none" stroke="var(--bg)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Mark
+    </a>
     <nav class="toplinks">
-      <a class="hide-sm" href="/api/v1/catalog">Catalog</a>
+      <a class="hide-sm" href="https://github.com/SylphxAI/readme-mark#readme">Docs</a>
+      <a class="hide-sm" href="/api/v1/catalog">API</a>
       <a href="https://github.com/SylphxAI/readme-mark">GitHub</a>
     </nav>
   </header>
 
   <section class="intro">
-    <h1>Beautiful README images <span>from one URL.</span></h1>
-    <p>Animated banners, badges, typing text, tech icons and GitHub stats cards. Free, no token, no signup. Pick a preset, tweak it, copy the markdown.</p>
+    <h1>Beautiful README images. <span>From one URL.</span></h1>
+    <p>Banners, badges, typing text, tech icons and GitHub stats cards. Free, no token, no signup. Pick a style, make it yours, copy the Markdown.</p>
     <form class="import" id="importForm" autocomplete="off">
-      <input id="importBox" type="text" spellcheck="false" aria-label="Paste an image URL to edit" placeholder="Paste any README image URL — shields.io, capsule-render, skillicons, readme-typing-svg, github-readme-stats…" />
-      <button class="btn" type="submit">Edit it here</button>
+      <input id="importBox" type="text" spellcheck="false" aria-label="Paste an image URL to edit" placeholder="Paste a shields.io, capsule-render, skill-icons or readme-stats URL to edit it here" />
+      <button class="btn" type="submit">Edit URL</button>
     </form>
-    <div class="import-note" id="importNote"></div>
+    <div class="import-note" id="importNote" role="status" aria-live="polite"></div>
   </section>
 
   <noscript>
     <div class="panel noscript">
       <p>The studio needs JavaScript. Every image is a plain URL, for example:</p>
-      <p><img src="/api/v1/mark/hero?type=waving&amp;text=Hello%20README&amp;desc=One%20URL%2C%20one%20image" alt="Example banner" width="880" height="220" loading="lazy" /></p>
+      <p><img src="/api/v1/mark/hero?type=waving&amp;text=Hello%2C%20README&amp;desc=Beautiful%20images%20from%20one%20URL" alt="Example banner" width="880" height="220" loading="lazy" style="max-width:100%;height:auto" /></p>
       <p><a href="/badge/build-passing-brightgreen">/badge/build-passing-brightgreen</a> · <a href="/api/v1/catalog">catalog</a></p>
     </div>
   </noscript>
@@ -163,48 +210,48 @@
   <nav class="kinds" id="kinds" aria-label="Image kind"></nav>
 
   <main class="studio">
-    <section class="panel">
-      <div class="stagebar">
-        <span class="title" id="stageTitle">Preview</span>
-        <div class="seg" id="bgSeg" role="group" aria-label="Preview background">
-          <button type="button" data-bg="dark" class="on">GitHub dark</button>
-          <button type="button" data-bg="light">GitHub light</button>
-          <button type="button" data-bg="checker">Transparent</button>
-        </div>
-      </div>
-      <div class="stage" id="stage" data-bg="dark"><img id="previewImg" alt="Preview" /></div>
-      <div class="status" id="previewStatus" data-state="loading" role="status" aria-live="polite">
-        <span id="statusText">Rendering…</span>
-        <button class="btn" id="retryBtn" type="button" hidden>Retry</button>
-      </div>
-      <div class="output">
-        <div class="row">
-          <div class="seg" id="fmtSeg" role="group" aria-label="Embed format">
-            <button type="button" data-fmt="md" class="on">Markdown</button>
-            <button type="button" data-fmt="html">HTML</button>
-            <button type="button" data-fmt="url">URL</button>
-          </div>
-          <div class="actions">
-            <button class="btn" id="openBtn" type="button">Open</button>
-            <button class="btn" id="downloadBtn" type="button" disabled>Download SVG</button>
-            <button class="btn" id="copyBtn" type="button">Copy URL</button>
-            <button class="btn primary" id="mdBtn" type="button">Copy markdown</button>
+      <section class="panel preview">
+        <div class="stagebar">
+          <span class="title" id="stageTitle">Preview</span>
+          <div class="seg" id="bgSeg" role="group" aria-label="Preview background">
+            <button type="button" data-bg="dark" class="on">Dark</button>
+            <button type="button" data-bg="light">Light</button>
+            <button type="button" data-bg="checker">Transparent</button>
           </div>
         </div>
-        <pre class="code" id="codeBox"></pre>
-      </div>
-      <div class="presets">
-        <h3>Presets</h3>
+        <div class="stage" id="stage" data-bg="dark"><img id="previewImg" alt="Preview" /></div>
+        <div class="status" id="previewStatus" data-state="loading" role="status" aria-live="polite">
+          <span id="statusText">Rendering…</span>
+          <button class="btn" id="retryBtn" type="button" hidden>Retry</button>
+        </div>
+        <div class="embed">
+          <div class="row">
+            <div class="seg" id="fmtSeg" role="group" aria-label="Embed format">
+              <button type="button" data-fmt="md" class="on">Markdown</button>
+              <button type="button" data-fmt="html">HTML</button>
+              <button type="button" data-fmt="url">URL</button>
+            </div>
+            <div class="actions">
+              <button class="btn" id="openBtn" type="button">Open</button>
+              <button class="btn" id="downloadBtn" type="button" disabled>Download SVG</button>
+              <button class="btn primary keep" id="copyBtn" type="button"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="5" y="5" width="9" height="9" rx="2"/><path d="M11 5V3.5A1.5 1.5 0 0 0 9.5 2h-6A1.5 1.5 0 0 0 2 3.5v6A1.5 1.5 0 0 0 3.5 11H5"/></svg><span id="copyLabel">Copy Markdown</span></button>
+            </div>
+          </div>
+          <pre class="code" id="codeBox" tabindex="0" aria-label="Embed code"></pre>
+        </div>
+      </section>
+      <section class="gallery">
+        <h2 class="section-title">Start from a style</h2>
         <div class="preset-grid" id="presetGrid"></div>
-      </div>
-    </section>
-    <aside class="panel">
+      </section>
+    <aside class="panel" aria-label="Options">
       <div class="controls" id="controls"></div>
     </aside>
   </main>
 
   <section class="dialects">
-    <h2>Already using another service? Change only the host.</h2>
+    <h2>Already using another service?</h2>
+    <p>Keep your URL and change only the host. Mark reads the same parameters.</p>
     <table class="dtable">
       <thead><tr><th>From</th><th>To</th></tr></thead>
       <tbody id="dialectRows"></tbody>
@@ -212,26 +259,38 @@
   </section>
 
   <footer>
-    <span>MIT · stateless Rust · every URL is cached at the edge.</span>
+    <span>Mark is open source (MIT). Every image is a cacheable URL — no account, no token.</span>
     <span>Brand icons from <a href="https://simpleicons.org">Simple Icons</a> (CC0).</span>
   </footer>
 </div>
-<div class="toast" id="toast"></div>
+<div class="dock" id="dock">
+  <button class="btn" id="dockUrl" type="button">Copy URL</button>
+  <button class="btn primary" id="dockMd" type="button">Copy Markdown</button>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
 <script>
 const BASE = "{{BASE}}";
 window.__MARK_BOOT__ = {{BOOT}};
 
 // ---- vocabulary (refined from /api/v1/catalog when it loads) --------------
-let THEMES = ["dark","light","tokyonight","dracula","nord","monokai","radical","gruvbox","ocean","sunset","forest","neon","github"];
-let ART = ["waving","wave","aurora","soft","rounded","slice","glass","product","terminal","mesh","plasma","holo","neon","liquid","silk","orbit","constellation","grid","blur","ring","circuit","hud","pulse","noise","cylinder","checkered","egg","shark","venom","speech","org","transparent"];
-let LAYOUTS = ["default","plate","signal","terminal"];
-let ANIMS = ["ambient","none","fade","rise","scale","float","glow","breathe","slide","cascade","shimmer","glitch","wave","orbit","neon","bounce","type"];
-const THEME_DOT = { dark:"#0d1117", light:"#f6f8fa", tokyonight:"#7aa2f7", dracula:"#bd93f9", nord:"#88c0d0", monokai:"#f92672", radical:"#fe428e", gruvbox:"#fabd2f", ocean:"#00b4d8", sunset:"#ff7e5f", forest:"#2d6a4f", neon:"#00f5d4", github:"#2f81f7" };
+let THEMES = ["dark","light","ocean","sunset","forest","grape","mono","paper"];
+let PALETTES = {
+  dark:{bg:"#0A0C12",accents:["#5B6CFF","#A35BFF","#22C4EE"]}, light:{bg:"#FAFAFC",accents:["#5B6CFF","#C27BFF","#38BDF8"]},
+  ocean:{bg:"#04111E",accents:["#0EA5E9","#2DD4BF","#6366F1"]}, sunset:{bg:"#150A0F",accents:["#FF6A45","#F43F8E","#FBBF24"]},
+  forest:{bg:"#06120D",accents:["#10B981","#A3E635","#06B6D4"]}, grape:{bg:"#0F0A1C",accents:["#8B5CF6","#EC4899","#6366F1"]},
+  mono:{bg:"#09090B",accents:["#A1A1AA","#E4E4E7","#52525B"]}, paper:{bg:"#F7F3EC",accents:["#EA580C","#E11D48","#D97706"]},
+};
+let ART = ["waving","aurora","mesh","spotlight","grid","minimal","terminal","transparent"];
+let LAYOUTS = ["default","left"];
+let ANIMS = ["ambient","fade","rise","type","none"];
+const ANIM_LABEL = { ambient:"Ambient", fade:"Fade", rise:"Rise", type:"Type", none:"Still" };
+const LAYOUT_LABEL = { default:"Centered", left:"Left" };
 const BADGE_COLORS = ["brightgreen","green","yellowgreen","yellow","orange","red","blue","blueviolet","ff69b4","lightgrey","555555","0a0d07"];
 const NAMED = { brightgreen:"#4c1", green:"#97ca00", yellowgreen:"#a4a61d", yellow:"#dfb317", orange:"#fe7d37", red:"#e05d44", blue:"#007ec6", blueviolet:"#8a2be2", lightgrey:"#9f9f9f" };
 const STAT_THEMES = ["default","dark","radical","tokyonight","dracula","gruvbox","onedark","nord","monokai","synthwave","cobalt","github_dark","catppuccin_mocha","transparent"];
 const POPULAR_ICONS = ["rust","ts","js","python","go","react","nextjs","vue","svelte","nodejs","bun","deno","docker","kubernetes","postgres","redis","mongodb","graphql","tailwind","linux","git","github","aws","gcp","cloudflare","vercel","figma","vim"];
-const SWATCHES = ["0:1A1A2E,50:4A90E2,100:D87000","667EEA,764BA2","4FACFE,00F2FE","43E97B,38F9D7","FA709A,FEE140","7C3AED,00F5D4","F43F5E,FB923C","14B8A6,6366F1","0EA5E9,A78BFA","FF6B35,F15BB5"];
+const SWATCHES = ["0:0F172A,50:5B8CFF,100:FF8A3D","6366F1,EC4899","0EA5E9,2DD4BF","10B981,A3E635","F97316,F43F5E","8B5CF6,22D3EE"];
+function cap(s){ return s ? s.charAt(0).toUpperCase() + s.slice(1) : s; }
 
 // Same vocabulary as the server (domain/spec.rs::MarkForm::parse): unknown
 // input is the hero, and the retired `identity` id is the profile card.
@@ -277,33 +336,37 @@ const F = {
   area:(key,label,def,extra)=>Object.assign({key,label,type:"area",def},extra||{}),
   num:(key,label,def,extra)=>Object.assign({key,label,type:"num",def},extra||{}),
   chips:(key,label,def,opts,extra)=>Object.assign({key,label,type:"chips",def,opts},extra||{}),
+  seg:(key,label,def,opts,extra)=>Object.assign({key,label,type:"seg",def,opts},extra||{}),
   select:(key,label,def,opts,extra)=>Object.assign({key,label,type:"select",def,opts},extra||{}),
   toggle:(key,label,def,extra)=>Object.assign({key,label,type:"toggle",def},extra||{}),
+  art:(key,label,def,extra)=>Object.assign({key,label,type:"art",def},extra||{}),
+  theme:(key,label,def,extra)=>Object.assign({key,label,type:"theme",def},extra||{}),
 };
 
 const KINDS = {
   banner: {
-    name:"Banner", note:"42 art types",
+    name:"Banner", note:"8 styles",
     fields:()=>[
       F.area("text","Title","Hello, README",{nl:true}),
       F.text("desc","Subtitle","Beautiful images from one URL"),
-      F.chips("type","Art","waving",ART),
-      F.chips("theme","Theme","",[""].concat(THEMES),{dots:true,none:"custom"}),
-      F.text("color","Custom colors","0:1A1A2E,50:4A90E2,100:D87000",{swatches:SWATCHES,hint:"Hex stops like 0:1A1A2E,100:D87000. Used when no theme is picked.",unless:"theme"}),
-      F.chips("layout","Layout","default",LAYOUTS,{sd:"default"}),
-      F.select("animation","Motion","ambient",ANIMS,{sd:"ambient"}),
-      F.chips("font","Font","sans",["sans","mono"],{sd:"sans"}),
-      F.num("height","Height","220",{min:60,max:900,sd:"220"}),
-      F.num("width","Width","880",{min:200,max:1600,sd:"880"}),
+      F.art("type","Style","waving",{sd:"waving"}),
+      F.theme("theme","Theme","dark",{custom:true}),
+      F.text("color","Custom colours","",{swatches:SWATCHES,hint:"One colour, or gradient stops like 0:0F172A,50:5B8CFF,100:FF8A3D (a dark first stop becomes the background).",only:{theme:""}}),
+      F.seg("animation","Motion","ambient",ANIMS,{sd:"ambient",labels:ANIM_LABEL}),
+      F.seg("layout","Alignment","default",LAYOUTS,{sd:"default",labels:LAYOUT_LABEL}),
+      F.seg("font","Font","sans",["sans","mono"],{sd:"sans",labels:{sans:"Sans",mono:"Mono"}}),
+      F.grid([F.num("width","Width","880",{min:200,max:1600,sd:"880"}), F.num("height","Height","220",{min:40,max:900,sd:"220"})]),
     ],
-    url:(s)=>"/api/v1/mark/hero?"+qs(s,["text","desc","type","theme","color","layout","animation","font","height","width"]),
+    url:(s)=>"/api/v1/mark/hero?"+qs(s,["text","desc","type","theme","color","layout","animation","font","width","height"]),
     presets:[
-      {name:"Header wave", s:{text:"Hello, README",desc:"Beautiful images from one URL",type:"waving",color:"0:1A1A2E,50:4A90E2,100:D87000"}},
-      {name:"Aurora", s:{text:"Aurora",desc:"Soft light for your project",type:"aurora",theme:"tokyonight",height:"240"}},
-      {name:"Constellation", s:{text:"Open source",desc:"Built in public",type:"constellation",color:"0:0B1026,100:7C3AED",height:"240"}},
-      {name:"Terminal", s:{text:"$ cargo install your-tool",desc:"Fast. Tiny. Yours.",type:"terminal",layout:"terminal",font:"mono",theme:"dark"}},
-      {name:"Product cover", s:{text:"Acme",desc:"The one-line pitch",type:"mesh",layout:"plate",color:"FA709A,FEE140"}},
-      {name:"Footer", s:{text:"thanks for reading",desc:"",type:"waving",color:"0:D87000,50:4A90E2,100:1A1A2E",height:"120",animation:"glow"}},
+      {name:"Waves", s:{text:"Hello, README",desc:"Beautiful images from one URL",type:"waving",theme:"dark"}},
+      {name:"Aurora", s:{text:"Aurora",desc:"Soft light for your project",type:"aurora",theme:"grape"}},
+      {name:"Mesh", s:{text:"Acme",desc:"The one-line pitch goes here",type:"mesh",theme:"sunset"}},
+      {name:"Spotlight", s:{text:"Launch week",desc:"Everything we shipped",type:"spotlight",theme:"dark"}},
+      {name:"Grid", s:{text:"Build in public",desc:"Notes, releases and roadmap",type:"grid",theme:"ocean"}},
+      {name:"Minimal", s:{text:"Mark",desc:"Beautiful README images from one URL",type:"minimal",theme:"light",layout:"left"}},
+      {name:"Terminal", s:{text:"cargo install your-tool",desc:"Fast. Tiny. Yours.",type:"terminal",theme:"dark",animation:"type"}},
+      {name:"Paper", s:{text:"Field notes",desc:"Writing about software",type:"waving",theme:"paper"}},
     ],
   },
   badge: {
@@ -313,7 +376,7 @@ const KINDS = {
       F.text("message","Message","passing"),
       F.chips("color","Color","brightgreen",BADGE_COLORS,{badgeDots:true,free:true,hint:"Named color or hex (without #)."}),
       F.text("labelColor","Label color",""),
-      F.chips("style","Style","flat",["flat","flat-square","plastic","for-the-badge","social"],{sd:"flat"}),
+      F.seg("style","Style","flat",["flat","flat-square","plastic","for-the-badge","social"],{sd:"flat",labels:{"flat":"Flat","flat-square":"Square","plastic":"Plastic","for-the-badge":"Bold","social":"Social"}}),
       F.text("logo","Logo","",{hint:"Any Simple Icons slug: rust, github, npm, docker…",suggest:POPULAR_ICONS}),
       F.text("logoColor","Logo color",""),
     ],
@@ -335,7 +398,7 @@ const KINDS = {
       F.text("label","Label","agent-ready"),
       F.num("value","Value","92",{min:0}),
       F.num("max","Max","100",{min:1,sd:"100"}),
-      F.chips("style","Style","flat",["flat","flat-square","plastic","for-the-badge","social"],{sd:"flat"}),
+      F.seg("style","Style","flat",["flat","flat-square","plastic","for-the-badge","social"],{sd:"flat",labels:{"flat":"Flat","flat-square":"Square","plastic":"Plastic","for-the-badge":"Bold","social":"Social"}}),
       F.text("logo","Logo",""),
       F.text("color","Color override","",{hint:"Leave empty for automatic grading."}),
     ],
@@ -370,7 +433,7 @@ const KINDS = {
     name:"Icons", note:"3000+ brands",
     fields:()=>[
       F.text("i","Icons","rust,ts,react,docker,kubernetes,postgres",{suggest:POPULAR_ICONS,append:true,hint:"Comma-separated. skill-icons ids and Simple Icons slugs both work."}),
-      F.chips("theme","Theme","dark",["dark","light"],{sd:"dark"}),
+      F.seg("theme","Theme","dark",["dark","light"],{sd:"dark",labels:{dark:"Dark",light:"Light"}}),
       F.num("perline","Per line","15",{min:1,max:50,sd:"15"}),
     ],
     url:(s)=>"/icons?"+qs(s,["i","theme","perline"]),
@@ -412,24 +475,23 @@ const KINDS = {
     fields:()=>[
       F.text("text","Name","Ada Lovelace"),
       F.text("desc","Tagline","Analytical engines and poetry"),
-      F.chips("theme","Theme","tokyonight",[""].concat(THEMES),{dots:true,none:"custom"}),
-      F.text("color","Custom colors","",{swatches:SWATCHES,unless:"theme"}),
-      F.chips("type","Art background","",[""].concat(ART),{none:"none"}),
-      F.num("width","Width","640",{min:280,max:1200,sd:"640"}),
-      F.num("height","Height","200",{min:80,max:400,sd:"200"}),
+      F.theme("theme","Theme","grape",{custom:true}),
+      F.text("color","Custom colours","",{swatches:SWATCHES,only:{theme:""}}),
+      F.chips("type","Background","",["","aurora","mesh","spotlight","grid","waving","minimal"],{none:"card"}),
+      F.grid([F.num("width","Width","640",{min:280,max:1200,sd:"640"}), F.num("height","Height","200",{min:80,max:400,sd:"200"})]),
     ],
     url:(s)=>"/api/v1/mark/profile?"+qs(s,["text","desc","theme","color","type","width","height"]),
     presets:[
-      {name:"Night", s:{text:"Ada Lovelace",desc:"Analytical engines and poetry",theme:"tokyonight"}},
+      {name:"Card", s:{text:"Ada Lovelace",desc:"Analytical engines and poetry",theme:"grape"}},
       {name:"Light", s:{text:"Grace Hopper",desc:"Compilers, COBOL, and nanoseconds",theme:"light"}},
-      {name:"Wave art", s:{text:"Alan Turing",desc:"Machines that think",type:"wave",theme:"ocean"}},
+      {name:"Aurora", s:{text:"Alan Turing",desc:"Machines that think",type:"aurora",theme:"ocean"}},
     ],
   },
   deploy: {
     name:"Deploy", note:"deployed on Sylphx",
     fields:()=>[
       F.text("service","Service","app"),
-      F.chips("style","Style","flat",["flat","flat-square","plastic","for-the-badge","social"],{sd:"flat"}),
+      F.seg("style","Style","flat",["flat","flat-square","plastic","for-the-badge","social"],{sd:"flat",labels:{"flat":"Flat","flat-square":"Square","plastic":"Plastic","for-the-badge":"Bold","social":"Social"}}),
     ],
     url:(s)=>"/api/v1/mark/deploy?"+qs(s,["service","style"]),
     presets:[
@@ -512,7 +574,7 @@ function renderKinds(){
   for (const k of ORDER) {
     const b = el("button", { type:"button", class: k === state.kind ? "on" : "", onclick:()=>setKind(k, KINDS[k].presets[0].s) });
     b.appendChild(document.createTextNode(KINDS[k].name));
-    b.appendChild(el("i", { text: KINDS[k].note }));
+    b.setAttribute("aria-pressed", k === state.kind ? "true" : "false");
     nav.appendChild(b);
   }
 }
@@ -586,6 +648,36 @@ function fieldNode(f){
       input.addEventListener("input", () => update(f.key, input.value.replace(/^#/, "")));
       wrap.appendChild(input);
     }
+  } else if (f.type === "seg") {
+    const seg = el("div", { class:"seg", role:"group", "aria-label":f.label });
+    for (const o of f.opts) seg.appendChild(el("button", { type:"button", class: String(v) === String(o) ? "on" : "", "aria-pressed": String(String(v) === String(o)), text:(f.labels && f.labels[o]) || o, onclick:()=>update(f.key, o, true) }));
+    wrap.appendChild(seg);
+  } else if (f.type === "art") {
+    const grid = el("div", { class:"arts" });
+    const theme = state.vals.theme || "";
+    for (const a of ART) {
+      const q = new URLSearchParams({ type:a, text:cap(a), animation:"none", width:"360", height:"120" });
+      if (theme) q.set("theme", theme); else if (state.vals.color) q.set("color", state.vals.color);
+      const b = el("button", { type:"button", class:"art" + (v === a ? " on" : ""), "aria-pressed":String(v === a), "aria-label":cap(a), onclick:()=>update(f.key, a, true) });
+      b.appendChild(el("img", { src: BASE + "/api/v1/mark/hero?" + q.toString(), alt:"", loading:"lazy", width:"360", height:"120" }));
+      b.appendChild(el("span", { text:cap(a) }));
+      grid.appendChild(b);
+    }
+    wrap.appendChild(grid);
+  } else if (f.type === "theme") {
+    const grid = el("div", { class:"themes" });
+    const opts = THEMES.concat(f.custom ? [""] : []);
+    for (const t of opts) {
+      const p = PALETTES[t];
+      const b = el("button", { type:"button", class:"theme" + (String(v || "") === t ? " on" : ""), "aria-pressed":String(String(v || "") === t), onclick:()=>update(f.key, t, true) });
+      const sw = el("div", { class:"sw" });
+      if (p) { sw.style.background = p.bg; for (const a of p.accents) sw.appendChild(el("i", { style:"background:" + a })); }
+      else { sw.style.background = "conic-gradient(from 90deg, #6366F1, #EC4899, #F59E0B, #10B981, #0EA5E9, #6366F1)"; }
+      b.appendChild(sw);
+      b.appendChild(el("span", { text: t ? cap(t) : "Custom" }));
+      grid.appendChild(b);
+    }
+    wrap.appendChild(grid);
   } else if (f.type === "toggle") {
     const lab = el("label", { class:"toggle" });
     const cb = el("input", { type:"checkbox" });
@@ -600,7 +692,6 @@ function fieldNode(f){
 function renderControls(){
   const box = document.getElementById("controls");
   box.innerHTML = "";
-  box.appendChild(el("h3", { text: KINDS[state.kind].name + " options" }));
   for (const f of KINDS[state.kind].fields()) {
     if (f.type === "grid") {
       const g = el("div", { class:"grid2" });
@@ -624,7 +715,7 @@ function renderPresets(){
   for (const p of KINDS[state.kind].presets) {
     const b = el("button", { type:"button", class:"preset", onclick:()=>setKind(state.kind, p.s) });
     b.dataset.url = presetUrl(state.kind, p.s);
-    const t = el("div", { class:"thumb" });
+    const t = el("div", { class:"thumb", style:"background:" + (state.bg === "light" ? "#fff" : "#0d1117") });
     t.appendChild(el("img", { src: b.dataset.url, alt: p.name, loading:"lazy" }));
     b.appendChild(t); b.appendChild(el("span", { text:p.name }));
     grid.appendChild(b);
@@ -647,15 +738,16 @@ function loadPreview(url){
   document.getElementById("downloadBtn").disabled = true;
   setPreviewStatus("loading", "Rendering…");
   const img = document.getElementById("previewImg");
+  img.classList.add("loading");
   const probe = new Image();
   probe.onload = () => {
     if (token !== previewToken) return;
     // Badges are ~20px tall: show small images at 2x so they can be judged.
     const small = probe.naturalWidth > 0 && probe.naturalWidth < 360 && probe.naturalHeight < 120;
     img.style.width = small ? (probe.naturalWidth * 2) + "px" : "";
-    img.src = url; previewUrl = url; previewReady = true;
+    img.src = url; img.classList.remove("loading"); previewUrl = url; previewReady = true;
     document.getElementById("downloadBtn").disabled = false;
-    setPreviewStatus("ready", "Ready — copy the markdown into your README.");
+    setPreviewStatus("ready", probe.naturalWidth + " × " + probe.naturalHeight + " · SVG");
   };
   probe.onerror = () => {
     if (token !== previewToken) return;
@@ -666,9 +758,10 @@ function loadPreview(url){
 function renderCode(){
   const code = state.fmt === "html" ? buildHtml() : state.fmt === "url" ? buildURL() : buildMarkdown();
   document.getElementById("codeBox").textContent = code;
+  document.getElementById("copyLabel").textContent = state.fmt === "html" ? "Copy HTML" : state.fmt === "url" ? "Copy URL" : "Copy Markdown";
 }
 function refresh(){
-  document.getElementById("stageTitle").textContent = KINDS[state.kind].name + " preview";
+  document.getElementById("stageTitle").textContent = KINDS[state.kind].name;
   renderCode();
   loadPreview(buildURL());
   try { history.replaceState(null, "", "#" + buildPath()); } catch (_) {}
@@ -773,6 +866,7 @@ function renderDialects(){
 }
 function applyCatalog(cat){
   if (Array.isArray(cat.themes) && cat.themes.length) THEMES = cat.themes.map(t => typeof t === "string" ? t : t.id).filter(Boolean);
+  if (cat.theme_palettes && typeof cat.theme_palettes === "object") PALETTES = cat.theme_palettes;
   if (Array.isArray(cat.art_types) && cat.art_types.length) ART = cat.art_types.slice();
   if (Array.isArray(cat.layouts) && cat.layouts.length) LAYOUTS = cat.layouts.slice();
   if (Array.isArray(cat.animations) && cat.animations.length) ANIMS = cat.animations.slice();
@@ -782,8 +876,13 @@ async function loadCatalog(){
 }
 function init(){
   document.getElementById("retryBtn").addEventListener("click", () => loadPreview(buildURL()));
-  document.getElementById("copyBtn").addEventListener("click", async () => { await copyText(buildURL()); toast("URL copied"); });
-  document.getElementById("mdBtn").addEventListener("click", async () => { await copyText(buildMarkdown()); toast("Markdown copied — paste it into your README"); });
+  document.getElementById("copyBtn").addEventListener("click", async () => {
+    const code = document.getElementById("codeBox").textContent;
+    await copyText(code);
+    toast(state.fmt === "url" ? "URL copied" : state.fmt === "html" ? "HTML copied" : "Markdown copied — paste it into your README");
+  });
+  document.getElementById("dockMd").addEventListener("click", async () => { await copyText(buildMarkdown()); toast("Markdown copied — paste it into your README"); });
+  document.getElementById("dockUrl").addEventListener("click", async () => { await copyText(buildURL()); toast("URL copied"); });
   document.getElementById("openBtn").addEventListener("click", () => window.open(buildURL(), "_blank", "noopener"));
   document.getElementById("downloadBtn").addEventListener("click", async () => {
     if (!previewReady) return;
@@ -792,7 +891,7 @@ function init(){
       const res = await fetch(previewUrl);
       if (!res.ok || !(res.headers.get("content-type") || "").includes("svg")) throw new Error("not svg");
       const href = URL.createObjectURL(await res.blob());
-      const a = el("a", { href, download: "readme-mark-" + state.kind + ".svg" });
+      const a = el("a", { href, download: "mark-" + state.kind + ".svg" });
       document.body.appendChild(a); a.click(); a.remove();
       setTimeout(() => URL.revokeObjectURL(href), 1000);
       setPreviewStatus("ready", "SVG downloaded.");
@@ -801,6 +900,7 @@ function init(){
   document.querySelectorAll("#bgSeg button").forEach(b => b.addEventListener("click", () => {
     document.querySelectorAll("#bgSeg button").forEach(x => x.classList.toggle("on", x === b));
     document.getElementById("stage").dataset.bg = b.dataset.bg;
+    state.bg = b.dataset.bg;
     document.querySelectorAll(".preset .thumb").forEach(t => t.style.background = b.dataset.bg === "light" ? "#fff" : "#0d1117");
   }));
   document.querySelectorAll("#fmtSeg button").forEach(b => b.addEventListener("click", () => {
@@ -812,7 +912,7 @@ function init(){
     const r = importUrl(document.getElementById("importBox").value);
     const note = document.getElementById("importNote");
     if (!r) { note.textContent = "That URL isn't one we recognize yet — try a badge, banner, icons, typing or stats URL."; return; }
-    note.textContent = r.from ? "Imported from " + r.from + " — same image, only the host changed." : "Loaded into the studio.";
+    note.textContent = r.from ? "Imported from " + r.from + " — the same image, only the host changed." : "Loaded into the studio.";
     setKind(r.kind, r.vals, r.extra);
   });
   renderDialects();

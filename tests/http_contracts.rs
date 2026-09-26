@@ -100,7 +100,7 @@ async fn studio_exposes_recovery_and_svg_export_controls() {
         "Download SVG",
         "Retry",
         "Preparing SVG export",
-        "Copy markdown",
+        "Copy Markdown",
         "Copy URL",
     ] {
         assert!(body.contains(marker), "studio copy missing: {marker}");
@@ -199,7 +199,7 @@ async fn badge_shorthand_accepts_grammar_query() {
 
     let (_, _, themed) = get("/badge/build-passing-brightgreen?theme=github").await;
     assert!(
-        themed.contains("fill=\"#1F6FEB\""),
+        themed.contains("fill=\"#5B6CFF\""),
         "theme query must paint"
     );
     assert!(
@@ -207,8 +207,8 @@ async fn badge_shorthand_accepts_grammar_query() {
         "theme query must override path color"
     );
 
-    let (_, _, glow) = get("/badge/build-passing-brightgreen?animation=glow").await;
-    assert!(glow.contains("<animate"), "animation query must compose");
+    let (_, _, faded) = get("/badge/build-passing-brightgreen?animation=fade").await;
+    assert!(faded.contains("<animate"), "animation query must compose");
 
     let (_, _, labeled) = get("/badge/build-passing-brightgreen?labelColor=red").await;
     assert!(
@@ -391,7 +391,7 @@ async fn catalog_exposes_the_one_vocabulary() {
     for key in [
         "forms",
         "art_types",
-        "featured_art_types",
+        "theme_palettes",
         "layouts",
         "themes",
         "icons",
@@ -472,36 +472,44 @@ async fn retired_form_ids_are_unknown_forms() {
 }
 
 #[tokio::test]
-async fn retired_layout_and_animation_aliases_are_unknown() {
+async fn retired_layout_and_animation_ids_map_or_default() {
     let (_, _, plain) = get("/api/v1/mark/hero?text=probe").await;
-    for alias in [
+    for unknown in [
         "bg",
         "idle",
         "off",
         "static",
-        "pulse",
-        "shine",
         "spin",
         "waving",
         "typewriter",
+        "glitch",
     ] {
-        let (_, _, body) = get(&format!("/api/v1/mark/hero?text=probe&animation={alias}")).await;
-        assert_eq!(
-            body, plain,
-            "retired animation alias {alias} must render the default animation"
-        );
+        let (_, _, body) = get(&format!("/api/v1/mark/hero?text=probe&animation={unknown}")).await;
+        assert_eq!(body, plain, "{unknown} must render the default animation");
+    }
+    let (_, _, rise) = get("/api/v1/mark/hero?text=probe&animation=rise").await;
+    for entry in ["bounce", "slide", "scale", "cascade"] {
+        let (_, _, body) = get(&format!("/api/v1/mark/hero?text=probe&animation={entry}")).await;
+        assert_eq!(body, rise, "retired entry motion {entry} renders rise");
     }
     let (_, _, default_layout) =
         get("/api/v1/mark/hero?text=probe&layout=default&animation=none").await;
-    for alias in ["card", "mono", "cli", "center", "product", "hero", "oss"] {
+    for alias in [
+        "card", "mono", "cli", "center", "product", "hero", "oss", "signal",
+    ] {
         let (_, _, body) = get(&format!(
             "/api/v1/mark/hero?text=probe&layout={alias}&animation=none"
         ))
         .await;
-        assert_eq!(
-            body, default_layout,
-            "retired layout alias {alias} must render the default layout"
-        );
+        assert_eq!(body, default_layout, "layout {alias} renders the default");
+    }
+    let (_, _, left) = get("/api/v1/mark/hero?text=probe&layout=left&animation=none").await;
+    for alias in ["plate", "terminal"] {
+        let (_, _, body) = get(&format!(
+            "/api/v1/mark/hero?text=probe&layout={alias}&animation=none"
+        ))
+        .await;
+        assert_eq!(body, left, "retired layout {alias} renders left");
     }
 }
 

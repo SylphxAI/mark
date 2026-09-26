@@ -257,7 +257,7 @@ fn align_list(v: Option<&str>) -> Vec<f32> {
 fn motion(name: &str) -> &'static str {
     match name {
         "fadeIn" => "fade",
-        "scaleIn" => "scale",
+        "scaleIn" => "rise",
         "blink" => "blink",
         "blinking" => "blinking",
         "twinkling" => "twinkling",
